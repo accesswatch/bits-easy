@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / local history
+.history/
+.vscode/*.log
+.vscode/settings.json
+.vscode/launch.json
+
+# PowerShell / temp
+*.tmp
+*.temp

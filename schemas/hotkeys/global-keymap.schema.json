@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spellforge.local/schemas/global-keymap.schema.json",
+  "title": "GlobalKeymap",
+  "type": "object",
+  "required": [
+    "version",
+    "bindings"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^v[0-9]+$"
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "commandId",
+          "keyChord",
+          "scope",
+          "enabled"
+        ],
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "pattern": "^cmd\\.[A-Za-z0-9]+(\\.[A-Za-z0-9]+)+$"
+          },
+          "keyChord": {
+            "type": "string",
+            "minLength": 3
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["global", "virtualized", "app-override"]
+          },
+          "appId": {
+            "type": ["string", "null"]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "safetyGate": {
+            "type": "string",
+            "enum": ["none", "low-confidence-confirm", "always-confirm"],
+            "default": "none"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

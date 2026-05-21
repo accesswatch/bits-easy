@@ -1,0 +1,165 @@
+{
+  "version": "v1",
+  "bindings": [
+    {
+      "commandId": "cmd.palette.open",
+      "keyChord": "CapsLock+Space",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.capture.quickInbox",
+      "keyChord": "CapsLock+Q",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.selection.summarize",
+      "keyChord": "CapsLock+S",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "low-confidence-confirm"
+    },
+    {
+      "commandId": "cmd.selection.extractActions",
+      "keyChord": "CapsLock+A",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "low-confidence-confirm"
+    },
+    {
+      "commandId": "cmd.selection.rewriteBeginner",
+      "keyChord": "CapsLock+R",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.result.virtualOpen",
+      "keyChord": "CapsLock+V",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.result.block.copy",
+      "keyChord": "CapsLock+C",
+      "scope": "virtualized",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.result.block.next",
+      "keyChord": "CapsLock+RightArrow",
+      "scope": "virtualized",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.result.block.previous",
+      "keyChord": "CapsLock+LeftArrow",
+      "scope": "virtualized",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.context.returnSource",
+      "keyChord": "CapsLock+Backspace",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.help.availableHotkeys",
+      "keyChord": "CapsLock+Slash",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.system.emergencyStop",
+      "keyChord": "CapsLock+Escape",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.result.copyAll",
+      "keyChord": "CapsLock+Shift+C",
+      "scope": "virtualized",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.result.pinInbox",
+      "keyChord": "CapsLock+P",
+      "scope": "virtualized",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.result.readConfidence",
+      "keyChord": "CapsLock+K",
+      "scope": "virtualized",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.result.openFallbacks",
+      "keyChord": "CapsLock+F",
+      "scope": "virtualized",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.result.toggleSpeechDensity",
+      "keyChord": "CapsLock+B",
+      "scope": "virtualized",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.result.toggleBrailleDensity",
+      "keyChord": "CapsLock+N",
+      "scope": "virtualized",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.result.search",
+      "keyChord": "CapsLock+Control+F",
+      "scope": "virtualized",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.profile.hotkeyDiagnostics",
+      "keyChord": "CapsLock+D",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+name: Validate Hotkey Configs
+
+on:
+  push:
+    paths:
+      - 'config/hotkeys/**'
+      - 'schemas/hotkeys/**'
+      - 'scripts/validate-hotkey-config.ps1'
+      - '.github/workflows/validate-hotkeys.yml'
+  pull_request:
+    paths:
+      - 'config/hotkeys/**'
+      - 'schemas/hotkeys/**'
+      - 'scripts/validate-hotkey-config.ps1'
+      - '.github/workflows/validate-hotkeys.yml'
+
+jobs:
+  validate-hotkeys:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate hotkey configs
+        shell: pwsh
+        run: ./scripts/validate-hotkey-config.ps1

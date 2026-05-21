@@ -1,0 +1,8 @@
+{
+  "profileId": "beginner",
+  "speechMode": "detailed",
+  "brailleMode": "expanded",
+  "confirmPolicy": "strict",
+  "hotkeyHints": true,
+  "appOverrides": []
+}

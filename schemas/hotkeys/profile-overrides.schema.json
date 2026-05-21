@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spellforge.local/schemas/profile-overrides.schema.json",
+  "title": "ProfileOverrides",
+  "type": "object",
+  "required": [
+    "profileId",
+    "speechMode",
+    "brailleMode",
+    "confirmPolicy",
+    "hotkeyHints"
+  ],
+  "properties": {
+    "profileId": {
+      "type": "string",
+      "enum": ["beginner", "balanced", "expert"]
+    },
+    "speechMode": {
+      "type": "string",
+      "enum": ["detailed", "concise", "minimal"]
+    },
+    "brailleMode": {
+      "type": "string",
+      "enum": ["expanded", "compact"]
+    },
+    "confirmPolicy": {
+      "type": "string",
+      "enum": ["strict", "adaptive", "minimal"]
+    },
+    "hotkeyHints": {
+      "type": "boolean"
+    },
+    "appOverrides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "appId",
+          "remapBindings"
+        ],
+        "properties": {
+          "appId": {
+            "type": "string"
+          },
+          "remapBindings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "commandId",
+                "keyChord"
+              ],
+              "properties": {
+                "commandId": {
+                  "type": "string",
+                  "pattern": "^cmd\\.[A-Za-z0-9]+(\\.[A-Za-z0-9]+)+$"
+                },
+                "keyChord": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    }
+  },
+  "additionalProperties": false
+}

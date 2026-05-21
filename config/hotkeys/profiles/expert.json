@@ -1,0 +1,8 @@
+{
+  "profileId": "expert",
+  "speechMode": "minimal",
+  "brailleMode": "compact",
+  "confirmPolicy": "minimal",
+  "hotkeyHints": false,
+  "appOverrides": []
+}

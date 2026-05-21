@@ -1,0 +1,260 @@
+[
+  {
+    "id": "cmd.palette.open",
+    "name": "Open palette",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "CapsLock+Space",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.capture.quickInbox",
+    "name": "Quick capture to inbox",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "CapsLock+Q",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": [
+      "cmd.palette.open"
+    ]
+  },
+  {
+    "id": "cmd.selection.summarize",
+    "name": "Summarize selection",
+    "safetyClass": "adaptive",
+    "executionMode": "preview-first",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+S",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": [
+      "cmd.result.openFallbacks",
+      "cmd.palette.open"
+    ]
+  },
+  {
+    "id": "cmd.selection.extractActions",
+    "name": "Extract action items",
+    "safetyClass": "adaptive",
+    "executionMode": "preview-first",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+A",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": [
+      "cmd.result.openFallbacks",
+      "cmd.palette.open"
+    ]
+  },
+  {
+    "id": "cmd.selection.rewriteBeginner",
+    "name": "Rewrite for beginners",
+    "safetyClass": "mutating",
+    "executionMode": "preview-first",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+R",
+    "requiresConfirmation": true,
+    "fallbackCommandIds": [
+      "cmd.palette.open"
+    ]
+  },
+  {
+    "id": "cmd.result.virtualOpen",
+    "name": "Open latest virtualized result",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+V",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": [
+      "cmd.palette.open"
+    ]
+  },
+  {
+    "id": "cmd.result.block.copy",
+    "name": "Copy current virtual block",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": false,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+C",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": [
+      "cmd.result.copyAll"
+    ]
+  },
+  {
+    "id": "cmd.result.block.next",
+    "name": "Next virtual block",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": false,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+RightArrow",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.result.block.previous",
+    "name": "Previous virtual block",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": false,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+LeftArrow",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.context.returnSource",
+    "name": "Return to source anchor",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+Backspace",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": [
+      "cmd.palette.open"
+    ]
+  },
+  {
+    "id": "cmd.help.availableHotkeys",
+    "name": "What can I press",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "CapsLock+Slash",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.system.emergencyStop",
+    "name": "Emergency stop",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+Escape",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.result.copyAll",
+    "name": "Copy full result",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+Shift+C",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.result.pinInbox",
+    "name": "Pin result to inbox",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+P",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.result.readConfidence",
+    "name": "Read confidence summary",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+K",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.result.openFallbacks",
+    "name": "Open fallback menu",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+F",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": [
+      "cmd.palette.open"
+    ]
+  },
+  {
+    "id": "cmd.result.toggleSpeechDensity",
+    "name": "Toggle speech density",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+B",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.result.toggleBrailleDensity",
+    "name": "Toggle braille density",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+N",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.result.search",
+    "name": "Search in virtualized result",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": true,
+    "defaultHotkey": "CapsLock+Control+F",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.profile.hotkeyDiagnostics",
+    "name": "Open hotkey diagnostics",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "CapsLock+D",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  }
+]

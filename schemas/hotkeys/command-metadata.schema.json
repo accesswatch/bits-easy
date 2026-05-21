@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spellforge.local/schemas/command-metadata.schema.json",
+  "title": "CommandMetadata",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "safetyClass",
+    "executionMode",
+    "supportsHotkey",
+    "supportsPalette",
+    "supportsVirtualized"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^cmd\\.[A-Za-z0-9]+(\\.[A-Za-z0-9]+)+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3
+    },
+    "safetyClass": {
+      "type": "string",
+      "enum": ["safe", "adaptive", "mutating", "destructive"]
+    },
+    "executionMode": {
+      "type": "string",
+      "enum": ["immediate", "preview-first", "confirm-first"]
+    },
+    "supportsHotkey": {
+      "type": "boolean"
+    },
+    "supportsPalette": {
+      "type": "boolean"
+    },
+    "supportsVirtualized": {
+      "type": "boolean"
+    },
+    "defaultHotkey": {
+      "type": ["string", "null"]
+    },
+    "requiresConfirmation": {
+      "type": "boolean",
+      "default": false
+    },
+    "fallbackCommandIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^cmd\\.[A-Za-z0-9]+(\\.[A-Za-z0-9]+)+$"
+      },
+      "default": []
+    }
+  },
+  "additionalProperties": false
+}

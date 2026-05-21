@@ -1,0 +1,8 @@
+{
+  "profileId": "balanced",
+  "speechMode": "concise",
+  "brailleMode": "compact",
+  "confirmPolicy": "adaptive",
+  "hotkeyHints": true,
+  "appOverrides": []
+}

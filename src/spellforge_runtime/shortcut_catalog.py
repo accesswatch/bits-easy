@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.shortcut_catalog")
 
 
 @dataclass
@@ -70,6 +73,7 @@ class ShortcutCatalogStore:
                 )
             self._presets = {k: [str(x) for x in v] for k, v in (payload.get("presets", {}) or {}).items()}
         except Exception:
+            _logger.exception("Spellforge: loading shortcut catalog at %s failed", self.storage_path)
             self._shortcuts = {}
             self._presets = {}
 

@@ -6,7 +6,10 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.structured_records")
 
 
 @dataclass
@@ -48,6 +51,7 @@ class StructuredRecordService:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading structured records at %s failed", self._storage_path)
             return
         self._databases = payload.get("databases", {}) if isinstance(payload.get("databases", {}), dict) else {}
         self._deleted_snapshots = payload.get("deleted", {}) if isinstance(payload.get("deleted", {}), dict) else {}

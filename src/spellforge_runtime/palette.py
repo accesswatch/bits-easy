@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 from .config import RuntimeConfig
+from .diagnostics import get_logger
+
+_logger = get_logger("spellforge.palette")
 
 
 @dataclass
@@ -35,7 +38,7 @@ class PaletteEngine:
                     for k, v in payload.items()
                 }
         except Exception:
-            pass
+            _logger.exception("Spellforge: loading palette history at %s failed", self.history_path)
         return {}
 
     def _save_history(self) -> None:

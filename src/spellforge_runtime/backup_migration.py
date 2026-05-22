@@ -5,7 +5,10 @@ import shutil
 from pathlib import Path
 from typing import Dict, List
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.backup_migration")
 
 
 class BackupMigrationService:
@@ -28,6 +31,7 @@ class BackupMigrationService:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading backup migration state at %s failed", self._storage_path)
             return
         self._sources = [str(x) for x in payload.get("sources", [])] if isinstance(payload.get("sources", []), list) else []
         self._target = str(payload.get("target", ""))

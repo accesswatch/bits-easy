@@ -6,8 +6,11 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
 from .google_calendar_sync import CalendarSyncEvent, GoogleCalendarSync
+
+_logger = get_logger("spellforge.tasks_calendar")
 
 
 @dataclass
@@ -58,6 +61,7 @@ class TaskIcsBridge:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading tasks at %s failed", self._storage_path)
             return
 
         self._counter = int(payload.get("counter", 0))

@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.hotkey_chains")
 
 
 class HotkeyChainStore:
@@ -23,6 +26,7 @@ class HotkeyChainStore:
                 for name, commands in (payload.get("chains", {}) or {}).items()
             }
         except Exception:
+            _logger.exception("Spellforge: loading hotkey chains at %s failed", self.storage_path)
             self._chains = {}
 
     def _save(self) -> None:

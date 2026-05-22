@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.retrieval_layer")
 
 
 class RetrievalLayer:
@@ -34,6 +37,7 @@ class RetrievalLayer:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading retrieval layer state at %s failed", self._storage_path)
             return
         providers = payload.get("providers", [])
         self._providers = [str(x) for x in providers] if isinstance(providers, list) else ["local", "docs", "web"]

@@ -5,8 +5,11 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
 from .google_contacts_sync import GoogleContact, GoogleContactsSync
+
+_logger = get_logger("spellforge.contacts_social")
 
 
 @dataclass
@@ -48,6 +51,7 @@ class ContactsSocialService:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading contacts at %s failed", self._storage_path)
             return
 
         self._counter = int(payload.get("counter", 0))

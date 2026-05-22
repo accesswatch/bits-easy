@@ -6,7 +6,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult, SpellforgeRuntime
+
+_logger = get_logger("spellforge.clip_library")
 
 
 def _now() -> str:
@@ -64,6 +67,7 @@ class ClipLibraryStore:
                 for fid, row in (payload.get("folders", {}) or {}).items()
             }
         except Exception:
+            _logger.exception("Spellforge: loading clip library at %s failed", self.storage_path)
             self._clips = {}
             self._folders = {}
 

@@ -6,7 +6,10 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.time_diary")
 
 
 @dataclass
@@ -65,6 +68,7 @@ class TimeDiaryService:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading time diary at %s failed", self._storage_path)
             return
         self._counter = int(payload.get("counter", 0))
         self._precision = int(payload.get("precision", 1))

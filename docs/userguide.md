@@ -31,6 +31,16 @@ When you press a hotkey or choose a command from the palette, Spellforge looks a
 
 ## 3. Getting Started
 
+### 3.0 Compatibility Requirements
+
+Before you install Spellforge, confirm these requirements:
+
+1. Windows 10 or 11, 64-bit.
+2. NVDA 2026.1, 64-bit.
+3. Spellforge `.nvda-addon` package.
+
+For this release, support is intentionally limited to NVDA 2026.1 x64.
+
 ### 3.1 Installing Spellforge
 
 1. Get the `spellforgeHotkeys` add-on file (it ends in `.nvda-addon`).
@@ -40,9 +50,38 @@ When you press a hotkey or choose a command from the palette, Spellforge looks a
 
 That is all there is to it. When NVDA comes back, you will hear a confirmation that Spellforge has loaded.
 
+### 3.1.1 Optional Dependencies for Advanced Integrations
+
+Most users do not need to install any extra libraries. If you use Google Calendar or Google Contacts integration features, install:
+
+1. `google-api-python-client`
+2. `google-auth`
+3. `google-auth-oauthlib`
+4. `google-auth-httplib2`
+
+If you are not using those integrations, you can skip these packages.
+
+### 3.1.2 Tester Quick Copy
+
+Use this quick checklist when handing the add-on to a tester.
+
+1. Confirm tester machine is Windows 10 or 11, 64-bit.
+2. Confirm NVDA version is 2026.1, 64-bit.
+3. Send the tester the Spellforge .nvda-addon file.
+4. In NVDA, open Tools > Manage add-ons > Install.
+5. Select the Spellforge .nvda-addon file and restart NVDA.
+6. After restart, press Control+Alt+Slash.
+7. If hotkeys are announced, installation passed.
+8. If hotkeys are not announced, run Control+Alt+D for diagnostics and capture the spoken result.
+
+Optional Google integration setup for testers who need Calendar or Contacts scenarios:
+
+1. Install Python 3.13 x64.
+2. Run: pip install google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2
+
 ### 3.2 Checking That Everything Is Working
 
-After NVDA restarts, try pressing `NVDA Key+Slash`. Spellforge will read out the hotkeys available to you. If you hear that list, you are up and running.
+After NVDA restarts, try pressing `Control+Alt+Slash`. Spellforge will read out the hotkeys available to you. If you hear that list, you are up and running.
 
 ### 3.3 Adjusting Your Settings
 
@@ -53,8 +92,31 @@ You can find Spellforge's settings inside the NVDA Settings dialog — just look
 - **Contextual fallback steps** — whether Spellforge offers alternative suggestions when a command cannot run as expected.
 - **Command palette** — turn the palette on or off.
 - **OS-level global hotkeys** — whether hotkeys work in all applications system-wide.
-- **NVDA Key prefix emulation** — how the NVDA Key-based shortcuts are registered with Windows.
+- **Control+Alt prefix emulation** — how the Control+Alt-based shortcuts are registered with Windows.
 - **Multi-press gestures** — whether double-press and hold gestures are active.
+- **Keyboard mappings editor** — edit command key chords and enabled state from a dedicated editor dialog.
+
+You can open the keyboard mappings editor in two ways:
+
+1. NVDA Settings > Spellforge > Edit keyboard mappings.
+2. NVDA Tools menu > Spellforge keyboard mappings.
+
+In the editor, turn on Advanced mode if you need to change scope, app override target, or trigger kind.
+
+Use Run NVDA gesture scrub in the editor to detect:
+
+1. Internal collisions between Spellforge bindings.
+2. Potential collisions with known NVDA gestures.
+
+### 3.4 Spellforge Key Model
+
+Spellforge includes a dedicated Spellforge key chord for helper actions.
+
+1. Primary model: Control+Alt based hotkeys (for example Control+Alt+S, Control+Alt+Q).
+2. Dedicated Spellforge helper key: Control+Alt+Space (single, double, triple, and hold variants).
+3. OS hook compatibility model: CapsLock prefix can be emulated as Control+Alt for registration.
+
+This avoids base NVDA gesture conflicts while still giving a single Spellforge-oriented entry point similar to a leader key workflow.
 
 ---
 
@@ -63,13 +125,13 @@ You can find Spellforge's settings inside the NVDA Settings dialog — just look
 Here are eight things to try right now, each taking about a minute:
 
 1. Press `NVDA Key+Shift+P` to open the **command palette**. Type a word like "summarise" and press Enter to run a command.
-2. Select some text in any application and press `NVDA Key+S` to **summarise** it.
-3. With text selected, press `NVDA Key+1` to **save it to clip slot 1**.
-4. Press `NVDA Key+2` to **paste it back** from slot 1.
-5. Press `NVDA Key+Q` to **capture a quick note** to your inbox.
-6. Press `NVDA Key+V` to **reopen the last result** in a navigable view.
-7. Press `NVDA Key+Backspace` to **return to where you were** before Spellforge opened a view.
-8. If anything feels stuck, press `NVDA Key+Escape` to **stop everything** immediately.
+2. Select some text in any application and press `Control+Alt+S` to **summarise** it.
+3. With text selected, press `Control+Alt+1` to **save it to clip slot 1**.
+4. Press `Control+Alt+2` to **paste it back** from slot 1.
+5. Press `Control+Alt+Q` to **capture a quick note** to your inbox.
+6. Press `Control+Alt+V` to **reopen the last result** in a navigable view.
+7. Press `Control+Alt+Backspace` to **return to where you were** before Spellforge opened a view.
+8. If anything feels stuck, press `Control+Alt+Escape` to **stop everything** immediately.
 
 ---
 
@@ -96,68 +158,68 @@ You can change your profile at any time — your commands stay the same, only th
 
 If you ever forget a hotkey, the palette is your starting point. Press `NVDA Key+Shift+P` to open it, type a word or two describing what you want to do, and press Enter to run the matching command.
 
-You can also press `NVDA Key+Slash` at any time to hear a spoken summary of available hotkeys.
+You can also press `Control+Alt+Slash` at any time to hear a spoken summary of available hotkeys.
 
-If you want to see diagnostics — for example, to check whether a hotkey is registered correctly — press `NVDA Key+D`.
+If you want to see diagnostics — for example, to check whether a hotkey is registered correctly — press `Control+Alt+D`.
 
 ### 6.2 Working with Selected Text
 
 Spellforge can act on text you have selected in any application.
 
-- Press `NVDA Key+S` to get a **summary** of the selected text.
-- Press `NVDA Key+A` to **extract action items** — useful for emails and meeting notes.
-- Press `NVDA Key+R` to **rewrite** the text in simpler language.
+- Press `Control+Alt+S` to get a **summary** of the selected text.
+- Press `Control+Alt+A` to **extract action items** — useful for emails and meeting notes.
+- Press `Control+Alt+R` to **rewrite** the text in simpler language.
 
-If you want to mark a region manually (for example when your application does not support standard selection), use `NVDA Key+[` to mark the start and `NVDA Key+]` to mark the end. Press `NVDA Key+'` to hear a description of your current selection context, `NVDA Key+J` to jump back to where your selection started, and `NVDA Key+X` to clear the markers.
+If you want to mark a region manually (for example when your application does not support standard selection), use `Control+Alt+[` to mark the start and `Control+Alt+]` to mark the end. Press `Control+Alt+'` to hear a description of your current selection context, `Control+Alt+J` to jump back to where your selection started, and `Control+Alt+X` to clear the markers.
 
 ### 6.3 Clip Slots and the Clip Library
 
 Clip slots let you save up to ten pieces of text and reuse them freely, even across applications.
 
-- **Save to a slot:** Press `NVDA Key+1` (or 2 through 0 for other slots).
-- **Paste from a slot:** Press `NVDA Key+2` (matching the slot number you used).
-- **Hear what is in a slot:** Press `NVDA Key+4`.
-- **Open the clip library:** Press `NVDA Key+6` to browse, organise, and manage saved clips in folders.
+- **Save to a slot:** Press `Control+Alt+1` (or 2 through 0 for other slots).
+- **Paste from a slot:** Press `Control+Alt+2` (matching the slot number you used).
+- **Hear what is in a slot:** Press `Control+Alt+4`.
+- **Open the clip library:** Press `Control+Alt+6` to browse, organise, and manage saved clips in folders.
 
-You can also combine clips using the **MergeBoard**. Set whether clips should be joined end-to-end or replace each other (`NVDA Key+M` for append, `NVDA Key+Shift+M` for replace), choose how they are separated (line, space, or paragraph), and then commit the merge when your stack is ready.
+You can also combine clips using the **MergeBoard**. Set whether clips should be joined end-to-end or replace each other (`Control+Alt+M` for append, `Control+Alt+Shift+M` for replace), choose how they are separated (line, space, or paragraph), and then commit the merge when your stack is ready.
 
 ### 6.4 Reading Long Results
 
 When Spellforge returns a long result — a summary, extracted actions, or a retrieval response — it opens a navigable virtual view so you can read through it at your own pace.
 
-- **Open the latest result:** `NVDA Key+V`
-- **Move to the next block:** `NVDA Key+RightArrow`
-- **Move to the previous block:** `NVDA Key+LeftArrow`
-- **Copy the current block:** `NVDA Key+C`
-- **Copy everything:** `NVDA Key+Shift+C`
-- **Search inside the result:** `NVDA Key+Control+F`
-- **Check how confident Spellforge is:** `NVDA Key+K`
-- **See alternative suggestions:** `NVDA Key+F`
-- **Save the result to your inbox:** `NVDA Key+P`
-- **Return to where you came from:** `NVDA Key+Backspace`
+- **Open the latest result:** `Control+Alt+V`
+- **Move to the next block:** `Control+Alt+RightArrow`
+- **Move to the previous block:** `Control+Alt+LeftArrow`
+- **Copy the current block:** `Control+Alt+C`
+- **Copy everything:** `Control+Alt+Shift+C`
+- **Search inside the result:** `Control+Alt+Control+F`
+- **Check how confident Spellforge is:** `Control+Alt+K`
+- **See alternative suggestions:** `Control+Alt+F`
+- **Save the result to your inbox:** `Control+Alt+P`
+- **Return to where you came from:** `Control+Alt+Backspace`
 
 ### 6.5 Quick Capture and Your Inbox
 
-Press `NVDA Key+Q` any time to capture what you are thinking about or working on. It goes straight to your inbox so you can deal with it later. From the palette you can list inbox items and route them to the right place when you are ready.
+Press `Control+Alt+Q` any time to capture what you are thinking about or working on. It goes straight to your inbox so you can deal with it later. From the palette you can list inbox items and route them to the right place when you are ready.
 
 Spellforge also keeps a journal of recent operations. If you need to undo something that was supported, you can roll it back from the palette.
 
 ### 6.6 Text Expansion
 
-Build up a personal shorthand dictionary — type a short trigger and Spellforge expands it into the full phrase. You can create, list, and delete expansions from the palette. Press `NVDA Key+0` for a quick insert when you want to drop a saved piece of text directly into your work.
+Build up a personal shorthand dictionary — type a short trigger and Spellforge expands it into the full phrase. You can create, list, and delete expansions from the palette. Press `Control+Alt+0` for a quick insert when you want to drop a saved piece of text directly into your work.
 
 ### 6.7 Shortcuts and the Launcher
 
-Shortcuts let you jump to files, folders, websites, or applications with a single keypress. Press `NVDA Key+7` to open the shortcut launcher and run anything you have set up. Press `NVDA Key+9` to add the application you are currently using as a shortcut. `NVDA Key+8` lists any drive aliases you have mapped.
+Shortcuts let you jump to files, folders, websites, or applications with a single keypress. Press `Control+Alt+7` to open the shortcut launcher and run anything you have set up. Press `Control+Alt+9` to add the application you are currently using as a shortcut. `Control+Alt+8` lists any drive aliases you have mapped.
 
 You can group shortcuts into categories and presets, and run a whole preset at once from the palette.
 
 ### 6.8 Tags, Tables, and Speech History
 
-- **Tag your current session** for easy retrieval later: `NVDA Key+T`
-- **Tag an Outlook message:** `NVDA Key+Shift+T`
-- **Browse your speech history** — what NVDA has recently announced: `NVDA Key+H`
-- **Open speech history as a navigable view:** `NVDA Key+Shift+H`
+- **Tag your current session** for easy retrieval later: `Control+Alt+T`
+- **Tag an Outlook message:** `Control+Alt+Shift+T`
+- **Browse your speech history** — what NVDA has recently announced: `Control+Alt+H`
+- **Open speech history as a navigable view:** `Control+Alt+Shift+H`
 - **Capture a table** from an application into Spellforge: use the palette and search "table capture."
 
 ### 6.9 Tasks, Time, Diary, Contacts, and More
@@ -184,12 +246,12 @@ Spellforge has a full personal workflow suite you can access from the palette:
 
 If something does not seem right, these tools can help:
 
-- `NVDA Key+D` — run hotkey diagnostics to see what is registered and why.
+- `Control+Alt+D` — run hotkey diagnostics to see what is registered and why.
 - Open the palette and search "integration health" to check that Spellforge's components are all working.
-- `NVDA Key+=` — search for a special character by name or description.
-- `NVDA Key+-` — recall a recently used special character.
-- `NVDA Key+W` — jump back to a bookmarked window. `NVDA Key+Shift+W` lists all your bookmarks.
-- `NVDA Key+R` — open the system report.
+- `Control+Alt+=` — search for a special character by name or description.
+- `Control+Alt+-` — recall a recently used special character.
+- `Control+Alt+W` — jump back to a bookmarked window. `Control+Alt+Shift+W` lists all your bookmarks.
+- `Control+Alt+R` — open the system report.
 
 ---
 
@@ -201,8 +263,8 @@ Spellforge is designed to give you confidence, not anxiety. Here is how it prote
 - **Previews:** When Spellforge is about to change something significant, it shows you what will happen first.
 - **Fallback suggestions:** If a command cannot run in your current application, Spellforge offers alternatives rather than just failing silently.
 - **Operation history:** Many actions are logged so you can review or roll back recent changes from the palette.
-- **Emergency stop:** Press `NVDA Key+Escape` at any time to halt whatever is happening immediately.
-- **Return to source:** Press `NVDA Key+Backspace` to close a virtual view and return to exactly where you were.
+- **Emergency stop:** Press `Control+Alt+Escape` at any time to halt whatever is happening immediately.
+- **Return to source:** Press `Control+Alt+Backspace` to close a virtual view and return to exactly where you were.
 
 A simple rule of thumb: start on the **Beginner** profile while you are learning, move to **Balanced** for everyday use, and switch to **Expert** once the commands feel second nature.
 
@@ -214,59 +276,60 @@ These are all the built-in hotkeys. The NVDA Key is the key you have set as your
 
 | Hotkey | What it does |
 |---|---|
-| NVDA Key+0 | Quick insert saved text |
-| NVDA Key+1 | Save to clip slot 1 |
-| NVDA Key+2 | Paste from clip slot 1 |
-| NVDA Key+3 | Delete clip slot |
-| NVDA Key+4 | Describe clip slot |
-| NVDA Key+5 | Open Shortcuts dashboard |
-| NVDA Key+6 | Open clip library |
-| NVDA Key+7 | Open shortcut launcher |
-| NVDA Key+8 | List drive aliases |
-| NVDA Key+9 | Add focused app to launcher |
-| NVDA Key+A | Extract action items from selection |
-| NVDA Key+B | Toggle speech density |
-| NVDA Key+Backspace | Return to source |
-| NVDA Key+C | Copy current result block |
-| NVDA Key+[ | Mark selection start |
-| NVDA Key+] | Mark selection end |
-| NVDA Key+Control+F | Search inside current result |
-| NVDA Key+D | Hotkey diagnostics |
-| NVDA Key+= | Search for a symbol |
-| NVDA Key+Escape | Emergency stop |
-| NVDA Key+F | Open fallback suggestions |
-| NVDA Key+H | Browse speech history |
-| NVDA Key+I | Set merge divider to paragraph |
-| NVDA Key+J | Jump to selection start |
-| NVDA Key+K | Read confidence summary |
-| NVDA Key+L | Set merge divider to line |
-| NVDA Key+LeftArrow | Previous result block |
-| NVDA Key+M | Set merge mode to append |
-| NVDA Key+- | Recall recent symbol |
-| NVDA Key+N | Toggle braille density |
-| NVDA Key+P | Pin result to inbox |
-| NVDA Key+Q | Quick capture to inbox |
-| NVDA Key+' | Read selection context |
-| NVDA Key+R | Rewrite selection in simpler language |
-| NVDA Key+R | Open system report |
-| NVDA Key+RightArrow | Next result block |
-| NVDA Key+S | Summarise selection |
-| NVDA Key+Shift+7 | Detect dialog insertion surface |
-| NVDA Key+Shift+C | Copy full result |
-| NVDA Key+Shift+H | Open speech history as virtual view |
-| NVDA Key+Shift+M | Set merge mode to replace |
+| Control+Alt+0 | Quick insert saved text |
+| Control+Alt+1 | Save to clip slot 1 |
+| Control+Alt+2 | Paste from clip slot 1 |
+| Control+Alt+3 | Delete clip slot |
+| Control+Alt+4 | Describe clip slot |
+| Control+Alt+5 | Open Shortcuts dashboard |
+| Control+Alt+6 | Open clip library |
+| Control+Alt+7 | Open shortcut launcher |
+| Control+Alt+8 | List drive aliases |
+| Control+Alt+9 | Add focused app to launcher |
+| Control+Alt+A | Extract action items from selection |
+| Control+Alt+B | Toggle speech density |
+| Control+Alt+Backspace | Return to source |
+| Control+Alt+C | Copy current result block |
+| Control+Alt+[ | Mark selection start |
+| Control+Alt+] | Mark selection end |
+| Control+Alt+Control+F | Search inside current result |
+| Control+Alt+D | Hotkey diagnostics |
+| Control+Alt+= | Search for a symbol |
+| Control+Alt+Escape | Emergency stop |
+| Control+Alt+F | Open fallback suggestions |
+| Control+Alt+H | Browse speech history |
+| Control+Alt+I | Set merge divider to paragraph |
+| Control+Alt+J | Jump to selection start |
+| Control+Alt+K | Read confidence summary |
+| Control+Alt+L | Set merge divider to line |
+| Control+Alt+LeftArrow | Previous result block |
+| Control+Alt+M | Set merge mode to append |
+| Control+Alt+- | Recall recent symbol |
+| Control+Alt+N | Toggle braille density |
+| Control+Alt+P | Pin result to inbox |
+| Control+Alt+Q | Quick capture to inbox |
+| Control+Alt+' | Read selection context |
+| Control+Alt+R | Rewrite selection in simpler language |
+| Control+Alt+Shift+R | Open system report |
+| Control+Alt+RightArrow | Next result block |
+| Control+Alt+S | Summarise selection |
+| Control+Alt+Shift+7 | Detect dialog insertion surface |
+| Control+Alt+Shift+C | Copy full result |
+| Control+Alt+Shift+H | Open speech history as virtual view |
+| Control+Alt+Shift+M | Set merge mode to replace |
 | NVDA Key+Shift+P | Open command palette |
-| NVDA Key+Shift+T | Report tagged Outlook messages |
-| NVDA Key+Shift+W | List window bookmarks |
-| NVDA Key+Slash | What can I press? (hotkey help) |
-| NVDA Key+Space (hold) | What can I press? (hotkey help) |
-| NVDA Key+Space (double) | What can I press? (hotkey help) |
-| NVDA Key+Space (triple) | Hotkey diagnostics |
-| NVDA Key+T | Report tagged files |
-| NVDA Key+U | Set merge divider to space |
-| NVDA Key+V | Open latest result |
-| NVDA Key+W | Recall window bookmark |
-| NVDA Key+X | Cancel selection markers |
+| Control+Alt+Shift+T | Report tagged Outlook messages |
+| Control+Alt+Shift+W | List window bookmarks |
+| Control+Alt+Slash | What can I press? (hotkey help) |
+| Control+Alt+Space | Open command palette |
+| Control+Alt+Space (hold) | What can I press? (hotkey help) |
+| Control+Alt+Space (double) | What can I press? (hotkey help) |
+| Control+Alt+Space (triple) | Hotkey diagnostics |
+| Control+Alt+T | Report tagged files |
+| Control+Alt+U | Set merge divider to space |
+| Control+Alt+V | Open latest result |
+| Control+Alt+W | Recall window bookmark |
+| Control+Alt+X | Cancel selection markers |
 
 ---
 
@@ -610,19 +673,19 @@ If you ever need to move to a new machine or reinstall, you can use the portabil
 ## 11. If Something Goes Wrong
 
 **A hotkey does not seem to do anything**
-Open the palette with `NVDA Key+Shift+P` and check that the command you expect is listed. Then press `NVDA Key+D` to run hotkey diagnostics — it will tell you whether the key is registered and whether anything is conflicting.
+Open the palette with `NVDA Key+Shift+P` and check that the command you expect is listed. Then press `Control+Alt+D` to run hotkey diagnostics — it will tell you whether the key is registered and whether anything is conflicting.
 
 **Spellforge is talking too much or not enough**
 Try a different profile. Open NVDA Settings, go to the Spellforge panel, and switch between Beginner, Balanced, and Expert.
 
 **A command says it cannot run in this application**
-Press `NVDA Key+F` to see if there are alternative suggestions, or open the palette and search for a related command that works differently.
+Press `Control+Alt+F` to see if there are alternative suggestions, or open the palette and search for a related command that works differently.
 
 **Something got stuck or feels out of control**
-Press `NVDA Key+Escape` immediately. That will stop whatever is running.
+Press `Control+Alt+Escape` immediately. That will stop whatever is running.
 
 **You are not sure where you are**
-Press `NVDA Key+Backspace` to return to where you started, or open the palette and search "where am I" for an orientation report.
+Press `Control+Alt+Backspace` to return to where you started, or open the palette and search "where am I" for an orientation report.
 
 ---
 
@@ -639,3 +702,4 @@ There is no pressure to learn everything at once. Here is a gentle week-by-week 
 - **Day 7:** Look at backup and portability so your setup is protected.
 
 Once you can open the palette, capture a thought, save and reuse a clip, and run one daily planning command — you are already getting real value from Spellforge. Everything else is there when you are ready for it.
+

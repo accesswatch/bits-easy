@@ -59,6 +59,7 @@ from .nvda_readiness import NvdaReadinessService
 from .utility_ops import UtilityOpsService
 from .missions_context import MissionsContextService
 from .workflow_portability import WorkflowPortabilityService
+from .spellcheck import SpellCheckService
 
 __all__ = [
     "AppAdapter",
@@ -148,4 +149,5 @@ __all__ = [
     "UtilityOpsService",
     "MissionsContextService",
     "WorkflowPortabilityService",
+    "SpellCheckService",
 ]

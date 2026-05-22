@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import sys
 import time
+import json
 
 import globalPluginHandler
 import scriptHandler
@@ -26,6 +27,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         self._hotkeys = None
         self._context = None
         self._current_snapshot = None
+        self._hotkey_overrides_path = None
+        self._tools_menu_id = None
         self._initialize_runtime()
 
     def _get_focus_snapshot(self):
@@ -80,6 +83,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             storage_path = storage_dir / "clip-slots.json"
             settings_path = storage_dir / "settings.json"
             palette_history_path = storage_dir / "palette-history.json"
+            self._hotkey_overrides_path = storage_dir / "hotkey-overrides.json"
 
             self._settings_store = SettingsStore(settings_path)
             self._settings = self._settings_store.load()
@@ -97,6 +101,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             }
             self._runtime = SpellforgeRuntime(adapters=adapters, storage_path=storage_path)
             self._config = load_runtime_config(repo_root)
+            self._load_hotkey_overrides()
             self._dispatcher = RuntimeDispatcher(
                 runtime=self._runtime,
                 config=self._config,
@@ -136,7 +141,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 settings_store=self._settings_store,
                 get_settings=self._get_settings,
                 set_settings=self._set_settings,
+                open_hotkey_editor=self._open_hotkey_editor,
             )
+            self._register_tools_menu_item()
             ui.message("Spellforge loaded")
         except Exception as exc:
             self._runtime = None
@@ -148,7 +155,91 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._palette = None
             self._hotkeys = None
             self._context = None
+            self._tools_menu_id = None
             ui.message(f"Spellforge failed to load: {exc}")
+
+    def _load_hotkey_overrides(self):
+        if self._config is None or self._hotkey_overrides_path is None:
+            return
+        try:
+            if not self._hotkey_overrides_path.exists():
+                return
+            payload = json.loads(self._hotkey_overrides_path.read_text(encoding="utf-8"))
+            bindings = payload.get("bindings", []) if isinstance(payload, dict) else []
+            if isinstance(bindings, list) and bindings:
+                self._config.keymap_bindings = [dict(row) for row in bindings if isinstance(row, dict)]
+        except Exception:
+            pass
+
+    def _save_hotkey_overrides(self, bindings: list[dict]):
+        if self._hotkey_overrides_path is None:
+            return
+        try:
+            self._hotkey_overrides_path.parent.mkdir(parents=True, exist_ok=True)
+            payload = {"version": "v1", "bindings": bindings}
+            self._hotkey_overrides_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
+    def _register_tools_menu_item(self):
+        try:
+            import gui
+            import wx
+        except Exception:
+            return
+
+        try:
+            menu = gui.mainFrame.sysTrayIcon.toolsMenu
+            item = menu.Append(wx.ID_ANY, "Spellforge keyboard mappings...")
+            self._tools_menu_id = int(item.GetId())
+            gui.mainFrame.Bind(wx.EVT_MENU, self._on_tools_menu_open_hotkeys, id=self._tools_menu_id)
+        except Exception:
+            self._tools_menu_id = None
+
+    def _unregister_tools_menu_item(self):
+        if self._tools_menu_id is None:
+            return
+        try:
+            import gui
+            import wx
+
+            gui.mainFrame.Unbind(wx.EVT_MENU, handler=self._on_tools_menu_open_hotkeys, id=self._tools_menu_id)
+            menu = gui.mainFrame.sysTrayIcon.toolsMenu
+            menu.Delete(self._tools_menu_id)
+        except Exception:
+            pass
+        finally:
+            self._tools_menu_id = None
+
+    def _on_tools_menu_open_hotkeys(self, _evt):
+        self._open_hotkey_editor()
+
+    def _open_hotkey_editor(self):
+        if self._config is None:
+            ui.message("Spellforge runtime unavailable")
+            return
+        try:
+            import gui
+            from spellforge_settings import open_hotkey_editor_dialog
+        except Exception:
+            ui.message("Hotkey editor is unavailable")
+            return
+
+        def _on_save(bindings: list[dict]):
+            if self._config is None:
+                return
+            self._config.keymap_bindings = [dict(row) for row in bindings]
+            self._save_hotkey_overrides(self._config.keymap_bindings)
+            self._restart_hotkeys()
+
+        changed = open_hotkey_editor_dialog(
+            parent=gui.mainFrame,
+            keymap_bindings=self._config.keymap_bindings,
+            command_catalog=self._config.command_catalog,
+            on_save=_on_save,
+        )
+        if changed:
+            ui.message("Keyboard mappings updated.")
 
     def _on_os_hotkey_command(self, command_id: str):
         def _run():
@@ -175,6 +266,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
     def terminate(self):
         try:
+            self._unregister_tools_menu_item()
             if self._hotkeys is not None:
                 self._hotkeys.stop()
             from spellforge_settings import unregister_settings_panel
@@ -300,10 +392,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         self._dispatch("cmd.clip.pasteFromSlot", slot=1)
 
     __gestures = {
-        "kb:NVDA+[": "markSelectionStart",
-        "kb:NVDA+]": "markSelectionEnd",
-        "kb:NVDA+'": "readSelectionContext",
-        "kb:NVDA+1": "copyToSlotOne",
-        "kb:NVDA+2": "pasteFromSlotOne",
+        "kb:control+alt+[": "markSelectionStart",
+        "kb:control+alt+]": "markSelectionEnd",
+        "kb:control+alt+'": "readSelectionContext",
+        "kb:control+alt+1": "copyToSlotOne",
+        "kb:control+alt+2": "pasteFromSlotOne",
+        "kb:control+alt+space": "openCommandPalette",
         "kb:NVDA+shift+p": "openCommandPalette",
     }

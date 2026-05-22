@@ -27,7 +27,7 @@ By the end of this guide, you will know how to:
 
 Use this when you are not sure what to do next.
 
-1. Press CapsLock+Space.
+1. Press NVDA+Shift+P.
 2. Listen for the palette opening.
 3. Type one word like "help" or "note".
 4. Press Enter on the action you want.
@@ -248,7 +248,7 @@ This is normal learning behavior.
 
 ## Quick Reference
 
-1. Open palette: CapsLock+Space
+1. Open palette: NVDA+Shift+P
 2. Quick capture: CapsLock+Q
 3. Summarize selection: CapsLock+S
 4. What can I press: CapsLock+Slash

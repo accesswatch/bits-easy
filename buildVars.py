@@ -9,7 +9,7 @@ addon_info = {
     "addon_url": "https://github.com/accesswatch/bits-easy",
     "addon_sourceURL": "https://github.com/accesswatch/bits-easy",
     "addon_docFileName": "readme.html",
-    "addon_minimumNVDAVersion": "2024.1",
+    "addon_minimumNVDAVersion": "2026.1",
     "addon_lastTestedNVDAVersion": "2026.1",
     "addon_updateChannel": "stable",
     "addon_license": "MIT",

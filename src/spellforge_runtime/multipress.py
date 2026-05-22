@@ -26,9 +26,17 @@ class MultiPressResolver:
 
         aliases: List[str] = [chord]
         if chord.startswith("CapsLock+"):
-            aliases.append("NVDA+" + chord[len("CapsLock+"):])
+            suffix = chord[len("CapsLock+"):]
+            aliases.append("NVDA+" + suffix)
+            aliases.append("Control+Alt+" + suffix)
+        elif chord.startswith("Control+Alt+"):
+            suffix = chord[len("Control+Alt+"):]
+            aliases.append("CapsLock+" + suffix)
+            aliases.append("NVDA+" + suffix)
         elif chord.startswith("NVDA+"):
-            aliases.append("CapsLock+" + chord[len("NVDA+"):])
+            suffix = chord[len("NVDA+"):]
+            aliases.append("CapsLock+" + suffix)
+            aliases.append("Control+Alt+" + suffix)
         return aliases
 
     def resolve(

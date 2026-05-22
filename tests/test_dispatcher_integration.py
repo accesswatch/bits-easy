@@ -104,13 +104,18 @@ class DispatcherIntegrationTests(unittest.TestCase):
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
         ctx = self._ctx("edge", "alpha", 0)
 
-        out_double = dispatcher.dispatch_key_chord(ctx, "CapsLock+Space", press_count=2)
+        out_single = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Space", press_count=1)
+        self.assertTrue(out_single.result.ok)
+        self.assertEqual(out_single.plan.command_id, "cmd.palette.open")
+        self.assertEqual(out_single.result.payload["gesture"]["triggerKind"], "single-press")
+
+        out_double = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Space", press_count=2)
         self.assertTrue(out_double.result.ok)
         self.assertEqual(out_double.plan.command_id, "cmd.help.availableHotkeys")
         self.assertEqual(out_double.result.payload["gesture"]["triggerKind"], "double-press")
 
         dispatcher.multi_press_enabled_override = False
-        out_disabled = dispatcher.dispatch_key_chord(ctx, "CapsLock+Space", press_count=3)
+        out_disabled = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Space", press_count=3)
         self.assertTrue(out_disabled.result.ok)
         self.assertEqual(out_disabled.plan.command_id, "cmd.palette.open")
         self.assertEqual(out_disabled.result.payload["gesture"]["triggerKind"], "single-press")
@@ -249,12 +254,12 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertIn("ColA,ColB", export.result.payload["content"])
 
     def test_layered_keymap_precedence_app_override(self) -> None:
-        # Same chord as global palette open, but app override should win for edge.
+        # Same chord as global Spellforge helper key, but app override should win for edge.
         self.config.keymap_bindings.insert(
             0,
             {
                 "commandId": "cmd.help.availableHotkeys",
-                "keyChord": "CapsLock+Space",
+                "keyChord": "Control+Alt+Space",
                 "scope": "app-override",
                 "appId": "edge",
                 "enabled": True,
@@ -264,7 +269,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
         ctx = self._ctx("edge", "alpha", 0)
 
-        out = dispatcher.dispatch_key_chord(ctx, "CapsLock+Space", press_count=1)
+        out = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Space", press_count=1)
         self.assertTrue(out.result.ok)
         self.assertEqual(out.plan.command_id, "cmd.help.availableHotkeys")
 
@@ -314,9 +319,9 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertIn("fallbackOrder", diag.result.payload)
         self.assertIn("resolutionTrace", diag.result.payload)
 
-        focused = dispatcher.dispatch_command(ctx, "cmd.profile.hotkeyDiagnostics", keyChord="CapsLock+Space")
+        focused = dispatcher.dispatch_command(ctx, "cmd.profile.hotkeyDiagnostics", keyChord="Control+Alt+Space")
         self.assertTrue(focused.result.ok)
-        self.assertIn("CapsLock+Space", focused.result.payload["resolutionTrace"])
+        self.assertIn("Control+Alt+Space", focused.result.payload["resolutionTrace"])
 
     def test_hotkey_chain_routes(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")

@@ -18,6 +18,19 @@ class MultiPressResolver:
     def __init__(self, bindings: List[dict]):
         self.bindings = bindings
 
+    @staticmethod
+    def _equivalent_key_chords(key_chord: str) -> List[str]:
+        chord = str(key_chord or "").strip()
+        if not chord:
+            return []
+
+        aliases: List[str] = [chord]
+        if chord.startswith("CapsLock+"):
+            aliases.append("NVDA+" + chord[len("CapsLock+"):])
+        elif chord.startswith("NVDA+"):
+            aliases.append("CapsLock+" + chord[len("NVDA+"):])
+        return aliases
+
     def resolve(
         self,
         key_chord: str,
@@ -26,7 +39,8 @@ class MultiPressResolver:
         hold_duration_ms: int = 0,
         multi_press_enabled: bool = True,
     ) -> Optional[MultiPressResolution]:
-        relevant = [b for b in self.bindings if b.get("enabled", True) and b.get("keyChord") == key_chord]
+        candidates = set(self._equivalent_key_chords(key_chord))
+        relevant = [b for b in self.bindings if b.get("enabled", True) and b.get("keyChord") in candidates]
         if not relevant:
             return None
 
@@ -52,6 +66,9 @@ class MultiPressResolver:
             kind = trig.get("kind", "single-press")
             if kind not in explicit:
                 explicit[kind] = b
+
+        if not multi_press_enabled and "single-press" not in explicit:
+            return None
 
         hold_cfg = explicit.get("press-and-hold")
         if hold_cfg is not None:

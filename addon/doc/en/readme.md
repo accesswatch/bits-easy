@@ -20,11 +20,13 @@ This add-on handoff profile is validated only on NVDA 2026.1 x64.
 
 ## Default Add-on Gestures
 
-1. NVDA+[ sets selection start.
-2. NVDA+] sets selection end.
-3. NVDA+' reads selection context.
-4. NVDA+1 copies into slot 1.
-5. NVDA+2 pastes from slot 1.
+1. Control+Alt+[ sets selection start.
+2. Control+Alt+] sets selection end.
+3. Control+Alt+' reads selection context.
+4. Control+Alt+1 copies into slot 1.
+5. Control+Alt+2 pastes from slot 1.
+6. Control+Alt+Space opens the command palette (double-press for hotkey list, hold for quick actions).
+7. NVDA+Shift+P also opens the command palette (secondary entry point).
 
 ## Development Notes
 

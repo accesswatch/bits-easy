@@ -12,6 +12,19 @@ class RuntimeConfig:
     keymap_bindings: List[Dict[str, Any]]
     profiles: Dict[str, Dict[str, Any]]
 
+    @staticmethod
+    def _equivalent_key_chords(key_chord: str) -> List[str]:
+        chord = str(key_chord or "").strip()
+        if not chord:
+            return []
+
+        candidates: List[str] = [chord]
+        if chord.startswith("CapsLock+"):
+            candidates.append("NVDA+" + chord[len("CapsLock+"):])
+        elif chord.startswith("NVDA+"):
+            candidates.append("CapsLock+" + chord[len("NVDA+"):])
+        return candidates
+
     def command(self, command_id: str) -> Optional[Dict[str, Any]]:
         return self.command_catalog.get(command_id)
 
@@ -22,9 +35,10 @@ class RuntimeConfig:
         return None
 
     def key_binding_for_chord(self, key_chord: str) -> Optional[Dict[str, Any]]:
+        candidates = set(self._equivalent_key_chords(key_chord))
         for binding in self.keymap_bindings:
             if (
-                binding.get("keyChord") == key_chord
+                binding.get("keyChord") in candidates
                 and binding.get("enabled", True)
                 and (binding.get("trigger") is None or binding["trigger"].get("kind") == "single-press")
             ):
@@ -39,8 +53,9 @@ class RuntimeConfig:
 
     def binding_resolution_trace(self, key_chord: str, app_id: str, mode: str = "global") -> List[Dict[str, Any]]:
         trace: List[Dict[str, Any]] = []
+        candidates = set(self._equivalent_key_chords(key_chord))
         for idx, binding in enumerate(self.keymap_bindings):
-            if binding.get("keyChord") != key_chord:
+            if binding.get("keyChord") not in candidates:
                 continue
 
             scope = str(binding.get("scope", "global"))

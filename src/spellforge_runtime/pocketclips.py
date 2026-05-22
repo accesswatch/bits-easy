@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import difflib
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -17,24 +19,64 @@ class SlotView:
     source_app: str
     length: int
     preview: str
+    captured_at: str
+    favorite: bool
 
 
 class PocketClipsStudio:
-    def __init__(self, runtime: SpellforgeRuntime):
+    def __init__(self, runtime: SpellforgeRuntime, storage_path: Path | str | None = None):
         self.runtime = runtime
+        self._storage_path = Path(storage_path) if storage_path else None
+        self._favorites: set[int] = set()
+        self._load()
 
-    def list_slots(self, *, source_app: str = "", only_protected: Optional[bool] = None, sort_by: str = "slot") -> List[SlotView]:
+    @staticmethod
+    def _now() -> str:
+        return datetime.now(timezone.utc).isoformat()
+
+    def _load(self) -> None:
+        if self._storage_path is None or not self._storage_path.exists():
+            return
+        try:
+            payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
+        except Exception:
+            return
+        favorites = payload.get("favorites", [])
+        if isinstance(favorites, list):
+            self._favorites = {int(x) for x in favorites if isinstance(x, int) and 1 <= x <= 12}
+
+    def _save(self) -> None:
+        if self._storage_path is None:
+            return
+        self._storage_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"favorites": sorted(self._favorites)}
+        self._storage_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    def list_slots(
+        self,
+        *,
+        source_app: str = "",
+        only_protected: Optional[bool] = None,
+        sort_by: str = "slot",
+        query: str = "",
+        favorites_only: bool = False,
+        smart_view: str = "",
+    ) -> List[SlotView]:
         rows: List[SlotView] = []
+        needle = query.strip().lower()
         for slot in range(1, 13):
             desc = self.runtime.describe_slot(slot)
             payload = desc.payload or {}
+            preview = str(payload.get("preview", ""))
             row = SlotView(
                 slot=slot,
                 empty=bool(payload.get("empty", True)),
                 protected=bool(payload.get("protected", False)),
                 source_app=str(payload.get("sourceApp", "")),
                 length=int(payload.get("length", 0)),
-                preview=str(payload.get("preview", "")),
+                preview=preview,
+                captured_at=str(payload.get("capturedAt", "")),
+                favorite=(slot in self._favorites),
             )
             rows.append(row)
 
@@ -42,13 +84,31 @@ class PocketClipsStudio:
             rows = [r for r in rows if r.source_app.lower() == source_app.lower()]
         if only_protected is not None:
             rows = [r for r in rows if r.protected == only_protected]
+        if favorites_only:
+            rows = [r for r in rows if r.favorite]
+        if needle:
+            rows = [
+                r
+                for r in rows
+                if needle in r.preview.lower() or needle in r.source_app.lower() or needle in str(r.slot)
+            ]
+
+        smart_view_key = smart_view.strip().lower()
+        if smart_view_key == "favorites":
+            rows = [r for r in rows if r.favorite]
+        elif smart_view_key == "recent":
+            rows = [r for r in rows if not r.empty]
+        elif smart_view_key == "non-empty":
+            rows = [r for r in rows if not r.empty]
 
         if sort_by == "recency":
-            rows.sort(key=lambda r: (r.empty, -r.length, r.slot))
+            rows.sort(key=lambda r: (r.empty, r.captured_at, -r.length, r.slot), reverse=True)
         elif sort_by == "size":
             rows.sort(key=lambda r: (-r.length, r.slot))
+        elif sort_by == "favorite":
+            rows.sort(key=lambda r: (not r.favorite, r.slot))
         else:
-            rows.sort(key=lambda r: r.slot)
+            rows.sort(key=lambda r: (not r.favorite, r.slot))
         return rows
 
     def compare_slots(self, slot_a: int, slot_b: int) -> RuntimeResult:
@@ -64,6 +124,17 @@ class PocketClipsStudio:
         b_words = set(text_b.split())
         added = sorted(list(b_words - a_words))[:20]
         removed = sorted(list(a_words - b_words))[:20]
+        similarity = difflib.SequenceMatcher(a=text_a, b=text_b).ratio()
+        diff_lines = list(
+            difflib.unified_diff(
+                text_a.splitlines(),
+                text_b.splitlines(),
+                fromfile=f"slot-{slot_a}",
+                tofile=f"slot-{slot_b}",
+                lineterm="",
+            )
+        )
+        changed_segments = [line for line in diff_lines if line.startswith("+") or line.startswith("-")]
 
         return RuntimeResult(
             ok=True,
@@ -75,6 +146,9 @@ class PocketClipsStudio:
                 "removedWords": removed,
                 "lenA": len(text_a),
                 "lenB": len(text_b),
+                "similarity": similarity,
+                "lineDiffPreview": diff_lines[:60],
+                "changedSegmentPreview": changed_segments[:40],
             },
         )
 
@@ -135,24 +209,59 @@ class PocketClipsStudio:
 
         self.runtime.unprotect_slot(from_slot)
         self.runtime.delete_slot(from_slot)
+        if from_slot in self._favorites:
+            self._favorites.remove(from_slot)
+            self._favorites.add(to_slot)
+            self._save()
         return RuntimeResult(ok=True, message="Slot reorder completed.", payload={"from": from_slot, "to": to_slot})
 
-    def batch_action(self, slots: List[int], action: str) -> RuntimeResult:
+    def batch_action(
+        self,
+        slots: List[int],
+        action: str,
+        *,
+        out_path: Path | str | None = None,
+        separator: str = "\n",
+    ) -> RuntimeResult:
         done: List[int] = []
+        copied_text: List[str] = []
         for slot in slots:
+            if slot < 1 or slot > 12:
+                continue
             if action == "protect":
                 result = self.runtime.protect_slot(slot)
             elif action == "unprotect":
                 result = self.runtime.unprotect_slot(slot)
             elif action == "delete":
                 result = self.runtime.delete_slot(slot)
+            elif action == "pin":
+                self._favorites.add(slot)
+                self._save()
+                result = RuntimeResult(ok=True, message=f"Slot {slot} pinned.")
+            elif action == "unpin":
+                if slot in self._favorites:
+                    self._favorites.remove(slot)
+                    self._save()
+                result = RuntimeResult(ok=True, message=f"Slot {slot} unpinned.")
+            elif action == "copyOut":
+                result = self.runtime.paste_from_slot(slot)
+                if result.ok:
+                    copied_text.append(str((result.payload or {}).get("content", "")))
+            elif action == "export":
+                if out_path is None:
+                    return RuntimeResult(ok=False, message="Export batch action requires outPath.")
+                return self.export_pack(slots, out_path)
             else:
                 return RuntimeResult(ok=False, message=f"Unsupported batch action: {action}")
 
             if result.ok:
                 done.append(slot)
 
-        return RuntimeResult(ok=True, message="Batch action complete.", payload={"action": action, "slots": done})
+        payload: Dict[str, object] = {"action": action, "slots": done}
+        if action == "copyOut":
+            payload["content"] = separator.join(copied_text)
+            payload["segmentCount"] = len(copied_text)
+        return RuntimeResult(ok=True, message="Batch action complete.", payload=payload)
 
     def export_pack(self, slots: List[int], out_path: Path | str) -> RuntimeResult:
         out = Path(out_path)

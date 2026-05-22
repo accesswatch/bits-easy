@@ -43,6 +43,9 @@ from .utility_ops import UtilityOpsService
 from .missions_context import MissionsContextService
 from .workflow_portability import WorkflowPortabilityService
 from .spellcheck import SpellCheckService
+from .surface_context import classify_surface, fallback_steps_for
+from .file_ops import FileOpsService
+from .ai_assistant import AiAssistantService
 
 
 @dataclass
@@ -72,13 +75,14 @@ class RuntimeDispatcher:
         self.profile_id = profile_id
         self.multi_press_enabled_override: Optional[bool] = None
         base_dir = Path(data_root) if data_root is not None else (Path.home() / "AppData" / "Roaming" / "Spellforge")
-        self._studio = PocketClipsStudio(runtime)
+        self._studio = PocketClipsStudio(runtime, storage_path=base_dir / "pocketclips-studio.json")
         self._health = IntegrationHealthTracker(base_dir / "integration-health.jsonl")
         self._expansions = TextExpansionStore(base_dir / "text-expansions.json")
         self._cuts = ShortcutCatalogStore(base_dir / "shortcut-catalog.json")
         self._library = ClipLibraryStore(runtime, base_dir / "clip-library.json")
         self._shortcuts = ShortcutsStore(base_dir / "shortcuts.json")
         self._tagging = TaggingSession()
+        self._file_ops = FileOpsService(self._tagging)
         self._table_capture = TableCaptureExtractor()
         self._chains = HotkeyChainStore(base_dir / "hotkey-chains.json")
         self._outlook_tags = OutlookTaggingSession()
@@ -91,6 +95,7 @@ class RuntimeDispatcher:
         self._adaptive = AdaptiveActionEngine()
         self._capture = QuickCaptureInbox(base_dir / "quick-capture.json")
         self._journal = OperationJournal(base_dir / "operation-journal.json")
+        self._ai = AiAssistantService(base_dir / "ai-assistant.json")
         self._google_calendar = GoogleCalendarSync(
             base_dir / "google-calendar-credentials.json",
             base_dir / "google-calendar-token.json",
@@ -503,6 +508,72 @@ class RuntimeDispatcher:
                             "rollbackResult": rollback_outcome.result.payload or {},
                         },
                     )
+        elif command_id == "cmd.journal.trends":
+            result = self._journal.trend_report(window_days=int(kwargs.get("windowDays", 30)))
+        elif command_id == "cmd.ai.key.set":
+            result = self._ai.key_set(
+                provider=str(kwargs.get("provider", "")),
+                key=str(kwargs.get("key", "")),
+            )
+        elif command_id == "cmd.ai.key.delete":
+            result = self._ai.key_delete(provider=str(kwargs.get("provider", "")))
+        elif command_id == "cmd.ai.billingStatus":
+            result = self._ai.billing_status(provider=str(kwargs.get("provider", "")))
+        elif command_id == "cmd.ai.session.new":
+            result = self._ai.session_new(title=str(kwargs.get("title", "")))
+        elif command_id == "cmd.ai.session.clear":
+            result = self._ai.session_clear()
+        elif command_id == "cmd.ai.session.save":
+            result = self._ai.session_save(session_id=str(kwargs.get("sessionId", "")))
+        elif command_id == "cmd.ai.session.load":
+            result = self._ai.session_load(session_id=str(kwargs.get("sessionId", "")))
+        elif command_id == "cmd.ai.session.list":
+            result = self._ai.session_list()
+        elif command_id == "cmd.ai.session.delete":
+            result = self._ai.session_delete(session_id=str(kwargs.get("sessionId", "")))
+        elif command_id == "cmd.ai.tool.run":
+            result = self._ai.tool_run(
+                tool=str(kwargs.get("tool", "")),
+                text=str(kwargs.get("text", "")),
+                replace=bool(kwargs.get("replace", False)),
+            )
+        elif command_id == "cmd.ai.prompt.create":
+            result = self._ai.prompt_create(
+                name=str(kwargs.get("name", "")),
+                text=str(kwargs.get("text", "")),
+            )
+        elif command_id == "cmd.ai.prompt.delete":
+            result = self._ai.prompt_delete(name=str(kwargs.get("name", "")))
+        elif command_id == "cmd.ai.prompt.list":
+            result = self._ai.prompt_list(query=str(kwargs.get("query", "")))
+        elif command_id == "cmd.ai.prompt.insert":
+            result = self._ai.prompt_insert(name=str(kwargs.get("name", "")))
+        elif command_id == "cmd.ai.doc.upload":
+            result = self._ai.document_upload(
+                path=Path(str(kwargs.get("path", ""))),
+                title=str(kwargs.get("title", "")),
+            )
+        elif command_id == "cmd.ai.doc.ask":
+            result = self._ai.document_ask(
+                document_id=str(kwargs.get("documentId", "")),
+                question=str(kwargs.get("question", "")),
+            )
+        elif command_id == "cmd.ai.doc.followUp":
+            result = self._ai.document_ask(
+                document_id=str(kwargs.get("documentId", "")),
+                question=str(kwargs.get("question", "")),
+            )
+        elif command_id == "cmd.ai.image.generate":
+            result = self._ai.image_generate(
+                prompt=str(kwargs.get("prompt", "")),
+                out_path=Path(str(kwargs.get("outPath", Path.cwd() / "dist" / "generated-image.txt"))),
+            )
+        elif command_id == "cmd.ai.transcribe":
+            result = self._ai.transcribe(
+                in_path=Path(str(kwargs.get("inPath", ""))),
+                speaker_separation=bool(kwargs.get("speakerSeparation", False)),
+                translate_to=str(kwargs.get("translateTo", "")),
+            )
         elif command_id == "cmd.time.speak":
             result = self._time_diary.speak_time(include_seconds=False)
         elif command_id == "cmd.time.speakSeconds":
@@ -637,8 +708,15 @@ class RuntimeDispatcher:
             )
         elif command_id == "cmd.db.create":
             result = self._records.create_database(str(kwargs.get("name", "")))
+        elif command_id == "cmd.db.list":
+            result = self._records.list_databases()
         elif command_id == "cmd.db.select":
             result = self._records.select_database(str(kwargs.get("name", "")))
+        elif command_id == "cmd.db.template.apply":
+            result = self._records.apply_template(
+                str(kwargs.get("template", "")),
+                database_name=str(kwargs.get("database", "")),
+            )
         elif command_id == "cmd.db.delete":
             result = self._records.delete_database(
                 str(kwargs.get("name", "")),
@@ -669,6 +747,14 @@ class RuntimeDispatcher:
             )
         elif command_id == "cmd.db.entry.list":
             result = self._records.list_entries(columns=[str(x) for x in list(kwargs.get("columns", []))] or None)
+        elif command_id == "cmd.db.entry.grid":
+            result = self._records.entry_grid(
+                fields=[str(x) for x in list(kwargs.get("fields", []))] or None,
+                sort_by=str(kwargs.get("sortBy", "")),
+                descending=bool(kwargs.get("descending", False)),
+                limit=int(kwargs.get("limit", 50)),
+                offset=int(kwargs.get("offset", 0)),
+            )
         elif command_id == "cmd.db.entry.detail":
             result = self._records.entry_detail(str(kwargs.get("entryId", "")))
         elif command_id == "cmd.db.search":
@@ -676,15 +762,25 @@ class RuntimeDispatcher:
                 str(kwargs.get("field", "")),
                 str(kwargs.get("query", "")),
             )
+        elif command_id == "cmd.db.search.advanced":
+            result = self._records.search_advanced(
+                text_query=str(kwargs.get("query", "")),
+                filters=dict(kwargs.get("filters", {})),
+                limit=int(kwargs.get("limit", 50)),
+            )
         elif command_id == "cmd.db.sort":
             result = self._records.sort_entries(
                 str(kwargs.get("field", "")),
                 descending=bool(kwargs.get("descending", False)),
             )
+        elif command_id == "cmd.db.dashboard":
+            result = self._records.dashboard()
         elif command_id == "cmd.db.export.csv":
             result = self._records.export_csv(Path(str(kwargs.get("outPath", Path.cwd() / "dist" / "records.csv"))))
         elif command_id == "cmd.db.export.text":
             result = self._records.export_text(Path(str(kwargs.get("outPath", Path.cwd() / "dist" / "records.txt"))))
+        elif command_id == "cmd.db.export.json":
+            result = self._records.export_json(Path(str(kwargs.get("outPath", Path.cwd() / "dist" / "records.json"))))
         elif command_id == "cmd.jamal.import":
             result = self._records.jamal_import(
                 Path(str(kwargs.get("inPath", ""))),
@@ -701,6 +797,55 @@ class RuntimeDispatcher:
                 [dict(x) for x in list(kwargs.get("incomingEntries", []))],
                 apply=bool(kwargs.get("apply", False)),
             )
+        elif command_id == "cmd.jamal.sync.plan":
+            result = self._records.jamal_sync_plan(
+                [dict(x) for x in list(kwargs.get("incomingEntries", []))],
+                strategy=str(kwargs.get("strategy", "prefer-incoming")),
+            )
+        elif command_id == "cmd.jamal.sync.applyPlan":
+            result = self._records.jamal_sync_apply_plan(
+                str(kwargs.get("planId", "")),
+                confirm=bool(kwargs.get("confirm", False)),
+            )
+        elif command_id == "cmd.jamal.sync.rollback":
+            result = self._records.jamal_sync_rollback(database_name=str(kwargs.get("database", "")))
+        elif command_id == "cmd.file.browse":
+            result = self._file_ops.browse(
+                str(kwargs.get("path", "")),
+                include_hidden=bool(kwargs.get("includeHidden", False)),
+            )
+        elif command_id == "cmd.file.copy":
+            result = self._file_ops.copy(
+                str(kwargs.get("source", "")),
+                str(kwargs.get("destination", "")),
+                confirm=bool(kwargs.get("confirm", False)),
+            )
+        elif command_id == "cmd.file.move":
+            result = self._file_ops.move(
+                str(kwargs.get("source", "")),
+                str(kwargs.get("destination", "")),
+                confirm=bool(kwargs.get("confirm", False)),
+            )
+        elif command_id == "cmd.file.rename":
+            result = self._file_ops.rename(
+                str(kwargs.get("path", "")),
+                str(kwargs.get("newName", "")),
+                confirm=bool(kwargs.get("confirm", False)),
+            )
+        elif command_id == "cmd.file.delete":
+            result = self._file_ops.delete(
+                str(kwargs.get("path", "")),
+                confirm=bool(kwargs.get("confirm", False)),
+            )
+        elif command_id == "cmd.file.zip.create":
+            result = self._file_ops.zip_create(
+                [str(x) for x in list(kwargs.get("sources", []))],
+                str(kwargs.get("outPath", Path.cwd() / "dist" / "archive.zip")),
+            )
+        elif command_id == "cmd.file.path.copy":
+            result = self._file_ops.copy_full_path(str(kwargs.get("path", "")))
+        elif command_id == "cmd.file.tag.batch":
+            result = self._file_ops.tag_batch([str(x) for x in list(kwargs.get("paths", []))])
         elif command_id == "cmd.notes.quickCapture":
             result = self._notes.quick_note(str(kwargs.get("text", "")), context.app_id)
         elif command_id == "cmd.notes.mode.set":
@@ -748,6 +893,20 @@ class RuntimeDispatcher:
             result = self._notes.snapshot_create(str(kwargs.get("reason", "manual")))
         elif command_id == "cmd.notes.snapshot.restore":
             result = self._notes.snapshot_restore(int(kwargs.get("index", -1)))
+        elif command_id == "cmd.notes.category.tree":
+            result = self._notes.category_tree()
+        elif command_id == "cmd.notes.related.graph":
+            result = self._notes.related_graph(str(kwargs.get("noteId", "")))
+        elif command_id == "cmd.notes.attachment.action":
+            result = self._notes.attachment_action(
+                str(kwargs.get("noteId", "")),
+                str(kwargs.get("path", "")),
+                str(kwargs.get("action", "")),
+            )
+        elif command_id == "cmd.notes.backup.export":
+            result = self._notes.backup_export(Path(str(kwargs.get("outPath", Path.cwd() / "dist" / "notes-backup.json"))))
+        elif command_id == "cmd.notes.backup.restore":
+            result = self._notes.backup_restore(Path(str(kwargs.get("inPath", ""))))
         elif command_id == "cmd.author.markdown.insert":
             result = self._author.markdown_insert(
                 str(kwargs.get("kind", "")),
@@ -789,6 +948,48 @@ class RuntimeDispatcher:
             result = self._retrieval.parse_resilient(str(kwargs.get("raw", "")))
         elif command_id == "cmd.retrieve.summarize":
             result = self._retrieval.summarize_actions([dict(x) for x in list(kwargs.get("results", []))])
+        elif command_id == "cmd.retrieve.anchor.set":
+            result = self._retrieval.set_domain_anchor(
+                str(kwargs.get("domain", "")),
+                page=str(kwargs.get("page", "")),
+                index=int(kwargs.get("index", 0)),
+                phrase=str(kwargs.get("phrase", "")),
+            )
+        elif command_id == "cmd.retrieve.trail.open":
+            result = self._retrieval.open_result_with_trail(
+                int(kwargs.get("index", 0)),
+                current_domain=str(kwargs.get("domain", "")),
+                current_page=str(kwargs.get("page", "")),
+            )
+        elif command_id == "cmd.retrieve.trail.return":
+            result = self._retrieval.return_previous_location()
+        elif command_id == "cmd.retrieve.visited.report":
+            result = self._retrieval.visited_report()
+        elif command_id == "cmd.context.capabilityEnvelope":
+            surface = classify_surface(context.app_id, context.control_id, context.control_id)
+            adapter = self.runtime._adapter_for(context.app_id)
+            steps = fallback_steps_for(surface.mode, str(kwargs.get("commandId", "cmd.context.capabilityEnvelope")))
+            result = RuntimeResult(
+                ok=True,
+                message="Capability envelope ready.",
+                payload={
+                    "appId": context.app_id,
+                    "surfaceMode": surface.mode,
+                    "supportsSelection": bool(getattr(adapter, "supports_selection", False)),
+                    "fallbackSteps": steps,
+                },
+            )
+        elif command_id == "cmd.context.returnSourceDriftSafe":
+            base = self.runtime.restore_source_anchor(context)
+            if base.ok and bool((base.payload or {}).get("driftDetected", False)):
+                surface = classify_surface(context.app_id, context.control_id, context.control_id)
+                extra = fallback_steps_for(surface.mode, "cmd.context.returnSource")
+                payload = dict(base.payload or {})
+                payload["fallbackSteps"] = extra
+                base.payload = payload
+                if not base.next_steps:
+                    base.next_steps = extra
+            result = base
         elif command_id == "cmd.backup.target.set":
             result = self._backup.set_target(str(kwargs.get("path", "")))
         elif command_id == "cmd.backup.source.add":
@@ -881,6 +1082,8 @@ class RuntimeDispatcher:
             result = self.runtime.mark_selection_end(context)
         elif command_id == "cmd.selection.readContext":
             result = self.runtime.read_selection_context(context)
+        elif command_id == "cmd.selection.markerStatus":
+            result = self.runtime.describe_selection_markers(context)
         elif command_id == "cmd.selection.jumpStart":
             result = self.runtime.jump_selection_start(context)
         elif command_id == "cmd.selection.cancel":
@@ -919,6 +1122,14 @@ class RuntimeDispatcher:
             result = self.runtime.set_merge_divider_space()
         elif command_id == "cmd.merge.setDividerParagraph":
             result = self.runtime.set_merge_divider_paragraph()
+        elif command_id == "cmd.merge.setDivider":
+            divider = str(kwargs.get("divider", "line")).lower()
+            if divider == "space":
+                result = self.runtime.set_merge_divider_space()
+            elif divider in ("paragraph", "para"):
+                result = self.runtime.set_merge_divider_paragraph()
+            else:
+                result = self.runtime.set_merge_divider_line()
         elif command_id == "cmd.merge.setCustomSeparator":
             separator = str(kwargs.get("separator", "\n"))
             result = self.runtime.set_merge_custom_separator(separator)
@@ -964,10 +1175,27 @@ class RuntimeDispatcher:
         elif command_id == "cmd.text.quickInsert":
             result = self._expansions.quick_insert()
         elif command_id == "cmd.clip.browser.open":
-            rows = self._studio.list_slots(sort_by=str(kwargs.get("sortBy", "slot")))
+            rows = self._studio.list_slots(
+                sort_by=str(kwargs.get("sortBy", "slot")),
+                query=str(kwargs.get("query", "")),
+                favorites_only=bool(kwargs.get("favoritesOnly", False)),
+                smart_view=str(kwargs.get("smartView", "")),
+            )
             result = RuntimeResult(
                 ok=True,
                 message="PocketClips browser opened.",
+                payload={"slots": [r.__dict__ for r in rows]},
+            )
+        elif command_id == "cmd.clip.browser.search":
+            rows = self._studio.list_slots(
+                sort_by=str(kwargs.get("sortBy", "slot")),
+                query=str(kwargs.get("query", "")),
+                favorites_only=bool(kwargs.get("favoritesOnly", False)),
+                smart_view=str(kwargs.get("smartView", "")),
+            )
+            result = RuntimeResult(
+                ok=True,
+                message="PocketClips search results ready.",
                 payload={"slots": [r.__dict__ for r in rows]},
             )
         elif command_id == "cmd.clip.browser.filter":
@@ -975,13 +1203,21 @@ class RuntimeDispatcher:
                 source_app=str(kwargs.get("sourceApp", "")),
                 only_protected=kwargs.get("onlyProtected"),
                 sort_by=str(kwargs.get("sortBy", "slot")),
+                query=str(kwargs.get("query", "")),
+                favorites_only=bool(kwargs.get("favoritesOnly", False)),
+                smart_view=str(kwargs.get("smartView", "")),
             )
             result = RuntimeResult(ok=True, message="PocketClips filter applied.", payload={"slots": [r.__dict__ for r in rows]})
         elif command_id == "cmd.clip.browser.sort":
             rows = self._studio.list_slots(sort_by=str(kwargs.get("sortBy", "slot")))
             result = RuntimeResult(ok=True, message="PocketClips sort applied.", payload={"slots": [r.__dict__ for r in rows]})
         elif command_id == "cmd.clip.browser.batchAction":
-            result = self._studio.batch_action(slots=list(kwargs.get("slots", [])), action=str(kwargs.get("action", "")))
+            result = self._studio.batch_action(
+                slots=list(kwargs.get("slots", [])),
+                action=str(kwargs.get("action", "")),
+                out_path=kwargs.get("outPath"),
+                separator=str(kwargs.get("separator", "\n")),
+            )
         elif command_id == "cmd.clip.browser.compare":
             result = self._studio.compare_slots(int(kwargs.get("slotA", 1)), int(kwargs.get("slotB", 2)))
         elif command_id == "cmd.clip.browser.reorder":
@@ -1319,9 +1555,20 @@ class RuntimeDispatcher:
                 folder_id=str(kwargs.get("folderId", "")),
             )
         elif command_id == "cmd.clip.library.retainSlotAlias":
-            result = self._library.retain_slot_alias(
+            result = self._library.retain_slot_alias_with_strategy(
                 clip_id=str(kwargs.get("clipId", "")),
                 alias=str(kwargs.get("slotAlias", "")),
+                strategy=str(kwargs.get("aliasStrategy", "reject")),
+            )
+        elif command_id == "cmd.clip.library.assignCategory":
+            result = self._library.assign_category(
+                clip_id=str(kwargs.get("clipId", "")),
+                category=str(kwargs.get("category", "")),
+            )
+        elif command_id == "cmd.clip.library.removeCategory":
+            result = self._library.remove_category(
+                clip_id=str(kwargs.get("clipId", "")),
+                category=str(kwargs.get("category", "")),
             )
         elif command_id == "cmd.clip.library.restoreToSlot":
             result = self._library.restore_to_slot(
@@ -1336,6 +1583,12 @@ class RuntimeDispatcher:
             )
         elif command_id == "cmd.clip.library.listLinkedLocations":
             result = self._library.list_linked_locations(str(kwargs.get("clipId", "")))
+        elif command_id == "cmd.clip.library.timeline":
+            result = self._library.timeline_view(
+                limit=int(kwargs.get("limit", 50)),
+                source_app=str(kwargs.get("sourceApp", "")),
+                category=str(kwargs.get("category", "")),
+            )
         elif command_id == "cmd.profile.hotkeyPresetExport":
             out_path = Path(str(kwargs.get("outPath", Path.cwd() / "dist" / "hotkey-preset.json")))
             import hashlib

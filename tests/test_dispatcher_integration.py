@@ -45,6 +45,16 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertTrue(out.result.ok)
         self.assertEqual(out.plan.command_id, "cmd.selection.markStart")
 
+    def test_key_chord_dispatch_marker_status(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha bravo", 5)
+        dispatcher.dispatch_command(ctx, "cmd.selection.markStart")
+
+        out = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Semicolon")
+        self.assertTrue(out.result.ok)
+        self.assertEqual(out.plan.command_id, "cmd.selection.markerStatus")
+        self.assertIn("telemetry", out.result.payload)
+
     def test_profile_policy_is_applied_to_clipboard_paste(self) -> None:
         ctx = self._ctx("edge", "alpha bravo charlie", 0)
 
@@ -87,6 +97,35 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertTrue(end.result.ok)
         self.assertEqual(end.plan.confirmation, "inherit")
         self.assertTrue(end.result.payload["executionPolicy"]["safetyGate"] in ["none", "low-confidence-confirm", "always-confirm"])
+
+    def test_marker_status_command_reports_state(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha bravo charlie", 6)
+
+        status_before = dispatcher.dispatch_command(ctx, "cmd.selection.markerStatus")
+        self.assertFalse(status_before.result.ok)
+        self.assertFalse(status_before.result.payload["startMarkerSet"])
+
+        started = dispatcher.dispatch_command(ctx, "cmd.selection.markStart")
+        self.assertTrue(started.result.ok)
+
+        status_after_start = dispatcher.dispatch_command(ctx, "cmd.selection.markerStatus")
+        self.assertTrue(status_after_start.result.ok)
+        self.assertTrue(status_after_start.result.payload["startMarkerSet"])
+        self.assertFalse(status_after_start.result.payload["endMarkerSet"])
+        self.assertIn("startMeta", status_after_start.result.payload)
+        self.assertIn("capturedAt", status_after_start.result.payload["startMeta"])
+
+        ctx.caret = 17
+        ended = dispatcher.dispatch_command(ctx, "cmd.selection.markEnd")
+        self.assertTrue(ended.result.ok)
+
+        status_ready = dispatcher.dispatch_command(ctx, "cmd.selection.markerStatus")
+        self.assertTrue(status_ready.result.ok)
+        self.assertEqual(status_ready.result.payload["activeRangeStart"], 6)
+        self.assertEqual(status_ready.result.payload["activeRangeEnd"], 17)
+        self.assertIn("telemetry", status_ready.result.payload)
+        self.assertGreaterEqual(status_ready.result.payload["telemetry"]["app"].get("markEndCaptured", 0), 1)
 
     def test_hotkey_discoverability_and_diagnostics(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
@@ -168,8 +207,40 @@ class DispatcherIntegrationTests(unittest.TestCase):
         move = dispatcher.dispatch_command(ctx, "cmd.clip.library.moveToFolder", clipId=clip_id, folderId=folder_id)
         self.assertTrue(move.result.ok)
 
+        category = dispatcher.dispatch_command(ctx, "cmd.clip.library.assignCategory", clipId=clip_id, category="project")
+        self.assertTrue(category.result.ok)
+
+        alias = dispatcher.dispatch_command(
+            ctx,
+            "cmd.clip.library.retainSlotAlias",
+            clipId=clip_id,
+            slotAlias="Slot A",
+            aliasStrategy="rename",
+        )
+        self.assertTrue(alias.result.ok)
+
         open_view = dispatcher.dispatch_command(ctx, "cmd.clip.library.open")
         self.assertTrue(open_view.result.ok)
+        self.assertIn("smartViews", open_view.result.payload)
+
+    def test_clip_browser_search_and_pin_routes(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha bravo", 0, clipboard_text="alpha bravo")
+        self.runtime.copy_to_slot(ctx, slot=1, text="alpha note")
+        self.runtime.copy_to_slot(ctx, slot=2, text="beta note")
+
+        pin = dispatcher.dispatch_command(ctx, "cmd.clip.browser.batchAction", slots=[2], action="pin")
+        self.assertTrue(pin.result.ok)
+
+        search = dispatcher.dispatch_command(
+            ctx,
+            "cmd.clip.browser.search",
+            query="beta",
+            favoritesOnly=True,
+        )
+        self.assertTrue(search.result.ok)
+        self.assertEqual(len(search.result.payload["slots"]), 1)
+        self.assertEqual(search.result.payload["slots"][0]["slot"], 2)
 
     def test_shortcuts_e05_routes(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
@@ -604,6 +675,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
 
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.create", name="inventory").result.ok)
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.select", name="inventory").result.ok)
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.list").result.ok)
             self.assertTrue(
                 dispatcher.dispatch_command(
                     ctx,
@@ -619,9 +691,22 @@ class DispatcherIntegrationTests(unittest.TestCase):
             eid = added.result.payload["entryId"]
 
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.entry.list").result.ok)
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.entry.grid", sortBy="name", limit=10).result.ok)
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.entry.detail", entryId=eid).result.ok)
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.search", field="name", query="item").result.ok)
+            self.assertTrue(
+                dispatcher.dispatch_command(
+                    ctx,
+                    "cmd.db.search.advanced",
+                    query="item",
+                    filters={"name": "item"},
+                    limit=5,
+                ).result.ok
+            )
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.sort", field="name", descending=False).result.ok)
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.dashboard").result.ok)
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.export.json", outPath="dist/records-e10.json").result.ok)
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.template.apply", template="tasks", database="tasks-db").result.ok)
 
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.jamal.export", outPath="dist/jamal-e10.json").result.ok)
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.jamal.launch", datasetPath="dist/jamal-e10.json").result.ok)

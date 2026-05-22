@@ -177,6 +177,33 @@ class RuntimeDispatcher:
             "suggestions": suggestions,
         }
 
+    def _selection_action_source(self, context: AppContext) -> str:
+        # Prefer explicit marker-captured selection, then clipboard, then full buffer.
+        marked = self.runtime.selection_text_for_actions(context)
+        if marked:
+            return marked
+        clip = context.clipboard_text.strip()
+        if clip:
+            return clip
+        return context.buffer.strip()
+
+    @staticmethod
+    def _resolve_tag_path(context: AppContext, kwargs: Dict[str, Any]) -> str:
+        raw = str(kwargs.get("path", "")).strip()
+        if not raw:
+            raw = context.clipboard_text.strip() or context.buffer.strip()
+        if "\n" in raw:
+            raw = raw.splitlines()[0].strip()
+        return raw.strip().strip('"').strip("'")
+
+    def _resolve_tag_path_from_selection(self, context: AppContext, kwargs: Dict[str, Any]) -> str:
+        raw = str(kwargs.get("path", "")).strip()
+        if not raw:
+            raw = self._selection_action_source(context)
+        if "\n" in raw:
+            raw = raw.splitlines()[0].strip()
+        return raw.strip().strip('"').strip("'")
+
     def _rollback_action_for(self, command_id: str, kwargs: Dict[str, Any], result: RuntimeResult) -> Optional[Dict[str, Any]]:
         if command_id == "cmd.capture.quickInbox.route":
             payload = result.payload or {}
@@ -196,6 +223,81 @@ class RuntimeDispatcher:
             path = str(kwargs.get("path", "")).strip()
             if path:
                 return {"commandId": "cmd.tags.session.tag", "kwargs": {"path": path}}
+
+        if command_id == "cmd.tags.session.toggleCurrent":
+            payload = result.payload or {}
+            path = str(payload.get("path", kwargs.get("path", ""))).strip()
+            if path:
+                return {
+                    "commandId": "cmd.tags.session.toggleCurrent",
+                    "kwargs": {"path": path},
+                }
+
+        if command_id == "cmd.clip.protectSlot":
+            slot = kwargs.get("slot")
+            if slot is not None:
+                return {
+                    "commandId": "cmd.clip.unprotectSlot",
+                    "kwargs": {"slot": int(slot)},
+                }
+        if command_id == "cmd.clip.unprotectSlot":
+            slot = kwargs.get("slot")
+            if slot is not None:
+                return {
+                    "commandId": "cmd.clip.protectSlot",
+                    "kwargs": {"slot": int(slot)},
+                }
+
+        if command_id == "cmd.notes.mode.set":
+            mode = str(kwargs.get("mode", "")).strip().lower()
+            if mode in ("simple", "advanced"):
+                inverse = "advanced" if mode == "simple" else "simple"
+                return {
+                    "commandId": "cmd.notes.mode.set",
+                    "kwargs": {"mode": inverse},
+                }
+
+        if command_id == "cmd.cuts.create":
+            payload = result.payload or {}
+            shortcut_id = str(payload.get("shortcutId", "")).strip()
+            if shortcut_id:
+                return {
+                    "commandId": "cmd.cuts.delete",
+                    "kwargs": {"shortcutId": shortcut_id},
+                }
+
+        if command_id == "cmd.cuts.assignCategory":
+            payload = result.payload or {}
+            shortcut_id = str(payload.get("shortcutId", kwargs.get("shortcutId", ""))).strip()
+            previous = str(payload.get("previousCategory", "")).strip()
+            if shortcut_id and previous:
+                return {
+                    "commandId": "cmd.cuts.assignCategory",
+                    "kwargs": {"shortcutId": shortcut_id, "category": previous},
+                }
+
+        if command_id == "cmd.notes.category.move":
+            payload = result.payload or {}
+            category = str(payload.get("category", kwargs.get("category", ""))).strip()
+            previous_parent = str(payload.get("previousParent", "")).strip()
+            if category:
+                return {
+                    "commandId": "cmd.notes.category.move",
+                    "kwargs": {"category": category, "parent": previous_parent},
+                }
+
+        if command_id in (
+            "cmd.author.pipeline.polish",
+            "cmd.author.template.apply",
+            "cmd.author.html.fixApply",
+        ):
+            payload = result.payload or {}
+            undo_token = str(payload.get("undoToken", "")).strip()
+            if undo_token:
+                return {
+                    "commandId": "cmd.author.pipeline.undo",
+                    "kwargs": {"undoToken": undo_token},
+                }
 
         if command_id == "cmd.tags.outlook.tag":
             message_id = str(kwargs.get("messageId", "")).strip()
@@ -314,11 +416,286 @@ class RuntimeDispatcher:
                 }
             )
         rows.sort(key=lambda r: (r["keyChord"], r["trigger"], r["commandId"]))
+        mnemonic_hints = [
+            {
+                "commandId": "cmd.selection.markStart",
+                "hint": "Use Control+Alt+Shift+S to set selection start anchor.",
+            },
+            {
+                "commandId": "cmd.selection.markEnd",
+                "hint": "Use Control+Alt+Shift+E to capture selection end and range.",
+            },
+            {
+                "commandId": "cmd.clip.copyToSlot",
+                "hint": "Use Control+Alt+1 to copy selection into the active clip lane.",
+            },
+            {
+                "commandId": "cmd.clip.pasteFromSlot",
+                "hint": "Use Control+Alt+2 to paste from the active clip lane.",
+            },
+            {
+                "commandId": "cmd.notes.quickCapture",
+                "hint": "Use Control+Alt+Q to capture quick notes from current context.",
+            },
+            {
+                "commandId": "cmd.journal.undoLast",
+                "hint": "Use Control+Alt+Shift+J to undo the latest reversible action.",
+            },
+            {
+                "commandId": "cmd.author.pipeline.polish",
+                "hint": "Use Control+Alt+Shift+A to polish draft text in one pass.",
+            },
+            {
+                "commandId": "cmd.author.template.apply",
+                "hint": "Use Control+Alt+Shift+N for release-notes template scaffolding.",
+            },
+            {
+                "commandId": "cmd.author.pipeline.undo",
+                "hint": "Use Control+Alt+Shift+Z to undo the latest author pipeline output.",
+            },
+        ]
         return RuntimeResult(
             ok=True,
             message=f"Available hotkeys for {context.app_id} ready.",
-            payload={"hotkeys": rows, "count": len(rows), "appId": context.app_id},
+            payload={
+                "hotkeys": rows,
+                "count": len(rows),
+                "appId": context.app_id,
+                "mnemonicHints": mnemonic_hints,
+            },
         )
+
+    @staticmethod
+    def _mission_id_for_command(command_id: str) -> str:
+        mapping = {
+            "cmd.author.template.apply": "author-template",
+            "cmd.author.pipeline.polish": "author-polish",
+            "cmd.author.html.fixPreview": "author-html-preview",
+            "cmd.author.html.fixApply": "author-html-apply",
+            "cmd.author.pipeline.undo": "author-undo",
+        }
+        if command_id.startswith("cmd.selection."):
+            return "select-range"
+        if command_id.startswith("cmd.clip."):
+            return "clips-core"
+        if command_id.startswith("cmd.notes."):
+            return "notes-core"
+        if command_id.startswith("cmd.diary."):
+            return "diary-core"
+        if command_id.startswith("cmd.cuts."):
+            return "cuts-core"
+        return mapping.get(command_id, "")
+
+    def _attach_mission_telemetry(self, command_id: str, result: RuntimeResult) -> None:
+        mission_id = self._mission_id_for_command(command_id)
+        if not mission_id:
+            return
+        before = self._missions.missions_status(self.profile_id)
+        before_done = set((before.payload or {}).get("completed", [])) if before.ok else set()
+        completed = self._missions.missions_complete(self.profile_id, mission_id)
+        if not completed.ok:
+            return
+        done = set((completed.payload or {}).get("completed", []))
+        is_first_completion = mission_id in done and mission_id not in before_done
+        if result.payload is None:
+            result.payload = {}
+        result.payload["missionTelemetry"] = {
+            "profile": self.profile_id,
+            "missionId": mission_id,
+            "firstCompletion": is_first_completion,
+            "completed": sorted(done),
+            "next": str((completed.payload or {}).get("next", "")),
+        }
+        if is_first_completion and self._is_core_magical_command(command_id):
+            next_mission = str((completed.payload or {}).get("next", "")).strip()
+            prompt_text = (
+                f"First mission completed: {mission_id}."
+                if not next_mission
+                else f"First mission completed: {mission_id}. Next mission: {next_mission}."
+            )
+            result.payload["guidedMissionPrompt"] = {
+                "title": "Guided mission update",
+                "text": prompt_text,
+                "nextMission": next_mission,
+                "profile": self.profile_id,
+            }
+
+    @staticmethod
+    def _is_core_magical_command(command_id: str) -> bool:
+        return (
+            command_id.startswith("cmd.selection.")
+            or command_id.startswith("cmd.clip.")
+            or command_id.startswith("cmd.cuts.")
+            or command_id.startswith("cmd.notes.")
+            or command_id.startswith("cmd.diary.")
+            or command_id.startswith("cmd.author.")
+            or command_id in ("cmd.journal.undoLast",)
+        )
+
+    def _attach_core_narration(self, command_id: str, result: RuntimeResult) -> None:
+        if not self._is_core_magical_command(command_id):
+            return
+        if result.payload is None:
+            result.payload = {}
+
+        confidence = result.payload.get("confidence")
+        if not isinstance(confidence, (int, float)):
+            confidence = 0.93 if result.ok else 0.41
+            result.payload["confidence"] = float(confidence)
+
+        action_map = {
+            "cmd.selection.markStart": "Move caret and run selection end capture.",
+            "cmd.selection.markEnd": "Run selection summarize or rewrite on captured range.",
+            "cmd.clip.copyToSlot": "Use clip paste to insert, or describe slot for preview.",
+            "cmd.clip.pasteFromSlot": "If needed, undo latest action using quick undo.",
+            "cmd.notes.quickCapture": "Route capture to notes, cuts, or tasks.",
+            "cmd.diary.create": "List this month to verify appointment placement.",
+            "cmd.author.pipeline.polish": "Review polished output and apply undo if needed.",
+            "cmd.author.template.apply": "Fill placeholders, then run polish flow.",
+            "cmd.author.html.fixPreview": "Apply fix preview when change list looks correct.",
+            "cmd.author.html.fixApply": "Use undo token to restore original HTML when needed.",
+            "cmd.author.pipeline.undo": "Continue editing from restored source content.",
+            "cmd.journal.undoLast": "Confirm output state, then continue workflow.",
+        }
+        next_action = action_map.get(command_id, "Continue with the next guided action.")
+        if not result.ok:
+            next_action = "Try a fallback command from the palette and retry with context."
+
+        if "nextAction" not in result.payload:
+            result.payload["nextAction"] = next_action
+        result.payload["narration"] = {
+            "confidence": float(confidence),
+            "nextAction": str(result.payload.get("nextAction", next_action)),
+            "tone": "guidance",
+        }
+        if not result.next_steps:
+            result.next_steps = [str(result.payload.get("nextAction", next_action))]
+
+    def _core_mutating_command_ids(self) -> list[str]:
+        prefixes = ("cmd.selection.", "cmd.clip.", "cmd.cuts.", "cmd.notes.", "cmd.diary.", "cmd.author.")
+        rows: list[str] = []
+        for command_id, meta in self.config.command_catalog.items():
+            if not str(command_id).startswith(prefixes):
+                continue
+            safety = str(meta.get("safetyClass", "safe"))
+            if safety not in ("mutating", "destructive"):
+                continue
+            rows.append(str(command_id))
+        rows.sort()
+        return rows
+
+    @staticmethod
+    def _rollback_support_matrix() -> Dict[str, Dict[str, str]]:
+        return {
+            "cmd.author.pipeline.polish": {
+                "status": "conditional",
+                "reason": "Uses undoToken produced by author pipeline payload.",
+                "rollbackCommandId": "cmd.author.pipeline.undo",
+            },
+            "cmd.author.template.apply": {
+                "status": "conditional",
+                "reason": "Uses undoToken produced by template apply payload.",
+                "rollbackCommandId": "cmd.author.pipeline.undo",
+            },
+            "cmd.author.html.fixApply": {
+                "status": "conditional",
+                "reason": "Uses undoToken produced by HTML fix apply payload.",
+                "rollbackCommandId": "cmd.author.pipeline.undo",
+            },
+            "cmd.clip.protectSlot": {
+                "status": "full",
+                "reason": "Inverse operation is deterministic.",
+                "rollbackCommandId": "cmd.clip.unprotectSlot",
+            },
+            "cmd.clip.unprotectSlot": {
+                "status": "full",
+                "reason": "Inverse operation is deterministic.",
+                "rollbackCommandId": "cmd.clip.protectSlot",
+            },
+            "cmd.notes.mode.set": {
+                "status": "full",
+                "reason": "Mode inversion is deterministic.",
+                "rollbackCommandId": "cmd.notes.mode.set",
+            },
+            "cmd.cuts.create": {
+                "status": "full",
+                "reason": "Created shortcut ID is captured in payload.",
+                "rollbackCommandId": "cmd.cuts.delete",
+            },
+            "cmd.cuts.assignCategory": {
+                "status": "full",
+                "reason": "Previous category captured before mutation.",
+                "rollbackCommandId": "cmd.cuts.assignCategory",
+            },
+            "cmd.notes.category.move": {
+                "status": "full",
+                "reason": "Previous parent captured before mutation.",
+                "rollbackCommandId": "cmd.notes.category.move",
+            },
+        }
+
+    def _rollback_coverage_report(self, out_path: Optional[Path] = None) -> RuntimeResult:
+        commands = self._core_mutating_command_ids()
+        matrix = self._rollback_support_matrix()
+        items: list[Dict[str, Any]] = []
+        for command_id in commands:
+            row = matrix.get(command_id)
+            if row is None:
+                items.append(
+                    {
+                        "commandId": command_id,
+                        "status": "none",
+                        "reason": "No rollback mapping declared.",
+                        "rollbackCommandId": "",
+                    }
+                )
+                continue
+            items.append(
+                {
+                    "commandId": command_id,
+                    "status": row.get("status", "none"),
+                    "reason": row.get("reason", ""),
+                    "rollbackCommandId": row.get("rollbackCommandId", ""),
+                }
+            )
+
+        total = len(items)
+        full = len([x for x in items if x.get("status") == "full"])
+        capable = len([x for x in items if x.get("status") in ("full", "conditional")])
+        strict_percent = round((float(full) / float(total)) * 100.0, 2) if total else 0.0
+        capable_percent = round((float(capable) / float(total)) * 100.0, 2) if total else 0.0
+
+        payload: Dict[str, Any] = {
+            "scope": "core-mutating",
+            "total": total,
+            "fullRollbackCount": full,
+            "rollbackCapableCount": capable,
+            "strictCoveragePercent": strict_percent,
+            "rollbackCapablePercent": capable_percent,
+            "items": items,
+        }
+
+        if out_path is not None:
+            lines = [
+                "# Rollback Coverage Report",
+                "",
+                f"- Scope: core-mutating",
+                f"- Total commands: {total}",
+                f"- Strict rollback coverage: {strict_percent}%",
+                f"- Rollback-capable coverage: {capable_percent}%",
+                "",
+                "| Command | Status | Rollback Command | Reason |",
+                "| --- | --- | --- | --- |",
+            ]
+            for row in items:
+                lines.append(
+                    f"| {row['commandId']} | {row['status']} | {row['rollbackCommandId'] or '-'} | {row['reason']} |"
+                )
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            payload["outPath"] = str(out_path)
+
+        return RuntimeResult(ok=True, message="Rollback coverage report ready.", payload=payload)
 
     def _hotkey_diagnostics(self, context: AppContext, *, key_chord: str = "") -> RuntimeResult:
         grouped: Dict[str, list[dict]] = {}
@@ -447,10 +824,18 @@ class RuntimeDispatcher:
                 ),
             )
 
-        out = self.dispatch_command(context, resolved.matched_command_id, **kwargs)
+        chosen_row = next((r for r in accepted if str(r.get("commandId", "")) == resolved.matched_command_id), accepted[0] if accepted else None)
+        binding_kwargs: Dict[str, Any] = {}
+        if chosen_row is not None:
+            bound = self.config.keymap_bindings[int(chosen_row.get("index", 0))]
+            raw_args = bound.get("args", {})
+            if isinstance(raw_args, dict):
+                binding_kwargs = dict(raw_args)
+        dispatch_kwargs = dict(binding_kwargs)
+        dispatch_kwargs.update(kwargs)
+        out = self.dispatch_command(context, resolved.matched_command_id, **dispatch_kwargs)
         if out.result.payload is None:
             out.result.payload = {}
-        chosen_row = next((r for r in accepted if str(r.get("commandId", "")) == resolved.matched_command_id), accepted[0] if accepted else None)
         out.result.payload["gesture"] = {
             "triggerKind": resolved.trigger_kind,
             "pressCount": resolved.used_press_count,
@@ -478,7 +863,7 @@ class RuntimeDispatcher:
         elif command_id == "cmd.palette.open":
             result = RuntimeResult(ok=True, message="Command palette opened.")
         elif command_id == "cmd.selection.summarize":
-            source = context.clipboard_text.strip() or context.buffer.strip()
+            source = self._selection_action_source(context)
             result = self._adaptive.summarize(source)
             self._attach_ai_augmentation(result, tool="summarize", source=source)
             if result.ok:
@@ -488,7 +873,7 @@ class RuntimeDispatcher:
                     "summary": str((result.payload or {}).get("content", "")),
                 }
         elif command_id == "cmd.selection.extractActions":
-            source = context.clipboard_text.strip() or context.buffer.strip()
+            source = self._selection_action_source(context)
             result = self._adaptive.extract_actions(source)
             self._attach_ai_augmentation(result, tool="extract-actions", source=source)
             if result.ok:
@@ -499,7 +884,7 @@ class RuntimeDispatcher:
                     "summary": "; ".join(str(x) for x in items[:3]),
                 }
         elif command_id == "cmd.selection.rewriteBeginner":
-            source = context.clipboard_text.strip() or context.buffer.strip()
+            source = self._selection_action_source(context)
             result = self._adaptive.rewrite_beginner(source)
             self._attach_ai_augmentation(result, tool="a11y-rewrite", source=source)
             if result.ok:
@@ -561,8 +946,66 @@ class RuntimeDispatcher:
                             "rollbackResult": rollback_outcome.result.payload or {},
                         },
                     )
+        elif command_id == "cmd.journal.undoLast":
+            listed = self._journal.list_entries(app_id=context.app_id)
+            if not listed.ok:
+                result = listed
+            else:
+                items = list((listed.payload or {}).get("items", []))
+                target = next(
+                    (
+                        row
+                        for row in reversed(items)
+                        if bool(row.get("reversible", False))
+                        and str(row.get("rollbackStatus", "none")) == "none"
+                    ),
+                    None,
+                )
+                if target is None:
+                    result = RuntimeResult(
+                        ok=False,
+                        message="No reversible action is available for quick undo.",
+                        next_steps=["Run journal list to inspect entries with rollback handlers."],
+                    )
+                else:
+                    entry_id = str(target.get("entryId", ""))
+                    prep = self._journal.rollback(entry_id)
+                    if not prep.ok:
+                        result = prep
+                    else:
+                        rollback_action = ((prep.payload or {}).get("rollbackAction") or {})
+                        rollback_command = str(rollback_action.get("commandId", ""))
+                        rollback_kwargs = rollback_action.get("kwargs", {})
+                        if not rollback_command:
+                            result = RuntimeResult(ok=False, message="Rollback handler metadata is incomplete.")
+                        else:
+                            rollback_outcome = self.dispatch_command(
+                                context,
+                                rollback_command,
+                                __skipJournal=True,
+                                **(rollback_kwargs if isinstance(rollback_kwargs, dict) else {}),
+                            )
+                            self._journal.mark_rollback_applied(entry_id, success=rollback_outcome.result.ok)
+                            result = RuntimeResult(
+                                ok=rollback_outcome.result.ok,
+                                message=(
+                                    "Quick undo completed."
+                                    if rollback_outcome.result.ok
+                                    else f"Quick undo failed: {rollback_outcome.result.message}"
+                                ),
+                                payload={
+                                    "entryId": entry_id,
+                                    "rolledBackCommandId": str(target.get("commandId", "")),
+                                    "rollbackCommandId": rollback_command,
+                                    "rollbackResult": rollback_outcome.result.payload or {},
+                                },
+                            )
         elif command_id == "cmd.journal.trends":
             result = self._journal.trend_report(window_days=int(kwargs.get("windowDays", 30)))
+        elif command_id == "cmd.journal.rollbackCoverage":
+            out_arg = str(kwargs.get("outPath", "")).strip()
+            out_path = Path(out_arg) if out_arg else None
+            result = self._rollback_coverage_report(out_path=out_path)
         elif command_id == "cmd.ai.key.set":
             result = self._ai.key_set(
                 provider=str(kwargs.get("provider", "")),
@@ -915,10 +1358,23 @@ class RuntimeDispatcher:
                 parent=str(kwargs.get("parent", "")),
             )
         elif command_id == "cmd.notes.category.move":
+            category_id = str(kwargs.get("category", "")).strip().lower()
+            previous_parent = ""
+            before_tree = self._notes.category_tree()
+            if before_tree.ok:
+                tree = dict((before_tree.payload or {}).get("tree", {}))
+                for parent, children in tree.items():
+                    if category_id and category_id in [str(x) for x in list(children)]:
+                        previous_parent = "" if str(parent) == "root" else str(parent)
+                        break
             result = self._notes.category_move(
                 str(kwargs.get("category", "")),
                 new_parent=str(kwargs.get("parent", "")),
             )
+            if result.ok:
+                if result.payload is None:
+                    result.payload = {}
+                result.payload["previousParent"] = previous_parent
         elif command_id == "cmd.notes.relate":
             result = self._notes.relate_notes(
                 str(kwargs.get("noteA", "")),
@@ -973,6 +1429,16 @@ class RuntimeDispatcher:
                 str(kwargs.get("kind", "")),
                 str(kwargs.get("text", "")),
             )
+        elif command_id == "cmd.author.pipeline.polish":
+            source = str(kwargs.get("text", "")).strip() or self._selection_action_source(context)
+            result = self._author.markdown_polish_pipeline(source)
+        elif command_id == "cmd.author.pipeline.undo":
+            result = self._author.pipeline_undo(str(kwargs.get("undoToken", "")))
+        elif command_id == "cmd.author.template.apply":
+            result = self._author.markdown_template_apply(
+                str(kwargs.get("template", "release-notes")),
+                str(kwargs.get("topic", "")),
+            )
         elif command_id == "cmd.author.html.semantic":
             result = self._author.html_semantic(
                 str(kwargs.get("title", "")),
@@ -994,6 +1460,10 @@ class RuntimeDispatcher:
             result = self._author.accessibility_lint(str(kwargs.get("markdown", "")))
         elif command_id == "cmd.author.a11y.fixPreview":
             result = self._author.accessibility_fix_preview(str(kwargs.get("markdown", "")))
+        elif command_id == "cmd.author.html.fixPreview":
+            result = self._author.html_fix_preview(str(kwargs.get("html", "")))
+        elif command_id == "cmd.author.html.fixApply":
+            result = self._author.html_fix_apply(str(kwargs.get("html", "")))
         elif command_id == "cmd.retrieve.query":
             result = self._retrieval.query(
                 str(kwargs.get("query", "")),
@@ -1151,27 +1621,29 @@ class RuntimeDispatcher:
             result = self.runtime.cancel_selection(context)
         elif command_id == "cmd.context.returnSource":
             result = self.runtime.restore_source_anchor(context)
+        elif command_id == "cmd.clip.selectSlot":
+            result = self.runtime.select_active_slot(int(kwargs.get("slot", self.runtime.active_slot())))
         elif command_id == "cmd.clip.copyToSlot":
-            slot = int(kwargs.get("slot", 1))
+            slot = int(kwargs.get("slot", self.runtime.active_slot()))
             result = self.runtime.copy_to_slot(context, slot=slot, text=kwargs.get("text"))
         elif command_id == "cmd.clip.pasteFromSlot":
-            slot = int(kwargs.get("slot", 1))
+            slot = int(kwargs.get("slot", self.runtime.active_slot()))
             result = self.runtime.paste_from_slot(slot=slot)
         elif command_id == "cmd.clip.protectSlot":
-            slot = int(kwargs.get("slot", 1))
+            slot = int(kwargs.get("slot", self.runtime.active_slot()))
             result = self.runtime.protect_slot(slot=slot)
         elif command_id == "cmd.clip.unprotectSlot":
-            slot = int(kwargs.get("slot", 1))
+            slot = int(kwargs.get("slot", self.runtime.active_slot()))
             result = self.runtime.unprotect_slot(slot=slot)
         elif command_id == "cmd.clip.deleteSlot":
-            slot = int(kwargs.get("slot", 1))
+            slot = int(kwargs.get("slot", self.runtime.active_slot()))
             result = self.runtime.delete_slot(slot=slot)
         elif command_id == "cmd.clip.editSlot":
-            slot = int(kwargs.get("slot", 1))
+            slot = int(kwargs.get("slot", self.runtime.active_slot()))
             content = str(kwargs.get("content", ""))
             result = self.runtime.edit_slot(slot=slot, content=content)
         elif command_id == "cmd.clip.describeSlot":
-            slot = int(kwargs.get("slot", 1))
+            slot = int(kwargs.get("slot", self.runtime.active_slot()))
             result = self.runtime.describe_slot(slot=slot)
         elif command_id == "cmd.merge.setModeAppend":
             result = self.runtime.set_merge_mode_append()
@@ -1398,9 +1870,13 @@ class RuntimeDispatcher:
         elif command_id == "cmd.shortcuts.drive.list":
             result = self._shortcuts.list_drive_mappings()
         elif command_id == "cmd.tags.session.tag":
-            result = self._tagging.tag(str(kwargs.get("path", "")))
+            result = self._tagging.tag(self._resolve_tag_path(context, kwargs))
+        elif command_id == "cmd.tags.session.toggleCurrent":
+            result = self._tagging.toggle(self._resolve_tag_path(context, kwargs))
+        elif command_id == "cmd.tags.session.tagFromSelection":
+            result = self._tagging.tag(self._resolve_tag_path_from_selection(context, kwargs))
         elif command_id == "cmd.tags.session.untag":
-            result = self._tagging.untag(str(kwargs.get("path", "")))
+            result = self._tagging.untag(self._resolve_tag_path(context, kwargs))
         elif command_id == "cmd.tags.session.report":
             result = self._tagging.report()
         elif command_id == "cmd.tags.session.count":
@@ -1556,10 +2032,22 @@ class RuntimeDispatcher:
         elif command_id == "cmd.cuts.delete":
             result = self._cuts.delete_shortcut(str(kwargs.get("shortcutId", "")))
         elif command_id == "cmd.cuts.assignCategory":
+            sid = str(kwargs.get("shortcutId", "")).strip()
+            previous_category = ""
+            before_list = self._cuts.list_shortcuts()
+            if before_list.ok:
+                for row in list((before_list.payload or {}).get("items", [])):
+                    if str(row.get("shortcutId", "")) == sid:
+                        previous_category = str(row.get("category", "")).strip()
+                        break
             result = self._cuts.assign_category(
                 str(kwargs.get("shortcutId", "")),
                 str(kwargs.get("category", "general")),
             )
+            if result.ok:
+                if result.payload is None:
+                    result.payload = {}
+                result.payload["previousCategory"] = previous_category
         elif command_id == "cmd.cuts.createPreset":
             result = self._cuts.create_preset(
                 str(kwargs.get("preset", "")),
@@ -1706,6 +2194,11 @@ class RuntimeDispatcher:
             ok=result.ok,
             reason="" if result.ok else (result.code.value if result.code else "failure"),
         )
+
+        self._attach_core_narration(command_id, result)
+
+        if result.ok:
+            self._attach_mission_telemetry(command_id, result)
 
         skip_journal = bool(kwargs.get("__skipJournal", False))
         if result.ok and safety_class in ("mutating", "destructive") and not skip_journal:

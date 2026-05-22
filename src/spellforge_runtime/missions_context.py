@@ -14,9 +14,46 @@ class MissionsContextService:
     def __init__(self, storage_path: Path | str | None = None):
         self._storage_path = Path(storage_path) if storage_path else None
         self._missions = {
-            "beginner": ["capture-note", "route-capture", "read-fallbacks"],
-            "balanced": ["capture-note", "create-task", "open-health"],
-            "expert": ["chain-command", "virtualize-result", "rollback-action"],
+            "beginner": [
+                "capture-note",
+                "route-capture",
+                "read-fallbacks",
+                "select-range",
+                "clips-core",
+                "notes-core",
+                "author-template",
+                "author-polish",
+            ],
+            "balanced": [
+                "capture-note",
+                "create-task",
+                "open-health",
+                "select-range",
+                "clips-core",
+                "cuts-core",
+                "notes-core",
+                "diary-core",
+                "author-template",
+                "author-polish",
+                "author-html-preview",
+                "author-html-apply",
+                "author-undo",
+            ],
+            "expert": [
+                "chain-command",
+                "virtualize-result",
+                "rollback-action",
+                "select-range",
+                "clips-core",
+                "cuts-core",
+                "notes-core",
+                "diary-core",
+                "author-template",
+                "author-polish",
+                "author-html-preview",
+                "author-html-apply",
+                "author-undo",
+            ],
         }
         self._progress: Dict[str, List[str]] = {}
         self._load()

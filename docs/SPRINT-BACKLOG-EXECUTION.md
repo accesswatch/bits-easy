@@ -22,7 +22,7 @@ Use these labels on all tickets:
 - Release: v1, v2, v3, v4
 
 ## Sprint Phases
-1. Sprint Group A (Foundations): E01, E13, E15, E17 baseline
+1. Sprint Group A (Foundations): E01, E13, E17 baseline
 2. Sprint Group B (Core Productivity): E03, E04, E05, E06
 3. Sprint Group C (Structured and AI): E10, E12
 4. Sprint Group D (Calendar and Social): E07, E08, E09, E11
@@ -46,6 +46,256 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 
 1. Cross-app manual parity sign-off and behavior tuning in real NVDA surfaces.
 2. Final release notes and migration sign-off packaging for rollout quality.
+
+## Leasey Full-Text Surface Reconciliation (2026-05-22)
+
+Method:
+1. Crawled and normalized full text for every chapter linked from LeaseyHelp.html.
+2. Compared chapter-described behavior against current command catalog, runtime services, tests, and user guide narratives.
+3. Classified each chapter as Implemented and tune, Partial and expand, or Missing and build.
+
+Coverage scope:
+1. Total links crawled: 59.
+2. Non-feature link excluded from parity gates: Back to Help Index.
+3. Feature chapters classified: 58.
+
+### Implemented and tune for magical quality
+
+These surfaces exist and now require delight, mnemonic reinforcement, and confidence-rich polish.
+
+1. ALTCodes.html
+2. BackupAndRestoreManager.html
+3. ChatGPT1.html
+4. ChatGPT2.html
+5. ChatGPT3.html
+6. LeaseyClips.html
+7. LeaseyClock.html
+8. LeaseyCuts.html
+9. LeaseyDiary.html
+10. LeaseyNotes.html
+11. LeaseySelect.html
+12. LeaseyTags.html
+13. LeaseyTexts.html
+14. ProgressIndicators.html
+15. SpeechHistory.html
+16. TableCapture.html
+
+### Partial and expand
+
+These surfaces have early capability in bits-easy but do not yet match chapter depth.
+
+1. AdditionalUtilities.html
+2. Emoji.html
+3. LeaseyAlerts.html
+4. LeaseyConnect.html
+5. LeaseyPoints.html
+6. LeaseyStickyNotes.html
+7. LeaseyVirtualNotes.html
+8. Mapping.html
+9. Markdown.html
+10. MastodonAddressBook.html
+11. MicrosoftOutlookCalendar.html
+12. TheLeaseyStartMenu.html
+13. TinySpell.html
+14. Twitter.html
+15. WhatsApp.html
+16. WhatsAppWeb.html
+17. WordWeb.html
+18. WorkingWithEmailBasicAndAdvanced.html
+
+### Missing and build
+
+These chapters describe product surfaces not yet implemented as first-class command families and workflows, and currently planned for roadmap implementation.
+
+1. ComputerAdjustments.html
+2. GettingStartedLeaseyAdvanced.html
+3. GettingStartedLeaseyBasic.html
+4. HTMLAssistant.html
+5. Installation.html
+6. Introduction.html
+7. LeaseyCustomHelp.html
+8. LeaseyCustomWebText.html
+9. LeaseySearch.html
+10. LeaseyWord.html
+11. TheOldReader.html
+12. WhatNext.html
+13. WorkingWithEmailBasic.html
+14. WorkingWithSounds.html
+15. WorkingWithTheInternetAdvanced.html
+16. WorkingWithTheInternetBasic.html
+
+### Excluded from roadmap implementation
+
+These chapters are intentionally excluded from planning scope.
+
+1. BrailleEas.html
+2. LeaseyAudio.html
+3. LeaseyRadio.html
+4. VLC.html
+5. Spotify.html
+6. StudioRecorder.html
+7. LeaseyGames.html
+8. LeaseySportsAndGames.html
+
+## E20 Leasey Parity Plus Magical Exceed Program
+
+### TKT-E20-001 SP-E20-A Chapter-by-chapter parity gate from full-text crawl
+- Priority: P0
+- Risk: Medium
+- Confidence: High
+- Release: v1.2
+- Dependencies: E17 command catalog, E18 magical runtime behaviors
+- Description: Convert the 58-chapter classification above into an enforced parity gate with objective pass or fail evidence.
+- Acceptance tests:
+1. Every chapter is mapped to one or more command families or an explicit no-scope decision.
+2. Every mapped chapter has at least one deterministic integration test fixture.
+3. Any chapter marked Missing in this snapshot has an owning ticket and target release.
+
+### TKT-E20-002 SP-E20-B Magical uplift for implemented core surfaces
+- Priority: P0
+- Risk: Low
+- Confidence: High
+- Release: v1.2
+- Dependencies: E01 and E13 closure, E18 narration and chain engine
+- Description: Upgrade implemented surfaces from functional to delightful using mnemonic hotkeys, narrative hints, confidence voice, and reversible action paths.
+- Acceptance tests:
+1. Core surfaces LeaseySelect, LeaseyClips, LeaseyCuts, LeaseyTexts, LeaseyNotes, LeaseyDiary include mnemonic-first hints for all primary flows.
+2. Every mutating action has one-step undo with clear confirmation speech.
+3. Success and failure narration includes confidence and next best action instead of flat status text.
+4. First-use experience for each core surface includes one guided mission completed in under two minutes.
+
+### TKT-E20-003 SP-E20-C Alerts, points, sticky, and virtual memory mesh
+- Priority: P0
+- Risk: Medium
+- Confidence: High
+- Release: v1.2
+- Dependencies: E01 marker model, E10 structured records, E18 intent memory
+- Description: Build first-class command families for Alerts, Points, Sticky Notes, and Virtual Notes with shared persistence and cross-surface recall.
+- Acceptance tests:
+1. Users can create, list, jump, edit, and remove alerts and points in documents and web contexts.
+2. Sticky notes and virtual notes support per-location and global modes with conflict-safe updates.
+3. A unified memory browser allows filter by app, date, and context anchor.
+
+### TKT-E20-004 SP-E20-D Communication and social command suite
+- Priority: P1
+- Risk: Medium
+- Confidence: MediumHigh
+- Release: v2
+- Dependencies: E07 and E09 adapter framework
+- Description: Expand partial communication surfaces into robust command sets for Outlook calendar workflows, WhatsApp classic and web, X, Mastodon contacts, and LeaseyConnect address-book scenarios.
+- Acceptance tests:
+1. Communication adapters expose deterministic command IDs for read, navigate, post, and contact actions.
+2. Each adapter includes diagnostics and fallback guidance when UI drift is detected.
+3. Social and calendar workflows can be chained from one-key templates.
+
+### TKT-E20-005 SP-E20-E Authoring and language power suite
+- Priority: P1
+- Risk: Medium
+- Confidence: MediumHigh
+- Release: v2
+- Dependencies: E10 records, E12 AI tools, E18 chain engine
+- Description: Implement remaining authoring and language surfaces described by LeaseyWord, TinySpell, WordWeb, and advanced symbol and emoji workflows.
+- Acceptance tests:
+1. Word and spelling workflows include quick correction loops with minimal keystrokes.
+2. Dictionary and synonym lookups can be invoked contextually and inserted inline.
+3. Advanced symbol and emoji insertion supports quick search, favorites, and recents with deterministic output.
+
+### TKT-E20-010 SP-E20-J Markdown and HTML Assistant magical accelerator
+- Priority: P0
+- Risk: Medium
+- Confidence: High
+- Release: v1.2
+- Dependencies: E12 AI tools, E18 chain engine, E17 command resolver
+- Description: Prioritize Markdown and HTML Assistant as a focused magical lane with fast transforms, structural intelligence, accessibility-first validation, and delight-focused interaction design.
+- Acceptance tests:
+1. One-command draft-to-polished flow performs transform, structure check, and style pass with reversible undo.
+2. Markdown workflows provide guided templates for common outputs including changelog, tutorial, release notes, and troubleshooting guides.
+3. HTML Assistant workflows produce semantic structures with accessibility checks and non-destructive fix previews.
+4. Mnemonic hotkey paths and contextual next-action hints are available across both Markdown and HTML surfaces.
+5. Speech feedback narrates concise confidence plus recommended next step for each major action.
+
+### TKT-E20-011 SP-E20-K Advanced text automation and snippet intelligence
+- Priority: P1
+- Risk: Medium
+- Confidence: High
+- Release: v1.2
+- Dependencies: E01 text expansion baseline, E17 command resolver, E18 intent memory
+- Description: Add TextExpander-level text automation including dynamic variables, fill-ins, app-aware snippet groups, typo correction, and deterministic cursor placement for rapid writing workflows.
+- Acceptance tests:
+1. Snippets support date and time tokens, clipboard token, and named variables with predictable expansion output.
+2. Fill-in snippets prompt for required fields in sequence and support cancel without partial insertion.
+3. App-aware snippet groups can be enabled by process or context and do not leak into excluded contexts.
+4. Cursor placeholders support multi-stop navigation after expansion for fast form and template completion.
+5. Typo-correction expansions can be toggled per profile and include safe rollback of last expansion.
+6. Snippet import and export package format preserves triggers, groups, variables, and metadata across devices.
+
+### TKT-E20-006 SP-E20-F Web, search, and custom web intelligence
+- Priority: P1
+- Risk: Medium
+- Confidence: Medium
+- Release: v2
+- Dependencies: E03 and E04 web adapters, E12 retrieval tools
+- Description: Build missing web productivity surfaces from WorkingWithTheInternet, LeaseySearch, LeaseyCustomHelp, LeaseyCustomWebText, and TheOldReader chapters.
+- Acceptance tests:
+1. Search workflows support source presets, saved queries, and result action chains.
+2. Custom web text and help notes can be bound to URL patterns with fast recall.
+3. RSS and reading workflows include browse, queue, and summarize actions.
+
+### TKT-E20-008 SP-E20-H Onboarding, install, and startup magic
+- Priority: P0
+- Risk: Low
+- Confidence: High
+- Release: v1.2
+- Dependencies: E18 mission engine, E17 mode manager
+- Description: Convert Introduction, Installation, WhatNext, GettingStarted, WorkingWithSounds, ComputerAdjustments, and Start Menu chapters into an interactive magical onboarding journey.
+- Acceptance tests:
+1. New users can complete install-to-first-win mission path with guided checks and instant remediation.
+2. Start menu includes progressive disclosure and mnemonic grouping tuned by profile.
+3. Onboarding dynamically unlocks advanced capability after successful beginner missions.
+
+### E20 Confidence-First Delivery Order (Great UX First)
+
+Ranking method:
+1. Great UX confidence score is weighted by user impact speed, implementation reliability, and cross-surface delight potential.
+2. Highest score ships first.
+3. Ties are resolved by lower integration risk and broader user reach.
+
+v1.2 must-ship sequence:
+1. TKT-E20-010 SP-E20-J Markdown and HTML Assistant magical accelerator. Great UX confidence score: 9.7 out of 10.
+2. TKT-E20-002 SP-E20-B Magical uplift for implemented core surfaces. Great UX confidence score: 9.6 out of 10.
+3. TKT-E20-008 SP-E20-H Onboarding, install, and startup magic. Great UX confidence score: 9.2 out of 10.
+4. TKT-E20-001 SP-E20-A Chapter-by-chapter parity gate from full-text crawl. Great UX confidence score: 8.9 out of 10.
+5. TKT-E20-003 SP-E20-C Alerts, points, sticky, and virtual memory mesh. Great UX confidence score: 8.4 out of 10.
+
+v1.2 stretch sequence:
+1. TKT-E20-004 SP-E20-D Communication and social command suite. Great UX confidence score: 7.8 out of 10.
+2. TKT-E20-011 SP-E20-K Advanced text automation and snippet intelligence. Great UX confidence score: 7.7 out of 10.
+3. TKT-E20-005 SP-E20-E Authoring and language power suite. Great UX confidence score: 7.3 out of 10.
+
+post-v1.2 sequence:
+1. TKT-E20-006 SP-E20-F Web, search, and custom web intelligence. Great UX confidence score: 6.9 out of 10.
+
+Execution cadence suggestion for v1.2:
+1. Week 1: Ship TKT-E20-010 Markdown and HTML magical accelerator baseline with guided transforms and undo paths.
+2. Week 2: Ship TKT-E20-002 core delight uplift baseline and validate with guided mission telemetry.
+3. Week 3: Ship TKT-E20-008 onboarding journey and completion-state progression.
+4. Week 4: Ship TKT-E20-001 parity gate automation and evidence report generation.
+5. Week 5: Ship TKT-E20-003 memory mesh minimum lovable release and finalize polish.
+
+### E20 Acceptance Gate Evidence (2026-05-22)
+
+Local gate snapshot:
+1. Rollback coverage scope: core mutating and destructive commands (`cmd.selection.*`, `cmd.clip.*`, `cmd.cuts.*`, `cmd.notes.*`, `cmd.diary.*`, `cmd.author.*`).
+2. Total scoped commands: 42.
+3. Strict rollback coverage (`status=full`): 14.29 percent.
+4. Rollback-capable coverage (`status=full` or `status=conditional`): 21.43 percent.
+5. Rollback coverage audit command: `cmd.journal.rollbackCoverage` (optional markdown export via `outPath`).
+
+Acceptance gate status:
+1. Rollback intent gate for curated reversible core commands: PASS.
+2. First-completion guided mission prompt coverage across selection, clip, cuts, notes, and diary families: PASS.
+3. Integration acceptance suite (`test_dispatcher_integration.py`) for these gates: PASS.
+4. Hotkey validation (`scripts/validate-hotkey-config.ps1`): PASS.
 
 ## E01 Selection and Clip Intelligence
 
@@ -163,7 +413,7 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 - Spec reference: SELECTION-CLIPBOARD-FEATURE-COMPLETE-SPEC.md
 - Acceptance tests:
 1. Every catalog feature has pass or fail evidence in test artifacts.
-2. Speech and braille parity checks pass for all critical outcomes.
+2. Speech parity checks pass for all critical outcomes.
 3. Unsupported context and drift fixtures pass no-silent-failure requirements.
 
 ### TKT-E01-010 SP-E01-J PocketClips Studio all-slot browser
@@ -177,7 +427,7 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 - Acceptance tests:
 1. Browser displays all slots with label, source, age, size, and protection state.
 2. Users can filter and sort slots using deterministic keyboard paths.
-3. Speech and braille output are equivalent for focused slot details.
+3. Speech output is deterministic and equivalent for focused slot details.
 
 ### TKT-E01-011 SP-E01-K Manual slot manipulation workflows
 - Priority: P1
@@ -230,7 +480,7 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 - Acceptance tests:
 1. Users can create, rename, and remove folders without data loss.
 2. Users can assign clips to categories and filter by folder or category.
-3. Speech and braille parity is maintained for folder operations.
+3. Speech parity is maintained for folder operations.
 
 ### TKT-E01-015 SP-E01-O Move versus link clip behavior
 - Priority: P1
@@ -385,7 +635,7 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 1. Single, double, and triple press bindings resolve correctly under timing jitter fixtures.
 2. Multi-press behavior can be disabled globally per profile.
 3. Multi-press collisions never block emergency stop.
-4. Speech and braille feedback identify triggered gesture type.
+4. Speech feedback identifies triggered gesture type.
 
 ### TKT-E17-010 SP-E17-J Baseline hotkey manager parity closure
 - Priority: P1
@@ -517,7 +767,7 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 3. Severity labels P1, P2, and P3 are documented for internal triage.
 4. Security handoff template includes reproduction steps, impact, and workaround fields.
 2. Optional auto-read triggers after failed commands.
-3. Speech and braille outputs are equivalent.
+3. Speech outputs are equivalent.
 
 ### TKT-E18-007 SP-E18-G Accessibility tuning profiles
 - Priority: P1
@@ -578,7 +828,7 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 - Starter pack reference: ENGINEERING-STARTER-PACK-VIRTUALIZED-HOTKEYS.md
 - Acceptance tests:
 1. Users can navigate returned content by heading, action item, and citation block using deterministic keys.
-2. Speech and braille outputs remain semantically equivalent in virtualized mode.
+2. Speech output remains semantically equivalent in virtualized mode.
 3. Exiting virtualized mode restores exact source focus and selection state.
 
 ## E13 Utility Mesh and Accessibility Ops
@@ -666,53 +916,6 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 1. Report includes core OS, memory, storage, and network fields.
 2. Report opens in readable view.
 3. Export writes to target path successfully.
-
-## E15 Braille-First Command Surface
-
-### TKT-E15-001 SP-E15-A Braille command grammar
-- Priority: P0
-- Risk: Medium
-- Confidence: High
-- Release: v1
-- Dependencies: Command parser
-- Description: Implement braille command entry and abbreviation grammar.
-- Acceptance tests:
-1. Core command set executes from braille input.
-2. Abbreviation file updates are loaded without restart.
-3. Invalid commands return concise error guidance.
-
-### TKT-E15-002 SP-E15-B Braille parity for core feedback
-- Priority: P0
-- Risk: Medium
-- Confidence: High
-- Release: v1
-- Dependencies: Feedback contract
-- Description: Ensure speech events have equivalent braille output in core modules.
-- Acceptance tests:
-1. P0 actions emit both speech and braille feedback.
-2. Braille output content matches speech meaning.
-
-### TKT-E15-003 SP-E15-C Braille profile editor
-- Priority: P1
-- Risk: Low
-- Confidence: High
-- Release: v2
-- Dependencies: Settings store
-- Description: Edit and persist braille command mappings and preferences.
-- Acceptance tests:
-1. Mapping changes save and reload correctly.
-2. Duplicate mapping conflicts are detected and resolved.
-
-### TKT-E15-004 SP-E15-D Braille conflict fallback
-- Priority: P1
-- Risk: Medium
-- Confidence: Medium
-- Release: v2
-- Dependencies: Conflict scanner
-- Description: Detect command conflicts and suggest fallback mappings.
-- Acceptance tests:
-1. Conflict detection runs on profile save.
-2. Fallback suggestion list is generated and selectable.
 
 ## E03 Markdown and HTML Authoring
 
@@ -1155,16 +1358,16 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 1. Countdown triggers at configured duration.
 2. Alarm triggers at configured time and can be stopped.
 
-### TKT-E07-004 SP-E07-D Time monitor and braille clock
+### TKT-E07-004 SP-E07-D Time monitor and spoken status clock
 - Priority: P2
 - Risk: Medium
 - Confidence: MediumHigh
 - Release: v2
-- Dependencies: Braille layer
-- Description: Minute-boundary monitor and per-second braille output mode.
+- Dependencies: Time service
+- Description: Minute-boundary monitor and per-second spoken status mode.
 - Acceptance tests:
 1. Monitor announces final second countdown and boundary event.
-2. Braille updates each second until cancel key pressed.
+2. Spoken updates each second until cancel key pressed.
 
 ### TKT-E07-005 SP-E07-E Diary and date utilities
 - Priority: P2
@@ -1240,7 +1443,7 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 - Confidence: Medium
 - Release: v3
 - Dependencies: Mastodon and Bluesky adapters
-- Description: Multi-account timelines, post details, compose, filters, sounds, and braille flash.
+- Description: Multi-account timelines, post details, compose, filters, and sounds.
 - Acceptance tests:
 1. New item announcements include account context.
 2. Timeline filtering is applied as configured.
@@ -1253,7 +1456,7 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 - Dependencies: Social adapters
 - Description: Nickname replacement and notification control across social channels.
 - Acceptance tests:
-1. Nickname replacements appear in speech and braille outputs.
+1. Nickname replacements appear in speech output.
 2. Notification preferences apply per timeline and account.
 
 ## E09 Search and Retrieval Layer
@@ -1431,7 +1634,7 @@ The backlog remains the source of truth for roadmap intent, but runtime currentl
 
 ### Cross-ticket required checks
 1. Keyboard-only pass.
-2. Speech and braille parity pass for all user-visible outcomes.
+2. Speech parity pass for all user-visible outcomes.
 3. Error path clarity pass.
 4. Telemetry event emitted for action success and failure.
 

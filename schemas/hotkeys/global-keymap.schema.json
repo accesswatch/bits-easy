@@ -41,6 +41,15 @@
           "enabled": {
             "type": "boolean"
           },
+          "args": {
+            "type": "object",
+            "propertyNames": {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "additionalProperties": {
+              "type": ["string", "number", "integer", "boolean", "null"]
+            }
+          },
           "trigger": {
             "type": "object",
             "required": ["kind"],

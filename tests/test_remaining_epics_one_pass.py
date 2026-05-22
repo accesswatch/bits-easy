@@ -60,6 +60,12 @@ class RemainingEpicsOnePassTests(unittest.TestCase):
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.author.export.word", markdown="# Title\n- item", outPath=str(out_docx)).result.ok)
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.author.a11y.lint", markdown="[click here](https://x)").result.ok)
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.author.a11y.fixPreview", markdown="click here").result.ok)
+            polished = dispatcher.dispatch_command(ctx, "cmd.author.pipeline.polish", text="line one\nclick here")
+            self.assertTrue(polished.result.ok)
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.author.pipeline.undo", undoToken=polished.result.payload["undoToken"]).result.ok)
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.author.template.apply", template="release-notes", topic="Sprint 12").result.ok)
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.author.html.fixPreview", html="<article><a>click here</a></article>").result.ok)
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.author.html.fixApply", html="<article><a>click here</a></article>").result.ok)
 
             # E09 Retrieval
             routed = dispatcher.dispatch_command(ctx, "cmd.retrieve.query", query="release notes", providerOrder=["local", "broken", "web"])

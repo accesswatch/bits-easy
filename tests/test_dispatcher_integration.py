@@ -134,6 +134,10 @@ class DispatcherIntegrationTests(unittest.TestCase):
         discover = dispatcher.dispatch_command(ctx, "cmd.help.availableHotkeys")
         self.assertTrue(discover.result.ok)
         self.assertGreater(discover.result.payload["count"], 0)
+        hints = discover.result.payload.get("mnemonicHints", [])
+        hint_commands = {str(row.get("commandId", "")) for row in hints}
+        self.assertIn("cmd.journal.undoLast", hint_commands)
+        self.assertIn("cmd.clip.copyToSlot", hint_commands)
 
         diag = dispatcher.dispatch_command(ctx, "cmd.profile.hotkeyDiagnostics")
         self.assertTrue(diag.result.ok)
@@ -158,6 +162,60 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertTrue(out_disabled.result.ok)
         self.assertEqual(out_disabled.plan.command_id, "cmd.palette.open")
         self.assertEqual(out_disabled.result.payload["gesture"]["triggerKind"], "single-press")
+
+    def test_marker_range_is_used_by_selection_actions(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha bravo charlie delta", 6, clipboard_text="clipboard fallback")
+
+        started = dispatcher.dispatch_command(ctx, "cmd.selection.markStart")
+        self.assertTrue(started.result.ok)
+
+        ctx.caret = 18
+        ended = dispatcher.dispatch_command(ctx, "cmd.selection.markEnd")
+        self.assertTrue(ended.result.ok)
+
+        summarize = dispatcher.dispatch_command(ctx, "cmd.selection.summarize")
+        self.assertTrue(summarize.result.ok)
+        payload = summarize.result.payload or {}
+        self.assertIn("content", payload)
+        self.assertIn("bravo", str(payload.get("content", "")).lower())
+
+    def test_marker_range_reconstructs_action_source_when_cache_missing(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha bravo charlie delta", 6, clipboard_text="clipboard fallback")
+
+        started = dispatcher.dispatch_command(ctx, "cmd.selection.markStart")
+        self.assertTrue(started.result.ok)
+
+        ctx.caret = 18
+        ended = dispatcher.dispatch_command(ctx, "cmd.selection.markEnd")
+        self.assertTrue(ended.result.ok)
+
+        # Simulate cache loss; selection actions should reconstruct from markers.
+        self.runtime._selection_cache.pop("edge", None)
+
+        summarize = dispatcher.dispatch_command(ctx, "cmd.selection.summarize")
+        self.assertTrue(summarize.result.ok)
+        payload = summarize.result.payload or {}
+        self.assertIn("content", payload)
+        self.assertIn("bravo", str(payload.get("content", "")).lower())
+
+    def test_clip_select_slot_hotkey_applies_binding_args(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha bravo", 0, clipboard_text="slot payload")
+
+        selected = dispatcher.dispatch_key_chord(ctx, "Control+Alt+F3")
+        self.assertTrue(selected.result.ok)
+        self.assertEqual(selected.plan.command_id, "cmd.clip.selectSlot")
+        self.assertEqual((selected.result.payload or {}).get("slot"), 3)
+
+        copied = dispatcher.dispatch_command(ctx, "cmd.clip.copyToSlot")
+        self.assertTrue(copied.result.ok)
+        self.assertEqual((copied.result.payload or {}).get("slot"), 3)
+
+        described = dispatcher.dispatch_command(ctx, "cmd.clip.describeSlot")
+        self.assertTrue(described.result.ok)
+        self.assertEqual((described.result.payload or {}).get("slot"), 3)
 
     def test_shortcut_catalog_command_routes(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
@@ -323,6 +381,44 @@ class DispatcherIntegrationTests(unittest.TestCase):
         export = dispatcher.dispatch_command(ctx, "cmd.table.capture.exportClipboard")
         self.assertTrue(export.result.ok)
         self.assertIn("ColA,ColB", export.result.payload["content"])
+
+    def test_tagging_route_inferrs_path_from_clipboard(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "", 0, clipboard_text='"C:/tmp/from-clipboard.txt"\nignored')
+
+        tagged = dispatcher.dispatch_command(ctx, "cmd.tags.session.tag")
+        self.assertTrue(tagged.result.ok)
+        self.assertEqual(tagged.result.payload["path"], "C:/tmp/from-clipboard.txt")
+
+        report = dispatcher.dispatch_command(ctx, "cmd.tags.session.report")
+        self.assertTrue(report.result.ok)
+        self.assertEqual(report.result.payload["count"], 1)
+        self.assertEqual(report.result.payload["items"][0]["path"], "C:/tmp/from-clipboard.txt")
+
+    def test_tagging_toggle_current_and_tag_from_selection(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "C:/tmp/from-selection.txt", 0)
+
+        from_selection = dispatcher.dispatch_command(ctx, "cmd.tags.session.tagFromSelection")
+        self.assertTrue(from_selection.result.ok)
+        self.assertEqual(from_selection.result.payload["path"], "C:/tmp/from-selection.txt")
+
+        toggled_off = dispatcher.dispatch_command(
+            ctx,
+            "cmd.tags.session.toggleCurrent",
+            path="C:/tmp/from-selection.txt",
+        )
+        self.assertTrue(toggled_off.result.ok)
+        self.assertEqual(toggled_off.result.payload["toggledTo"], "untagged")
+
+        toggled_on = dispatcher.dispatch_key_chord(ctx, "Control+Alt+G", press_count=1)
+        self.assertTrue(toggled_on.result.ok)
+        self.assertEqual(toggled_on.plan.command_id, "cmd.tags.session.toggleCurrent")
+        self.assertEqual(toggled_on.result.payload["toggledTo"], "tagged")
+
+        via_hotkey = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Shift+G", press_count=1)
+        self.assertTrue(via_hotkey.result.ok)
+        self.assertEqual(via_hotkey.plan.command_id, "cmd.tags.session.tagFromSelection")
 
     def test_layered_keymap_precedence_app_override(self) -> None:
         # Same chord as global Spellforge helper key, but app override should win for edge.
@@ -661,6 +757,260 @@ class DispatcherIntegrationTests(unittest.TestCase):
         routed_items = dispatcher.dispatch_command(ctx, "cmd.capture.quickInbox.list", route="inbox")
         self.assertTrue(routed_items.result.ok)
         self.assertGreaterEqual(routed_items.result.payload["count"], 1)
+
+    def test_operation_journal_undo_last_reversible_action(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "capture this snippet", 0)
+
+        saved = dispatcher.dispatch_command(ctx, "cmd.capture.quickInbox")
+        capture_id = saved.result.payload["captureId"]
+        routed = dispatcher.dispatch_command(
+            ctx,
+            "cmd.capture.quickInbox.route",
+            captureId=capture_id,
+            target="notes",
+        )
+        self.assertTrue(routed.result.ok)
+
+        undone = dispatcher.dispatch_command(ctx, "cmd.journal.undoLast")
+        self.assertTrue(undone.result.ok)
+        self.assertEqual(undone.result.payload["rolledBackCommandId"], "cmd.capture.quickInbox.route")
+        self.assertIn("narration", undone.result.payload)
+        self.assertIn("nextAction", undone.result.payload)
+
+        inbox_items = dispatcher.dispatch_command(ctx, "cmd.capture.quickInbox.list", route="inbox")
+        self.assertTrue(inbox_items.result.ok)
+        self.assertGreaterEqual(inbox_items.result.payload["count"], 1)
+
+    def test_operation_journal_undo_last_for_cuts_create(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha", 0)
+
+        created = dispatcher.dispatch_command(
+            ctx,
+            "cmd.cuts.create",
+            name="Temp Shortcut",
+            target="C:/tmp/rollback-cut.txt",
+            targetType="file",
+        )
+        self.assertTrue(created.result.ok)
+        sid = created.result.payload["shortcutId"]
+
+        undone = dispatcher.dispatch_command(ctx, "cmd.journal.undoLast")
+        self.assertTrue(undone.result.ok)
+        self.assertEqual(undone.result.payload["rolledBackCommandId"], "cmd.cuts.create")
+
+        listed = dispatcher.dispatch_command(ctx, "cmd.cuts.list")
+        self.assertTrue(listed.result.ok)
+        ids = {row["shortcutId"] for row in listed.result.payload.get("items", [])}
+        self.assertNotIn(sid, ids)
+
+    def test_guided_prompt_is_added_on_first_core_mission_completion(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dispatcher = RuntimeDispatcher(
+                self.runtime,
+                self.config,
+                profile_id="balanced",
+                data_root=Path(tmpdir) / "data",
+            )
+            ctx = self._ctx("edge", "alpha bravo", 0)
+
+            first = dispatcher.dispatch_command(ctx, "cmd.selection.markStart")
+            self.assertTrue(first.result.ok)
+            telemetry = first.result.payload.get("missionTelemetry", {})
+            self.assertTrue(telemetry.get("firstCompletion", False))
+            self.assertIn("guidedMissionPrompt", first.result.payload)
+
+            second = dispatcher.dispatch_command(ctx, "cmd.selection.markStart")
+            self.assertTrue(second.result.ok)
+            second_telemetry = second.result.payload.get("missionTelemetry", {})
+            self.assertFalse(second_telemetry.get("firstCompletion", True))
+
+    def test_operation_journal_undo_last_for_cuts_assign_category(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dispatcher = RuntimeDispatcher(
+                self.runtime,
+                self.config,
+                profile_id="balanced",
+                data_root=Path(tmpdir) / "data",
+            )
+            ctx = self._ctx("edge", "alpha", 0)
+
+            created = dispatcher.dispatch_command(
+                ctx,
+                "cmd.cuts.create",
+                name="Categorized Shortcut",
+                target="C:/tmp/cat-cut.txt",
+                targetType="file",
+            )
+            self.assertTrue(created.result.ok)
+            sid = created.result.payload["shortcutId"]
+
+            categorized = dispatcher.dispatch_command(
+                ctx,
+                "cmd.cuts.assignCategory",
+                shortcutId=sid,
+                category="work",
+            )
+            self.assertTrue(categorized.result.ok)
+
+            undone = dispatcher.dispatch_command(ctx, "cmd.journal.undoLast")
+            self.assertTrue(undone.result.ok)
+            self.assertEqual(
+                undone.result.payload["rolledBackCommandId"],
+                "cmd.cuts.assignCategory",
+            )
+
+            listed = dispatcher.dispatch_command(ctx, "cmd.cuts.list")
+            self.assertTrue(listed.result.ok)
+            row = next(
+                x
+                for x in listed.result.payload.get("items", [])
+                if x.get("shortcutId") == sid
+            )
+            self.assertEqual(row.get("category"), "general")
+
+    def test_operation_journal_undo_last_for_notes_category_move(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dispatcher = RuntimeDispatcher(
+                self.runtime,
+                self.config,
+                profile_id="balanced",
+                data_root=Path(tmpdir) / "data",
+            )
+            ctx = self._ctx("edge", "alpha", 0)
+
+            created = dispatcher.dispatch_command(
+                ctx,
+                "cmd.notes.category.create",
+                category="work",
+            )
+            self.assertTrue(created.result.ok)
+
+            moved = dispatcher.dispatch_command(
+                ctx,
+                "cmd.notes.category.move",
+                category="work",
+                parent="projects",
+            )
+            self.assertTrue(moved.result.ok)
+
+            undone = dispatcher.dispatch_command(ctx, "cmd.journal.undoLast")
+            self.assertTrue(undone.result.ok)
+            self.assertEqual(
+                undone.result.payload["rolledBackCommandId"],
+                "cmd.notes.category.move",
+            )
+
+            tree = dispatcher.dispatch_command(ctx, "cmd.notes.category.tree")
+            self.assertTrue(tree.result.ok)
+            root_children = tree.result.payload.get("tree", {}).get("root", [])
+            self.assertIn("work", root_children)
+
+    def test_guided_prompt_on_first_completion_for_notes_core(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dispatcher = RuntimeDispatcher(
+                self.runtime,
+                self.config,
+                profile_id="balanced",
+                data_root=Path(tmpdir) / "data",
+            )
+            ctx = self._ctx("edge", "quick note text", 0)
+
+            out = dispatcher.dispatch_command(ctx, "cmd.notes.quickCapture", text="first")
+            self.assertTrue(out.result.ok)
+            telemetry = out.result.payload.get("missionTelemetry", {})
+            self.assertEqual(telemetry.get("missionId"), "notes-core")
+            self.assertTrue(telemetry.get("firstCompletion", False))
+            self.assertIn("guidedMissionPrompt", out.result.payload)
+
+    def test_journal_rollback_coverage_report_and_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dispatcher = RuntimeDispatcher(
+                self.runtime,
+                self.config,
+                profile_id="balanced",
+                data_root=Path(tmpdir) / "data",
+            )
+            ctx = self._ctx("edge", "alpha", 0)
+            out_path = Path(tmpdir) / "rollback-coverage.md"
+
+            report = dispatcher.dispatch_command(
+                ctx,
+                "cmd.journal.rollbackCoverage",
+                outPath=str(out_path),
+            )
+            self.assertTrue(report.result.ok)
+            payload = report.result.payload
+            self.assertTrue(out_path.exists())
+            self.assertGreater(payload["total"], 0)
+            self.assertGreater(payload["rollbackCapablePercent"], 0.0)
+
+            by_command = {row["commandId"]: row for row in payload.get("items", [])}
+            required = [
+                "cmd.cuts.create",
+                "cmd.cuts.assignCategory",
+                "cmd.notes.category.move",
+                "cmd.notes.mode.set",
+                "cmd.author.pipeline.polish",
+                "cmd.author.template.apply",
+                "cmd.author.html.fixApply",
+            ]
+            for command_id in required:
+                self.assertIn(command_id, by_command)
+                self.assertIn(by_command[command_id]["status"], ["full", "conditional"])
+
+    def test_first_completion_guided_prompt_across_core_families(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dispatcher = RuntimeDispatcher(
+                self.runtime,
+                self.config,
+                profile_id="balanced",
+                data_root=Path(tmpdir) / "data",
+            )
+
+            sel_ctx = self._ctx("edge", "alpha bravo", 0)
+            selection_out = dispatcher.dispatch_command(sel_ctx, "cmd.selection.markStart")
+            self.assertTrue(selection_out.result.ok)
+            self.assertIn("guidedMissionPrompt", selection_out.result.payload)
+            self.assertEqual(selection_out.result.payload["missionTelemetry"]["missionId"], "select-range")
+
+            clip_ctx = self._ctx("edge", "clip text", 0, clipboard_text="clip text")
+            clip_out = dispatcher.dispatch_command(clip_ctx, "cmd.clip.copyToSlot", slot=3)
+            self.assertTrue(clip_out.result.ok)
+            self.assertIn("guidedMissionPrompt", clip_out.result.payload)
+            self.assertEqual(clip_out.result.payload["missionTelemetry"]["missionId"], "clips-core")
+
+            cuts_out = dispatcher.dispatch_command(
+                self._ctx("edge", "alpha", 0),
+                "cmd.cuts.create",
+                name="mission-cut",
+                target="C:/tmp/mission-cut.txt",
+                targetType="file",
+            )
+            self.assertTrue(cuts_out.result.ok)
+            self.assertIn("guidedMissionPrompt", cuts_out.result.payload)
+            self.assertEqual(cuts_out.result.payload["missionTelemetry"]["missionId"], "cuts-core")
+
+            notes_out = dispatcher.dispatch_command(
+                self._ctx("edge", "note", 0),
+                "cmd.notes.quickCapture",
+                text="note first",
+            )
+            self.assertTrue(notes_out.result.ok)
+            self.assertIn("guidedMissionPrompt", notes_out.result.payload)
+            self.assertEqual(notes_out.result.payload["missionTelemetry"]["missionId"], "notes-core")
+
+            diary_out = dispatcher.dispatch_command(
+                self._ctx("edge", "diary", 0),
+                "cmd.diary.create",
+                title="Review",
+                startsAt="2026-05-22T14:00:00+00:00",
+                notes="weekly",
+            )
+            self.assertTrue(diary_out.result.ok)
+            self.assertIn("guidedMissionPrompt", diary_out.result.payload)
+            self.assertEqual(diary_out.result.payload["missionTelemetry"]["missionId"], "diary-core")
 
     def test_e07_e08_routes_with_google_sync_dry_run(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")

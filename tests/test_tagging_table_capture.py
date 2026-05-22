@@ -50,6 +50,18 @@ class TaggingAndTableCaptureTests(unittest.TestCase):
         self.assertTrue(cleared.ok)
         self.assertEqual(cleared.payload["cleared"], 2)
 
+    def test_tagging_duplicate_reports_already_tagged(self):
+        session = TaggingSession()
+
+        first = session.tag("C:/tmp/dup.txt")
+        second = session.tag("C:/tmp/dup.txt")
+
+        self.assertTrue(first.ok)
+        self.assertTrue(second.ok)
+        self.assertFalse(first.payload["alreadyTagged"])
+        self.assertTrue(second.payload["alreadyTagged"])
+        self.assertEqual(second.payload["count"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

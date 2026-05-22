@@ -21,6 +21,10 @@ class OsHotkeyTests(unittest.TestCase):
         spec = parse_key_chord_for_os("Control+Alt+F", emulate_capslock_prefix=False)
         self.assertTrue(spec.supported)
 
+    def test_f_key_shortcut_supported(self):
+        spec = parse_key_chord_for_os("CapsLock+Shift+F12", emulate_capslock_prefix=True)
+        self.assertTrue(spec.supported)
+
 
 if __name__ == "__main__":
     unittest.main()

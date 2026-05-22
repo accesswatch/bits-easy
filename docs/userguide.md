@@ -70,7 +70,7 @@ You can change profile any time. Your saved clips, notes, and workflows are unaf
 
 ## 4. The Spellforge Key: Your Magical Door
 
-Before anything else, learn one chord: `Control+Alt+Space`. This is the Spellforge key. You can press it from almost any application and it will do the right thing for the way you press it.
+Before anything else, learn one chord: `NVDA Key+Space` (internally shown as `CapsLock+Space` or `Control+Alt+Space` depending on layout). This is the Spellforge key. You can press it from almost any application and it will do the right thing for the way you press it.
 
 | How you press it | What happens |
 | --- | --- |
@@ -86,9 +86,18 @@ This is the magic Spellforge promises:
 3. The same key lets you ask for anything by name.
 4. The same key shows you the truth when something feels wrong.
 
-If you ever feel lost, press `Control+Alt+Space` twice. Spellforge will tell you what you can press from where you are.
+If you ever feel lost, press `NVDA Key+Space` twice. Spellforge will tell you what you can press from where you are.
 
-### 4.1 Companion helpers
+### 4.1 LEASEY-style help layers
+
+Spellforge now follows a layered help rhythm similar to classic screen reader companion manuals:
+
+1. **Layer 1 (Do).** Single press opens the palette and runs commands fast.
+2. **Layer 2 (Discover).** Double press reads what is available in this surface.
+3. **Layer 3 (Diagnose).** Triple press explains collisions and fallback routing.
+4. **Layer 4 (Guide).** Press-and-hold gives calm spoken help for newer users.
+
+### 4.2 Companion helpers
 
 These three keys travel alongside the Spellforge key and never change meaning:
 
@@ -127,6 +136,17 @@ Some surfaces are not selection-friendly. Spellforge gives you a deterministic m
 6. `Control+Alt+X` - cancel markers cleanly.
 
 Once your range is set, every selection command above behaves exactly the same as if you had used native selection.
+
+### 5.4 Start-arrow-end flow (fast selection)
+
+This is the high-speed workflow for large text:
+
+1. Press `Control+Alt+[` to set start.
+2. Use only arrow keys to move to the end.
+3. Press `Control+Alt+]` to capture the range.
+4. Run normal selection actions (`Control+Alt+S`, `Control+Alt+A`, `Control+Alt+R`).
+
+Marker-captured ranges are now treated as first-class selection for those actions.
 
 ### 5.3 What every app feels like
 
@@ -182,6 +202,7 @@ You can:
 7. Browse a timeline of how a clip evolved.
 
 Every action announces a short summary and is recorded in the operation journal, so you can roll back.
+Use `Control+Alt+Shift+J` for one-step quick undo of the latest reversible action.
 
 ### 6.3 MergeBoard: build up output without losing your place
 
@@ -280,8 +301,16 @@ Markdown commands help you build structured content that pastes cleanly into any
 1. `cmd.author.markdown.insert` - insert structured markdown for headings, lists, tables, callouts, or code blocks.
 2. `cmd.author.a11y.lint` - check the markdown you have for accessibility issues such as missing alt text, ambiguous link text, skipped heading levels, and emoji that should be removed.
 3. `cmd.author.a11y.fixPreview` - preview the accessibility fixes Spellforge suggests before applying any of them.
-4. `cmd.author.export.html` - export markdown to clean semantic HTML.
-5. `cmd.author.export.word` - export to a Word-compatible stub.
+4. `cmd.author.pipeline.polish` - run one-command draft-to-polished flow with transform, structure check, and style pass.
+5. `cmd.author.template.apply` - apply the guided `release-notes` template scaffold with placeholder sections.
+6. `cmd.author.pipeline.undo` - restore the source text from the latest authoring undo token.
+7. `cmd.author.export.html` - export markdown to clean semantic HTML.
+8. `cmd.author.export.word` - export to a Word-compatible stub.
+
+Mnemonic defaults:
+1. `Control+Alt+Shift+A` - run markdown polish flow.
+2. `Control+Alt+Shift+N` - apply release-notes template.
+3. `Control+Alt+Shift+Z` - undo latest author pipeline output.
 
 ### 11.3 HTML authoring
 
@@ -289,6 +318,8 @@ When you need accessible HTML directly:
 
 1. `cmd.author.html.semantic` - generate semantic HTML with `article`, `header`, and `section` structure from a title and a list of items.
 2. `cmd.author.html.validate` - validate HTML for common accessibility and structure issues, with concise per-issue guidance.
+3. `cmd.author.html.fixPreview` - generate a non-destructive accessibility fix preview with before and after change details.
+4. `cmd.author.html.fixApply` - apply the HTML fix preview output and create an undo token for rollback.
 
 These helpers produce output suitable for documentation sites, email templates, intranet articles, and any place where semantic structure matters.
 
@@ -362,6 +393,8 @@ From the palette:
 
 On Windows, Spellforge prefers Windows Credential Manager and never stores provider keys in plain JSON. If secure storage is unavailable, Spellforge falls back safely and tells you what the backend is.
 
+When `cmd.ai.key.storeStatus` runs from the NVDA layer, Spellforge now speaks a short plain-language summary: backend name, whether storage is secure, whether keys persist after restart, and how many providers are configured.
+
 ### 13.2 What AI augments
 
 When a key is configured and Spellforge has a real selection or capture, AI may add an optional augmentation to:
@@ -411,7 +444,7 @@ If context feels off, press `Control+Alt+Backspace` first. If the question remai
 
 ## 15. The Command Palette In Depth
 
-The Spellforge key chord (`Control+Alt+Space`) opens the palette. `NVDA+Shift+P` opens it too. The palette is a searchable, plain-language entry point to every Spellforge command.
+The Spellforge key chord (`NVDA Key+Space`) opens the palette. `NVDA+Shift+P` opens it too. The palette is a searchable, plain-language entry point to every Spellforge command.
 
 1. Type one or two words describing what you want.
 2. Browse the matching results with the arrow keys.
@@ -429,10 +462,10 @@ These are the built-in hotkeys. The NVDA Key is the key you set as NVDA modifier
 
 | Hotkey | What it does |
 | --- | --- |
-| Control+Alt+Space | Open command palette |
-| Control+Alt+Space (double) | Read available hotkeys |
-| Control+Alt+Space (triple) | Hotkey diagnostics |
-| Control+Alt+Space (hold) | Guided hotkey help |
+| NVDA Key+Space | Open command palette |
+| NVDA Key+Space (double) | Read available hotkeys |
+| NVDA Key+Space (triple) | Hotkey diagnostics |
+| NVDA Key+Space (hold) | Guided hotkey help |
 | NVDA Key+Shift+P | Open command palette |
 | Control+Alt+Slash | Read available hotkeys |
 | Control+Alt+D | Hotkey diagnostics |
@@ -447,12 +480,17 @@ These are the built-in hotkeys. The NVDA Key is the key you set as NVDA modifier
 | Control+Alt+; | Read selection marker status |
 | Control+Alt+J | Jump to selection start |
 | Control+Alt+X | Cancel selection markers |
-| Control+Alt+1 | Copy to clip slot 1 |
-| Control+Alt+2 | Paste from clip slot 1 |
-| Control+Alt+3 | Delete clip slot |
-| Control+Alt+4 | Describe clip slot |
+| CapsLock+F1..F12 | Select active clip slot 1..12 |
+| CapsLock+Shift+F1..F12 | Copy to clip slot 1..12 |
+| CapsLock+Control+F1..F12 | Paste from clip slot 1..12 |
+| CapsLock+Windows+F1..F12 | Describe clip slot 1..12 |
+| Control+Alt+3 | Delete active clip slot |
+| Control+Alt+Shift+P | Protect active clip slot |
+| Control+Alt+Shift+U | Unprotect active clip slot |
+| Control+Alt+Shift+E | Edit active clip slot |
 | Control+Alt+5 | Open shortcuts dashboard |
 | Control+Alt+6 | Open clip library |
+| Control+Alt+Shift+6 | Open clip browser |
 | Control+Alt+7 | Open shortcut launcher |
 | Control+Alt+8 | List drive aliases |
 | Control+Alt+9 | Add focused app as shortcut |
@@ -477,6 +515,7 @@ These are the built-in hotkeys. The NVDA Key is the key you set as NVDA modifier
 | Control+Alt+I | Toggle merge clear-on-paste |
 | Control+Alt+T | Tag current session |
 | Control+Alt+Shift+T | Tag Outlook message |
+| Control+Alt+Shift+Y | Speak current time |
 | Control+Alt+H | Browse speech history |
 | Control+Alt+Shift+H | Open speech history as virtual view |
 | Control+Alt+W | Recall window bookmark |
@@ -492,7 +531,7 @@ If you would like to change a chord, open `NVDA Settings > Spellforge > Edit key
 
 The palette holds every command. Use it as your discovery surface. Here is a grouped overview so you know what exists before you search for it.
 
-1. **author** - markdown insert, HTML semantic, HTML validate, accessibility lint, accessibility fix preview, export HTML, export Word.
+1. **author** - markdown insert, markdown polish pipeline, markdown undo, template apply, HTML semantic, HTML validate, HTML fix preview and apply, accessibility lint, accessibility fix preview, export HTML, export Word.
 2. **backup** - migrate, run selected, create settings backup, restore settings, add source, set target.
 3. **capture** - quick capture to inbox, list captures, route captures.
 4. **ai** - key set, key delete, key status, key store status, billing status, doc ask, doc follow-up, doc upload, image generate, prompt create/list/insert/delete, session new/save/load/list/clear/delete, tool run, transcribe.
@@ -507,7 +546,7 @@ The palette holds every command. Use it as your discovery surface. Here is a gro
 13. **help** - available hotkeys.
 14. **jamal** - launch, export, import, sync, plan, apply plan, rollback, return.
 15. **joplin** - import, export, refresh, refresh rollback, set mapping.
-16. **journal** - list, rollback, trends.
+16. **journal** - list, rollback, undo last reversible action, trends.
 17. **mail** - extract sender, attachments action.
 18. **merge** - mode append/replace, divider line/space/paragraph, custom separator, toggle clear on paste, apply profile, commit.
 19. **missions** - start, complete, status.

@@ -14,6 +14,8 @@ class RetrievalLayer:
         self._last_results: List[Dict[str, Any]] = []
         self._last_index = 0
         self._visited: Dict[str, bool] = {}
+        self._domain_anchors: Dict[str, Dict[str, Any]] = {}
+        self._trail_stack: List[Dict[str, Any]] = []
         self._load()
 
     def _save(self) -> None:
@@ -25,6 +27,8 @@ class RetrievalLayer:
             "lastResults": self._last_results,
             "lastIndex": self._last_index,
             "visited": self._visited,
+            "domainAnchors": self._domain_anchors,
+            "trailStack": self._trail_stack[-100:],
         }
         self._storage_path.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
 
@@ -40,6 +44,8 @@ class RetrievalLayer:
         self._last_results = payload.get("lastResults", []) if isinstance(payload.get("lastResults", []), list) else []
         self._last_index = int(payload.get("lastIndex", 0))
         self._visited = payload.get("visited", {}) if isinstance(payload.get("visited", {}), dict) else {}
+        self._domain_anchors = payload.get("domainAnchors", {}) if isinstance(payload.get("domainAnchors", {}), dict) else {}
+        self._trail_stack = payload.get("trailStack", []) if isinstance(payload.get("trailStack", []), list) else []
 
     def query(self, query: str, provider_order: List[str] | None = None) -> RuntimeResult:
         q = query.strip()
@@ -93,3 +99,77 @@ class RetrievalLayer:
         actions = [f"Review: {x.get('title','')}" for x in top]
         refs = [str(x.get("provider", "")) for x in top]
         return RuntimeResult(ok=True, message="Retrieval summary and actions ready.", payload={"summary": summary, "actions": actions, "references": refs})
+
+    def set_domain_anchor(self, domain: str, *, page: str = "", index: int = 0, phrase: str = "") -> RuntimeResult:
+        key = domain.strip().lower()
+        if not key:
+            return RuntimeResult(ok=False, message="Domain is required.")
+        self._domain_anchors[key] = {
+            "domain": key,
+            "page": page.strip(),
+            "index": max(0, int(index)),
+            "phrase": phrase.strip(),
+        }
+        self._save()
+        return RuntimeResult(ok=True, message="Domain anchor saved.", payload={"anchor": self._domain_anchors[key]})
+
+    def open_result_with_trail(self, index: int, *, current_domain: str = "", current_page: str = "") -> RuntimeResult:
+        if not self._last_results:
+            return RuntimeResult(ok=False, message="No retrieval results in memory.")
+        idx = max(0, min(len(self._last_results) - 1, int(index)))
+        self._trail_stack.append(
+            {
+                "domain": current_domain.strip().lower(),
+                "page": current_page.strip(),
+                "index": self._last_index,
+            }
+        )
+        self._last_index = idx
+        self._visited[str(idx)] = True
+        self._save()
+        return RuntimeResult(
+            ok=True,
+            message="Result opened with trail bookmark.",
+            payload={
+                "index": idx,
+                "result": self._last_results[idx],
+                "visited": self._visited,
+                "trailDepth": len(self._trail_stack),
+            },
+        )
+
+    def return_previous_location(self) -> RuntimeResult:
+        if not self._trail_stack:
+            return RuntimeResult(ok=False, message="No trail bookmark is available.")
+        prev = self._trail_stack.pop()
+        idx = max(0, min(len(self._last_results) - 1, int(prev.get("index", 0)))) if self._last_results else 0
+        self._last_index = idx
+        self._save()
+        return RuntimeResult(
+            ok=True,
+            message="Returned to previous location.",
+            payload={
+                "index": idx,
+                "trailDepth": len(self._trail_stack),
+                "domain": prev.get("domain", ""),
+                "page": prev.get("page", ""),
+                "result": self._last_results[idx] if self._last_results else None,
+            },
+        )
+
+    def visited_report(self) -> RuntimeResult:
+        total = len(self._last_results)
+        visited = [int(k) for k, v in self._visited.items() if bool(v) and str(k).isdigit()]
+        visited.sort()
+        unvisited = [i for i in range(total) if i not in visited]
+        return RuntimeResult(
+            ok=True,
+            message="Visited results report ready.",
+            payload={
+                "total": total,
+                "visitedCount": len(visited),
+                "visitedIndices": visited,
+                "unvisitedIndices": unvisited,
+                "trailDepth": len(self._trail_stack),
+            },
+        )

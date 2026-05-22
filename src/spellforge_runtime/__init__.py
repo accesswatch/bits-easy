@@ -60,6 +60,8 @@ from .utility_ops import UtilityOpsService
 from .missions_context import MissionsContextService
 from .workflow_portability import WorkflowPortabilityService
 from .spellcheck import SpellCheckService
+from .file_ops import FileOpsService
+from .ai_assistant import AiAssistantService
 
 __all__ = [
     "AppAdapter",
@@ -150,4 +152,6 @@ __all__ = [
     "MissionsContextService",
     "WorkflowPortabilityService",
     "SpellCheckService",
+    "FileOpsService",
+    "AiAssistantService",
 ]

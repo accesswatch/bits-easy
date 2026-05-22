@@ -101,6 +101,7 @@ Run these in Edge, Chrome, Firefox, Outlook, Word, Notepad, and VS Code where ap
 3. PocketClips browser: open, search, filter, sort, pin/unpin, reorder, split, merge, compare.
 4. Clip library: ingest, folder create/rename/delete, move/link clip, alias conflict strategy, restore to slot, retention policy.
 5. Database tools: template apply, entry grid paging, advanced search filters, dashboard summary, CSV/TXT/JSON export, Jamal import/export/sync dry-run.
+6. AI key management: set a test AI key, run `cmd.ai.key.status`, run `cmd.ai.key.storeStatus`, confirm spoken backend summary reports backend type and provider count.
 
 ## Manual Sign-Off Evidence
 
@@ -109,6 +110,7 @@ Capture and attach to release:
 1. App + scenario + PASS/FAIL for every required scenario.
 2. Any fallback message text that was unclear or missing action guidance.
 3. Repro steps for each fail, including command id, profile, and app surface.
+4. For AI key scenario, capture the spoken `cmd.ai.key.storeStatus` output and whether secure persistent backend was reported.
 
 ## Notes
 

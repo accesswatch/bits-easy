@@ -354,6 +354,35 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
         return fallback_steps_for(self._surface_mode(), command_id)
 
+    def _secure_store_spoken_message(self, payload):
+        if not isinstance(payload, dict):
+            return "AI key store status is available."
+
+        backend = str(payload.get("backend") or "unknown")
+        secure = bool(payload.get("secure", False))
+        persistent = bool(payload.get("persistent", False))
+        provider_count_raw = payload.get("providerCount", 0)
+        try:
+            provider_count = int(provider_count_raw)
+        except Exception:
+            provider_count = 0
+
+        if secure and persistent:
+            storage_phrase = "secure and persistent"
+        elif secure:
+            storage_phrase = "secure but temporary"
+        elif persistent:
+            storage_phrase = "persistent but not secure"
+        else:
+            storage_phrase = "temporary and not secure"
+
+        provider_label = "provider" if provider_count == 1 else "providers"
+        return (
+            f"AI key storage backend: {backend}. "
+            f"Storage mode is {storage_phrase}. "
+            f"{provider_count} {provider_label} currently configured."
+        )
+
     def _dispatch(self, command_id: str, **kwargs):
         if self._dispatcher is None or self._context is None:
             ui.message("Spellforge runtime unavailable")
@@ -369,7 +398,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             if self._palette is not None:
                 self._palette_tick += 1
                 self._palette.record_execution(command_id, int(time.time()) + self._palette_tick)
-            ui.message(out.result.message)
+            if command_id == "cmd.ai.key.storeStatus":
+                ui.message(self._secure_store_spoken_message(out.result.payload))
+            else:
+                ui.message(out.result.message)
         else:
             extra_steps = self._contextual_fallbacks(command_id)
             steps = out.result.next_steps + extra_steps
@@ -400,7 +432,19 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         finally:
             query_dlg.Destroy()
 
-        ranked = self._palette.search(query=query, app_id=self._context.app_id, limit=30)
+        ai_key_enabled = False
+        key_status = self._dispatcher.dispatch_command(self._context, "cmd.ai.key.status")
+        if key_status.result.ok:
+            ai_key_enabled = bool((key_status.result.payload or {}).get("hasAnyKey", False))
+
+        has_selection_activity = bool((self._context.clipboard_text or "").strip())
+        ranked = self._palette.search(
+            query=query,
+            app_id=self._context.app_id,
+            limit=30,
+            ai_key_enabled=ai_key_enabled,
+            has_selection_activity=has_selection_activity,
+        )
         if not ranked:
             ui.message("No commands are registered")
             return

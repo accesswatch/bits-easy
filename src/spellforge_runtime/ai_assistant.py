@@ -5,12 +5,15 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from .engine import RuntimeResult
+from .secret_store import SecretStore, create_default_secret_store
 
 
 class AiAssistantService:
-    def __init__(self, storage_path: Path | str | None = None):
+    def __init__(self, storage_path: Path | str | None = None, secret_store: SecretStore | None = None):
         self._storage_path = Path(storage_path) if storage_path else None
-        self._keys: Dict[str, str] = {}
+        self._secret_store = secret_store or create_default_secret_store()
+        self._secret_namespace = "spellforge.ai.provider-key"
+        self._key_providers: set[str] = set()
         self._sessions: Dict[str, List[Dict[str, str]]] = {}
         self._prompts: Dict[str, str] = {}
         self._documents: Dict[str, Dict[str, str]] = {}
@@ -24,7 +27,7 @@ class AiAssistantService:
             return
         self._storage_path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
-            "keys": self._keys,
+            "keyProviders": sorted(self._key_providers),
             "sessions": self._sessions,
             "prompts": self._prompts,
             "documents": self._documents,
@@ -41,7 +44,21 @@ class AiAssistantService:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
             return
-        self._keys = payload.get("keys", {}) if isinstance(payload.get("keys", {}), dict) else {}
+        providers = payload.get("keyProviders", [])
+        if isinstance(providers, list):
+            self._key_providers = {str(x).strip().lower() for x in providers if str(x).strip()}
+
+        legacy_keys = payload.get("keys", {}) if isinstance(payload.get("keys", {}), dict) else {}
+        migrated = False
+        for provider, key in legacy_keys.items():
+            p = self._provider_key(str(provider))
+            v = str(key).strip()
+            if not p or not v:
+                continue
+            if self._secret_store.set_secret(self._secret_namespace, p, v):
+                self._key_providers.add(p)
+                migrated = True
+
         self._sessions = payload.get("sessions", {}) if isinstance(payload.get("sessions", {}), dict) else {}
         self._prompts = payload.get("prompts", {}) if isinstance(payload.get("prompts", {}), dict) else {}
         self._documents = payload.get("documents", {}) if isinstance(payload.get("documents", {}), dict) else {}
@@ -49,9 +66,40 @@ class AiAssistantService:
         self._session_counter = int(payload.get("sessionCounter", 0))
         self._doc_counter = int(payload.get("docCounter", 0))
 
+        # Save once after migration so plaintext keys are removed from disk.
+        if migrated and legacy_keys:
+            self._save()
+
     @staticmethod
     def _provider_key(name: str) -> str:
-        return name.strip().lower()
+        raw = name.strip().lower()
+        aliases = {
+            "llama": "llama-cloud",
+            "llama cloud": "llama-cloud",
+            "llamacloud": "llama-cloud",
+            "llama-cloud": "llama-cloud",
+            "open ai": "openai",
+        }
+        return aliases.get(raw, raw)
+
+    def key_status(self, provider: str = "") -> RuntimeResult:
+        p = self._provider_key(provider) if provider.strip() else ""
+        providers = sorted(self._key_providers)
+        payload: Dict[str, Any] = {
+            "hasAnyKey": bool(providers),
+            "providerCount": len(providers),
+            "providers": providers,
+        }
+        if p:
+            payload["provider"] = p
+            payload["hasKey"] = self._secret_store.get_secret(self._secret_namespace, p) is not None
+        return RuntimeResult(ok=True, message="AI key status ready.", payload=payload)
+
+    def key_store_status(self) -> RuntimeResult:
+        payload: Dict[str, Any] = dict(self._secret_store.diagnostics())
+        payload["providerCount"] = len(self._key_providers)
+        payload["providers"] = sorted(self._key_providers)
+        return RuntimeResult(ok=True, message="AI key store diagnostics ready.", payload=payload)
 
     def key_set(self, provider: str, key: str) -> RuntimeResult:
         p = self._provider_key(provider)
@@ -60,7 +108,9 @@ class AiAssistantService:
             return RuntimeResult(ok=False, message="Provider is required.")
         if not v:
             return RuntimeResult(ok=False, message="API key is required.")
-        self._keys[p] = v
+        if not self._secret_store.set_secret(self._secret_namespace, p, v):
+            return RuntimeResult(ok=False, message="Unable to save AI provider key securely.")
+        self._key_providers.add(p)
         self._save()
         return RuntimeResult(ok=True, message="AI provider key saved.", payload={"provider": p})
 
@@ -68,16 +118,21 @@ class AiAssistantService:
         p = self._provider_key(provider)
         if not p:
             return RuntimeResult(ok=False, message="Provider is required.")
-        if p in self._keys:
-            del self._keys[p]
-            self._save()
+        self._secret_store.delete_secret(self._secret_namespace, p)
+        self._key_providers.discard(p)
+        self._save()
         return RuntimeResult(ok=True, message="AI provider key deleted.", payload={"provider": p})
 
     def billing_status(self, provider: str) -> RuntimeResult:
         p = self._provider_key(provider)
         if not p:
             return RuntimeResult(ok=False, message="Provider is required.")
-        url = f"https://{p}.com/billing"
+        url_map = {
+            "openai": "https://platform.openai.com/settings/organization/billing/overview",
+            "anthropic": "https://console.anthropic.com/settings/plans",
+            "llama-cloud": "https://cloud.llamaindex.ai/",
+        }
+        url = url_map.get(p, f"https://{p}.com/billing")
         return RuntimeResult(ok=True, message="Billing status endpoint ready.", payload={"provider": p, "url": url})
 
     def session_new(self, title: str = "") -> RuntimeResult:

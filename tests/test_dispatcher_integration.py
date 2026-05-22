@@ -553,6 +553,47 @@ class DispatcherIntegrationTests(unittest.TestCase):
         rewrite = dispatcher.dispatch_command(ctx, "cmd.selection.rewriteBeginner")
         self.assertTrue(rewrite.result.ok)
 
+    def test_selection_commands_get_additive_ai_augmentation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced", data_root=Path(tmpdir) / "data")
+            ctx = self._ctx(
+                "edge",
+                "We should follow up with the team next week and define action owners.",
+                0,
+            )
+
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.ai.key.set", provider="openai", key="k-live").result.ok)
+            summary = dispatcher.dispatch_command(ctx, "cmd.selection.summarize")
+            self.assertTrue(summary.result.ok)
+            self.assertIn("content", summary.result.payload)
+            self.assertIn("aiAugmentation", summary.result.payload)
+            self.assertTrue(summary.result.payload["aiAugmentation"]["enabled"])
+
+            capture = dispatcher.dispatch_command(ctx, "cmd.capture.quickInbox")
+            self.assertTrue(capture.result.ok)
+            self.assertIn("aiAugmentation", capture.result.payload)
+
+            note = dispatcher.dispatch_command(
+                ctx,
+                "cmd.notes.quickCapture",
+                text="Please rewrite this note for beginner clarity.",
+            )
+            self.assertTrue(note.result.ok)
+            self.assertIn("aiAugmentation", note.result.payload)
+
+            help_set = dispatcher.dispatch_command(
+                ctx,
+                "cmd.notes.help.set",
+                text="Use shorter phrases and clear labels.",
+                appId="edge",
+            )
+            self.assertTrue(help_set.result.ok)
+            self.assertIn("aiAugmentation", help_set.result.payload)
+
+            spell = dispatcher.dispatch_command(ctx, "cmd.spell.checkCurrentWord")
+            self.assertTrue(spell.result.ok)
+            self.assertIn("aiAugmentation", spell.result.payload)
+
     def test_quick_capture_routing_routes(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
         ctx = self._ctx("edge", "capture this snippet", 0)

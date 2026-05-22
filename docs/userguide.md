@@ -162,6 +162,11 @@ You can also press `Control+Alt+Slash` at any time to hear a spoken summary of a
 
 If you want to see diagnostics — for example, to check whether a hotkey is registered correctly — press `Control+Alt+D`.
 
+AI commands in the palette are context-aware:
+
+- AI setup and status commands stay visible so you can always configure or check AI.
+- Selection-driven AI commands appear when Spellforge has selection context and an AI key is configured.
+
 ### 6.2 Working with Selected Text
 
 Spellforge can act on text you have selected in any application.
@@ -169,6 +174,8 @@ Spellforge can act on text you have selected in any application.
 - Press `Control+Alt+S` to get a **summary** of the selected text.
 - Press `Control+Alt+A` to **extract action items** — useful for emails and meeting notes.
 - Press `Control+Alt+R` to **rewrite** the text in simpler language.
+
+When an AI key is configured, Spellforge can attach optional AI augmentation to these selection workflows while preserving the deterministic primary result.
 
 If you want to mark a region manually (for example when your application does not support standard selection), use `Control+Alt+[` to mark the start and `Control+Alt+]` to mark the end. Press `Control+Alt+'` to hear a description of your current selection context, `Control+Alt+;` to hear marker status and cross-surface drift hints, `Control+Alt+J` to jump back to where your selection started, and `Control+Alt+X` to clear the markers.
 
@@ -205,6 +212,8 @@ When Spellforge returns a long result — a summary, extracted actions, or a ret
 ### 6.5 Quick Capture and Your Inbox
 
 Press `Control+Alt+Q` any time to capture what you are thinking about or working on. It goes straight to your inbox so you can deal with it later. From the palette you can list inbox items and route them to the right place when you are ready.
+
+When AI is configured, quick capture can include optional AI augmentation (for example a compact summary suggestion) without changing the base capture output.
 
 Spellforge also keeps a journal of recent operations. If you need to undo something that was supported, you can roll it back from the palette.
 
@@ -245,6 +254,26 @@ Spellforge has a full personal workflow suite you can access from the palette:
 - **Structured records:** Define fields, manage entries, search, sort, and export to text or CSV.
 - **Joplin and Jamal integration:** Import, export, and sync notes with your preferred note app.
 - **Workflow packs:** Export and import your entire workflow setup so you can take it with you.
+
+When AI is configured, note quick capture and note help text workflows can include optional AI rewrite augmentation while keeping the original note pipeline unchanged.
+
+### 6.12 AI Keys and Storage Diagnostics
+
+Spellforge supports AI provider keys, including Llama Cloud.
+
+Use these commands from the palette:
+
+- `cmd.ai.key.set` - set or update a provider key.
+- `cmd.ai.key.status` - check whether keys are configured.
+- `cmd.ai.key.storeStatus` - report which key storage backend is active.
+
+Key storage behavior:
+
+1. On Windows, Spellforge stores provider keys in Windows Credential Manager when available.
+2. Provider keys are not persisted in plain JSON state files.
+3. If secure storage is unavailable, Spellforge falls back safely and reports the backend through `cmd.ai.key.storeStatus`.
+
+When you run `cmd.ai.key.storeStatus`, Spellforge speaks a plain-language summary that includes backend, security/persistence mode, and configured provider count.
 
 ### 6.11 Diagnostics and Utilities
 
@@ -373,6 +402,8 @@ cmd.ai.doc.upload
 cmd.ai.image.generate
 cmd.ai.key.delete
 cmd.ai.key.set
+cmd.ai.key.status
+cmd.ai.key.storeStatus
 cmd.ai.prompt.create
 cmd.ai.prompt.delete
 cmd.ai.prompt.insert
@@ -724,6 +755,8 @@ cmd.x.timeline
 ## 10. Your Data and Portability
 
 Spellforge saves your clips, settings, palette history, and other personal data to a folder under your Windows user profile (usually in AppData\Spellforge). Everything stays on your own computer.
+
+AI provider keys are handled separately from regular JSON state. When available, Spellforge stores them in Windows Credential Manager. Use `cmd.ai.key.storeStatus` to confirm the active key storage backend on your system.
 
 If you ever need to move to a new machine or reinstall, you can use the portability and backup commands from the palette to export and restore your complete setup — clips, shortcuts, workflow packs, and all.
 

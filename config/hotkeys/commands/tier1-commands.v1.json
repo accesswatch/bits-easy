@@ -3439,6 +3439,30 @@
     "fallbackCommandIds": []
   },
   {
+    "id": "cmd.ai.key.status",
+    "name": "AI Key Status",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.ai.key.storeStatus",
+    "name": "AI Key Store Status",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
     "id": "cmd.ai.billingStatus",
     "name": "AI Billing Status",
     "safetyClass": "safe",

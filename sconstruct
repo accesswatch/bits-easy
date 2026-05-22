@@ -1,0 +1,34 @@
+# Simple SCons script for producing a development-ready NVDA add-on layout.
+# This is intentionally lightweight for repository use.
+
+import os
+from pathlib import Path
+
+Import("env") if "env" in globals() else None
+
+repo_root = Path(__file__).resolve().parent
+build_dir = repo_root / "dist" / "addon"
+
+if build_dir.exists():
+    for root, dirs, files in os.walk(build_dir, topdown=False):
+        for name in files:
+            Path(root, name).unlink()
+        for name in dirs:
+            Path(root, name).rmdir()
+else:
+    build_dir.mkdir(parents=True)
+
+for src_rel in ["addon", "config", "src"]:
+    src = repo_root / src_rel
+    if not src.exists():
+        continue
+    for root, dirs, files in os.walk(src):
+        rel = Path(root).relative_to(repo_root)
+        out_dir = build_dir / rel
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for name in files:
+            in_path = Path(root, name)
+            out_path = out_dir / name
+            out_path.write_bytes(in_path.read_bytes())
+
+print("Prepared development add-on tree at", build_dir)

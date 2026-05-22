@@ -41,6 +41,33 @@
           "enabled": {
             "type": "boolean"
           },
+          "trigger": {
+            "type": "object",
+            "required": ["kind"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["single-press", "double-press", "triple-press", "press-and-hold"]
+              },
+              "multiPressWindowMs": {
+                "type": "integer",
+                "minimum": 120,
+                "maximum": 1200,
+                "default": 350
+              },
+              "holdThresholdMs": {
+                "type": "integer",
+                "minimum": 150,
+                "maximum": 2000,
+                "default": 500
+              },
+              "suppressSinglePress": {
+                "type": "boolean",
+                "default": true
+              }
+            },
+            "additionalProperties": false
+          },
           "safetyGate": {
             "type": "string",
             "enum": ["none", "low-confidence-confirm", "always-confirm"],

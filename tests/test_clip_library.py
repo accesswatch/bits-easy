@@ -52,6 +52,35 @@ class ClipLibraryStoreTests(unittest.TestCase):
         restored = self.lib.restore_to_slot(clip_id, 2, mode="replace")
         self.assertTrue(restored.ok)
 
+    def test_alias_conflict_resolution_and_categories(self):
+        a = self.lib.ingest_slot(1)
+        self.assertTrue(a.ok)
+        clip_a = a.payload["clipId"]
+
+        self.runtime.copy_to_slot(self.ctx, 2, text="Second clip")
+        b = self.lib.ingest_slot(2)
+        self.assertTrue(b.ok)
+        clip_b = b.payload["clipId"]
+
+        self.assertTrue(self.lib.retain_slot_alias_with_strategy(clip_a, "Slot X", strategy="reject").ok)
+
+        conflict = self.lib.retain_slot_alias_with_strategy(clip_b, "Slot X", strategy="reject")
+        self.assertFalse(conflict.ok)
+
+        renamed = self.lib.retain_slot_alias_with_strategy(clip_b, "Slot X", strategy="rename")
+        self.assertTrue(renamed.ok)
+        self.assertEqual(renamed.payload["slotAlias"], "Slot X-2")
+
+        replaced = self.lib.retain_slot_alias_with_strategy(clip_b, "Slot X", strategy="replace")
+        self.assertTrue(replaced.ok)
+
+        assigned = self.lib.assign_category(clip_b, "project")
+        self.assertTrue(assigned.ok)
+        opened = self.lib.open_library(category="project")
+        self.assertTrue(opened.ok)
+        self.assertGreaterEqual(len(opened.payload["clips"]), 1)
+        self.assertIn("smartViews", opened.payload)
+
     def test_retention_and_folder_ops(self):
         archived = self.lib.ingest_slot(1)
         clip_id = archived.payload["clipId"]
@@ -65,6 +94,17 @@ class ClipLibraryStoreTests(unittest.TestCase):
         self.assertTrue(renamed.ok)
         deleted = self.lib.delete_folder(folder_id)
         self.assertTrue(deleted.ok)
+
+    def test_timeline_view_and_discoverability_payload(self):
+        self.assertTrue(self.lib.ingest_slot(1).ok)
+        self.runtime.copy_to_slot(self.ctx, 2, text="Second clip timeline")
+        self.assertTrue(self.lib.ingest_slot(2).ok)
+
+        timeline = self.lib.timeline_view(limit=10)
+        self.assertTrue(timeline.ok)
+        self.assertGreaterEqual(timeline.payload["count"], 2)
+        self.assertIn("timelineBuckets", timeline.payload)
+        self.assertIn("discoverability", timeline.payload)
 
 
 if __name__ == "__main__":

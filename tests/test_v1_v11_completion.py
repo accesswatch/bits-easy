@@ -75,6 +75,9 @@ class V1V11CompletionTests(unittest.TestCase):
             self.assertTrue(deleted.result.ok)
 
     def test_merge_advanced_controls(self):
+        divider = self.dispatcher.dispatch_command(self.ctx, "cmd.merge.setDivider", divider="line")
+        self.assertTrue(divider.result.ok)
+
         custom = self.dispatcher.dispatch_command(self.ctx, "cmd.merge.setCustomSeparator", separator=" | ")
         self.assertTrue(custom.result.ok)
 

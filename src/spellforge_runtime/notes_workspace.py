@@ -195,3 +195,86 @@ class NotesWorkspaceService:
         self._mode = str(row.get("mode", "simple"))
         self._save()
         return RuntimeResult(ok=True, message="Notes state restored.", payload={"reason": row.get("reason", "")})
+
+    def category_tree(self) -> RuntimeResult:
+        tree: Dict[str, List[str]] = {}
+        for cid, row in self._categories.items():
+            parent = str(row.get("parent", "")).strip().lower() or "root"
+            tree.setdefault(parent, []).append(cid)
+        for key in list(tree.keys()):
+            tree[key].sort()
+        return RuntimeResult(ok=True, message="Category tree ready.", payload={"tree": tree, "count": len(self._categories)})
+
+    def related_graph(self, note_id: str) -> RuntimeResult:
+        nid = note_id.strip()
+        root = self._notes.get(nid)
+        if root is None:
+            return RuntimeResult(ok=False, message="Note not found.")
+        nodes = {nid: {"title": root.get("title", ""), "depth": 0}}
+        edges: List[Dict[str, str]] = []
+        for rel in list(root.get("relations", [])):
+            peer = self._notes.get(rel)
+            if peer is not None:
+                nodes[rel] = {"title": peer.get("title", ""), "depth": 1}
+                edges.append({"from": nid, "to": rel})
+        return RuntimeResult(
+            ok=True,
+            message="Related note graph ready.",
+            payload={"root": nid, "nodes": [{"id": k, **v} for k, v in nodes.items()], "edges": edges},
+        )
+
+    def attachment_action(self, note_id: str, path: str, action: str) -> RuntimeResult:
+        note = self._notes.get(note_id.strip())
+        if note is None:
+            return RuntimeResult(ok=False, message="Note not found.")
+        target = path.strip()
+        if not target:
+            return RuntimeResult(ok=False, message="Attachment path is required.")
+        if target not in note.get("attachments", []):
+            return RuntimeResult(ok=False, message="Attachment not found on this note.")
+        mode = action.strip().lower()
+        if mode not in ("open", "copy"):
+            return RuntimeResult(ok=False, message="Attachment action must be open or copy.")
+        return RuntimeResult(
+            ok=True,
+            message="Attachment action prepared.",
+            payload={"noteId": note_id.strip(), "path": target, "action": mode, "insertText": target if mode == "copy" else ""},
+        )
+
+    def backup_export(self, out_path: Path | str) -> RuntimeResult:
+        path = Path(out_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "notes": self._notes,
+            "categories": self._categories,
+            "globalHelp": self._global_help,
+            "appHelp": self._app_help,
+            "webNotes": self._web_notes,
+            "mode": self._mode,
+            "counter": self._counter,
+        }
+        path.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
+        return RuntimeResult(ok=True, message="Notes backup exported.", payload={"path": str(path)})
+
+    def backup_restore(self, in_path: Path | str) -> RuntimeResult:
+        path = Path(in_path)
+        if not path.exists():
+            return RuntimeResult(ok=False, message="Notes backup file was not found.")
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return RuntimeResult(ok=False, message=f"Notes backup restore failed: {exc}")
+        notes = payload.get("notes", {})
+        categories = payload.get("categories", {})
+        if not isinstance(notes, dict) or not isinstance(categories, dict):
+            return RuntimeResult(ok=False, message="Notes backup payload is invalid.")
+        self._snapshot("backup-restore-before")
+        self._notes = notes
+        self._categories = categories
+        self._global_help = payload.get("globalHelp", {}) if isinstance(payload.get("globalHelp", {}), dict) else {}
+        self._app_help = payload.get("appHelp", {}) if isinstance(payload.get("appHelp", {}), dict) else {}
+        self._web_notes = payload.get("webNotes", {}) if isinstance(payload.get("webNotes", {}), dict) else {}
+        self._mode = str(payload.get("mode", self._mode))
+        self._counter = int(payload.get("counter", self._counter))
+        self._save()
+        return RuntimeResult(ok=True, message="Notes backup restored.", payload={"noteCount": len(self._notes), "categoryCount": len(self._categories)})

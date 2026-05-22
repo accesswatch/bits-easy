@@ -23,10 +23,32 @@ class FieldDef:
 
 
 class StructuredRecordService:
+    TEMPLATE_PACKS: Dict[str, List[Dict[str, Any]]] = {
+        "contacts": [
+            {"name": "name", "type": "text", "required": True, "validator": "", "helpText": "Contact display name"},
+            {"name": "email", "type": "text", "required": False, "validator": "email", "helpText": "Primary email"},
+            {"name": "phone", "type": "text", "required": False, "validator": "", "helpText": "Primary phone"},
+            {"name": "company", "type": "text", "required": False, "validator": "", "helpText": "Organization"},
+        ],
+        "inventory": [
+            {"name": "item", "type": "text", "required": True, "validator": "", "helpText": "Item title"},
+            {"name": "sku", "type": "text", "required": True, "validator": "", "helpText": "Stock unit code"},
+            {"name": "quantity", "type": "number", "required": True, "validator": "", "helpText": "In-stock amount"},
+            {"name": "updatedAt", "type": "date", "required": False, "validator": "", "helpText": "Last update ISO date"},
+        ],
+        "tasks": [
+            {"name": "title", "type": "text", "required": True, "validator": "", "helpText": "Task title"},
+            {"name": "status", "type": "choice", "required": True, "validator": "", "choices": ["todo", "doing", "done"]},
+            {"name": "dueDate", "type": "date", "required": False, "validator": "", "helpText": "Due ISO date"},
+            {"name": "owner", "type": "text", "required": False, "validator": "", "helpText": "Task owner"},
+        ],
+    }
+
     def __init__(self, storage_path: Path | str | None = None):
         self._storage_path = Path(storage_path) if storage_path else None
         self._databases: Dict[str, Dict[str, Any]] = {}
         self._deleted_snapshots: Dict[str, Dict[str, Any]] = {}
+        self._sync_plans: Dict[str, Dict[str, Any]] = {}
         self._current_db = ""
         self._entry_counter = 0
         self._launch_bookmark: Dict[str, str] | None = None
@@ -39,6 +61,7 @@ class StructuredRecordService:
         payload = {
             "databases": self._databases,
             "deleted": self._deleted_snapshots,
+            "syncPlans": self._sync_plans,
             "current": self._current_db,
             "entryCounter": self._entry_counter,
             "launchBookmark": self._launch_bookmark,
@@ -55,6 +78,7 @@ class StructuredRecordService:
             return
         self._databases = payload.get("databases", {}) if isinstance(payload.get("databases", {}), dict) else {}
         self._deleted_snapshots = payload.get("deleted", {}) if isinstance(payload.get("deleted", {}), dict) else {}
+        self._sync_plans = payload.get("syncPlans", {}) if isinstance(payload.get("syncPlans", {}), dict) else {}
         self._current_db = str(payload.get("current", ""))
         self._entry_counter = int(payload.get("entryCounter", 0))
         launch = payload.get("launchBookmark")
@@ -90,6 +114,60 @@ class StructuredRecordService:
         self._current_db = db_name
         self._save()
         return RuntimeResult(ok=True, message="Database selected.", payload={"database": db_name})
+
+    def list_databases(self) -> RuntimeResult:
+        items = []
+        for db_name in sorted(self._databases.keys()):
+            db = self._databases.get(db_name, {})
+            schema = db.get("schema", {})
+            entries = db.get("entries", [])
+            items.append(
+                {
+                    "database": db_name,
+                    "selected": db_name == self._current_db,
+                    "fieldCount": len(schema) if isinstance(schema, dict) else 0,
+                    "entryCount": len(entries) if isinstance(entries, list) else 0,
+                }
+            )
+        return RuntimeResult(
+            ok=True,
+            message="Database list ready.",
+            payload={"items": items, "count": len(items), "current": self._current_db},
+        )
+
+    def apply_template(self, name: str, *, database_name: str = "") -> RuntimeResult:
+        template = self._normalize_name(name)
+        fields = self.TEMPLATE_PACKS.get(template)
+        if fields is None:
+            return RuntimeResult(
+                ok=False,
+                message="Template was not found.",
+                payload={"available": sorted(self.TEMPLATE_PACKS.keys())},
+            )
+        target = self._normalize_name(database_name or template)
+        if not target:
+            target = template
+        self._databases[target] = {"schema": {}, "entries": []}
+        self._current_db = target
+        db = self._databases[target]
+        for row in fields:
+            fname = str(row.get("name", "")).strip()
+            if not fname:
+                continue
+            db["schema"][fname] = {
+                "name": fname,
+                "type": str(row.get("type", "text")),
+                "required": bool(row.get("required", False)),
+                "helpText": str(row.get("helpText", "")),
+                "validator": str(row.get("validator", "")),
+                "choices": [str(x) for x in list(row.get("choices", []))],
+            }
+        self._save()
+        return RuntimeResult(
+            ok=True,
+            message="Template applied.",
+            payload={"database": target, "template": template, "fieldCount": len(db["schema"])},
+        )
 
     def delete_database(self, name: str, *, confirm: bool) -> RuntimeResult:
         db_name = self._normalize_name(name)
@@ -281,9 +359,106 @@ class StructuredRecordService:
         if err:
             return err
         key = field.strip()
+        schema = db.get("schema", {})
+        field_meta = schema.get(key, {}) if isinstance(schema, dict) else {}
+        ftype = str(field_meta.get("type", "text"))
         rows = list(db.get("entries", []))
-        rows.sort(key=lambda x: str(x.get("values", {}).get(key, "")), reverse=bool(descending))
+
+        def sort_key(row: Dict[str, Any]):
+            value = row.get("values", {}).get(key, "")
+            if value is None:
+                return ""
+            text = str(value)
+            if ftype == "number":
+                try:
+                    return float(text)
+                except Exception:
+                    return float("-inf")
+            if ftype == "bool":
+                return text.strip().lower() in ("true", "1", "yes")
+            return text
+
+        rows.sort(key=sort_key, reverse=bool(descending))
         return RuntimeResult(ok=True, message="Sorted entries ready.", payload={"items": rows, "count": len(rows), "field": key, "descending": bool(descending)})
+
+    def search_advanced(
+        self,
+        *,
+        text_query: str = "",
+        filters: Optional[Dict[str, Any]] = None,
+        limit: int = 50,
+    ) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        q = text_query.strip().lower()
+        active_filters = {str(k): str(v) for k, v in (filters or {}).items() if str(v).strip()}
+        rows = []
+        for entry in db.get("entries", []):
+            values = entry.get("values", {})
+            if active_filters:
+                mismatch = False
+                for fk, fv in active_filters.items():
+                    if fv.lower() not in str(values.get(fk, "")).lower():
+                        mismatch = True
+                        break
+                if mismatch:
+                    continue
+            if q:
+                haystack = " ".join(str(v) for v in values.values()).lower()
+                if q not in haystack:
+                    continue
+            rows.append(entry)
+            if len(rows) >= max(1, int(limit)):
+                break
+        return RuntimeResult(
+            ok=True,
+            message="Advanced search results ready.",
+            payload={"items": rows, "count": len(rows), "query": q, "filters": active_filters},
+        )
+
+    def entry_grid(
+        self,
+        *,
+        fields: Optional[List[str]] = None,
+        sort_by: str = "",
+        descending: bool = False,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        schema = db.get("schema", {})
+        selected_fields = [str(x) for x in (fields or list(schema.keys()))]
+        rows = list(db.get("entries", []))
+        if sort_by.strip():
+            sorted_out = self.sort_entries(sort_by, descending=descending)
+            if not sorted_out.ok:
+                return sorted_out
+            rows = list((sorted_out.payload or {}).get("items", []))
+        start = max(0, int(offset))
+        size = max(1, int(limit))
+        page = rows[start:start + size]
+        items = []
+        for entry in page:
+            values = entry.get("values", {})
+            row = {"entryId": entry.get("entryId", "")}
+            for key in selected_fields:
+                row[key] = values.get(key)
+            items.append(row)
+        return RuntimeResult(
+            ok=True,
+            message="Entry grid ready.",
+            payload={
+                "fields": selected_fields,
+                "items": items,
+                "count": len(items),
+                "total": len(rows),
+                "offset": start,
+                "limit": size,
+            },
+        )
 
     def export_csv(self, out_path: Path | str) -> RuntimeResult:
         _, db, err = self._active()
@@ -314,6 +489,54 @@ class StructuredRecordService:
             lines.append("")
         path.write_text("\n".join(lines), encoding="utf-8")
         return RuntimeResult(ok=True, message="Text export complete.", payload={"path": str(path)})
+
+    def export_json(self, out_path: Path | str) -> RuntimeResult:
+        db_name, db, err = self._active()
+        if err:
+            return err
+        path = Path(out_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "database": db_name,
+            "schema": db.get("schema", {}),
+            "entries": db.get("entries", []),
+        }
+        path.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
+        return RuntimeResult(ok=True, message="JSON export complete.", payload={"path": str(path), "database": db_name})
+
+    def dashboard(self) -> RuntimeResult:
+        db_name, db, err = self._active()
+        if err:
+            return err
+        schema = db.get("schema", {})
+        entries = list(db.get("entries", []))
+        required_fields = [k for k, v in schema.items() if bool((v or {}).get("required", False))]
+        completeness_checks = 0
+        completeness_filled = 0
+        for row in entries:
+            values = row.get("values", {})
+            for key in required_fields:
+                completeness_checks += 1
+                if str(values.get(key, "")).strip():
+                    completeness_filled += 1
+        completeness_rate = 1.0 if completeness_checks == 0 else round(completeness_filled / completeness_checks, 4)
+        by_type: Dict[str, int] = {}
+        for meta in schema.values():
+            field_type = str((meta or {}).get("type", "text"))
+            by_type[field_type] = by_type.get(field_type, 0) + 1
+        return RuntimeResult(
+            ok=True,
+            message="Database dashboard ready.",
+            payload={
+                "database": db_name,
+                "fieldCount": len(schema),
+                "entryCount": len(entries),
+                "requiredFieldCount": len(required_fields),
+                "completenessRate": completeness_rate,
+                "fieldTypes": by_type,
+                "databases": self.list_databases().payload,
+            },
+        )
 
     def jamal_export(self, out_path: Path | str) -> RuntimeResult:
         db_name, db, err = self._active()
@@ -414,3 +637,115 @@ class StructuredRecordService:
         db["entries"] = list(merged.values())
         self._save()
         return RuntimeResult(ok=True, message="Jamal sync applied with snapshot.", payload={"conflictCount": len(conflicts), "mergedCount": len(db['entries'])})
+
+    def jamal_sync_plan(self, incoming_entries: List[Dict[str, Any]], *, strategy: str = "prefer-incoming") -> RuntimeResult:
+        db_name, db, err = self._active()
+        if err:
+            return err
+        current = {str(e.get("entryId", "")): e for e in db.get("entries", [])}
+        incoming = {str(e.get("entryId", "")): e for e in incoming_entries}
+        mode = strategy.strip().lower()
+        if mode not in ("prefer-incoming", "prefer-current", "merge-values"):
+            return RuntimeResult(ok=False, message="Sync strategy must be prefer-incoming, prefer-current, or merge-values.")
+
+        conflicts: List[Dict[str, Any]] = []
+        resolutions: List[Dict[str, Any]] = []
+        for eid, inc in incoming.items():
+            cur = current.get(eid)
+            if cur is None:
+                resolutions.append({"entryId": eid, "action": "create", "resolved": inc})
+                continue
+            cur_vals = dict(cur.get("values", {}))
+            inc_vals = dict(inc.get("values", {}))
+            if cur_vals == inc_vals:
+                resolutions.append({"entryId": eid, "action": "noop", "resolved": cur})
+                continue
+            if mode == "prefer-current":
+                resolved_vals = cur_vals
+            elif mode == "merge-values":
+                resolved_vals = dict(cur_vals)
+                resolved_vals.update(inc_vals)
+            else:
+                resolved_vals = inc_vals
+            conflicts.append({"entryId": eid, "current": cur_vals, "incoming": inc_vals, "resolved": resolved_vals})
+            resolutions.append({"entryId": eid, "action": "update", "resolved": {"entryId": eid, "values": resolved_vals}})
+
+        plan_id = f"sync-plan-{len(self._sync_plans) + 1:04d}"
+        self._sync_plans[plan_id] = {
+            "database": db_name,
+            "strategy": mode,
+            "incoming": list(incoming.values()),
+            "resolutions": resolutions,
+            "conflicts": conflicts,
+        }
+        self._save()
+        return RuntimeResult(
+            ok=True,
+            message="Jamal sync plan ready.",
+            payload={
+                "planId": plan_id,
+                "database": db_name,
+                "strategy": mode,
+                "conflicts": conflicts,
+                "conflictCount": len(conflicts),
+                "resolutionCount": len(resolutions),
+            },
+        )
+
+    def jamal_sync_apply_plan(self, plan_id: str, *, confirm: bool) -> RuntimeResult:
+        if not confirm:
+            return RuntimeResult(ok=False, message="Apply plan requires confirmation.")
+        pid = plan_id.strip()
+        plan = self._sync_plans.get(pid)
+        if plan is None:
+            return RuntimeResult(ok=False, message="Sync plan was not found.")
+
+        db_name = str(plan.get("database", ""))
+        db = self._databases.get(db_name)
+        if db is None:
+            return RuntimeResult(ok=False, message="Sync plan database was not found.")
+
+        current = {str(e.get("entryId", "")): e for e in db.get("entries", [])}
+        self._deleted_snapshots[f"sync-plan-snapshot-{db_name}"] = {
+            "schema": dict(db.get("schema", {})),
+            "entries": list(db.get("entries", [])),
+        }
+
+        for step in list(plan.get("resolutions", [])):
+            eid = str(step.get("entryId", ""))
+            action = str(step.get("action", ""))
+            resolved = step.get("resolved")
+            if action == "create" and isinstance(resolved, dict):
+                current[eid] = resolved
+            elif action == "update" and isinstance(resolved, dict):
+                current[eid] = resolved
+            elif action == "noop":
+                continue
+
+        db["entries"] = list(current.values())
+        self._save()
+        return RuntimeResult(
+            ok=True,
+            message="Jamal sync plan applied with snapshot.",
+            payload={
+                "planId": pid,
+                "database": db_name,
+                "mergedCount": len(db["entries"]),
+                "conflictCount": len(list(plan.get("conflicts", []))),
+            },
+        )
+
+    def jamal_sync_rollback(self, *, database_name: str = "") -> RuntimeResult:
+        target = self._normalize_name(database_name or self._current_db)
+        if not target:
+            return RuntimeResult(ok=False, message="Database name is required for rollback.")
+        snap = self._deleted_snapshots.get(f"sync-plan-snapshot-{target}") or self._deleted_snapshots.get(f"sync-snapshot-{target}")
+        if snap is None:
+            return RuntimeResult(ok=False, message="No sync snapshot was found for rollback.")
+        self._databases[target] = {
+            "schema": dict(snap.get("schema", {})),
+            "entries": list(snap.get("entries", [])),
+        }
+        self._current_db = target
+        self._save()
+        return RuntimeResult(ok=True, message="Jamal sync rollback complete.", payload={"database": target, "restoredCount": len(self._databases[target]["entries"])})

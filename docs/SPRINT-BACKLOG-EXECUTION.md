@@ -31,6 +31,22 @@ Use these labels on all tickets:
 
 ## Ticket Backlog
 
+## Implementation Reconciliation Snapshot (2026-05-22)
+
+The backlog remains the source of truth for roadmap intent, but runtime currently includes substantial portions of E01, E10, and E17 beyond original staged targets. Use this snapshot to avoid duplicate effort.
+
+### Closed or substantially closed in code/tests
+
+1. E01 core selection, clips, merge, plus PocketClips browser and clip library command families.
+2. E10 structured records baseline plus advanced tooling (template apply, dashboard, advanced search, entry grid, JSON export, Jamal bridge).
+3. E17 direct hotkey plane, diagnostics, multi-press, layered key routing, fallback order, and command orchestration baseline.
+4. E12 AI assistant platform baseline command surface (key and policy, sessions, tools, prompt library, document Q and A, image and transcription flows).
+
+### Remaining high-priority closure work
+
+1. Cross-app manual parity sign-off and behavior tuning in real NVDA surfaces.
+2. Final release notes and migration sign-off packaging for rollout quality.
+
 ## E01 Selection and Clip Intelligence
 
 ### TKT-E01-001 SP-E01-A Selection markers and context

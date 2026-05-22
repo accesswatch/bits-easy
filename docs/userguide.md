@@ -170,7 +170,9 @@ Spellforge can act on text you have selected in any application.
 - Press `Control+Alt+A` to **extract action items** — useful for emails and meeting notes.
 - Press `Control+Alt+R` to **rewrite** the text in simpler language.
 
-If you want to mark a region manually (for example when your application does not support standard selection), use `Control+Alt+[` to mark the start and `Control+Alt+]` to mark the end. Press `Control+Alt+'` to hear a description of your current selection context, `Control+Alt+J` to jump back to where your selection started, and `Control+Alt+X` to clear the markers.
+If you want to mark a region manually (for example when your application does not support standard selection), use `Control+Alt+[` to mark the start and `Control+Alt+]` to mark the end. Press `Control+Alt+'` to hear a description of your current selection context, `Control+Alt+;` to hear marker status and cross-surface drift hints, `Control+Alt+J` to jump back to where your selection started, and `Control+Alt+X` to clear the markers.
+
+From the palette you can also run `cmd.selection.markerStatus` to hear whether start and end markers are set and whether a usable range is already cached.
 
 ### 6.3 Clip Slots and the Clip Library
 
@@ -182,6 +184,8 @@ Clip slots let you save up to ten pieces of text and reuse them freely, even acr
 - **Open the clip library:** Press `Control+Alt+6` to browse, organise, and manage saved clips in folders.
 
 You can also combine clips using the **MergeBoard**. Set whether clips should be joined end-to-end or replace each other (`Control+Alt+M` for append, `Control+Alt+Shift+M` for replace), choose how they are separated (line, space, or paragraph), and then commit the merge when your stack is ready.
+
+From the palette, advanced PocketClips workflows now include search in slot browser (`cmd.clip.browser.search`), pin or unpin favorite slots via batch action (`action=pin` or `action=unpin`), clip category assignment (`cmd.clip.library.assignCategory`), and alias conflict handling strategy for retained slot aliases (`aliasStrategy=rename|replace|reject`).
 
 ### 6.4 Reading Long Results
 
@@ -309,6 +313,7 @@ These are all the built-in hotkeys. The NVDA Key is the key you have set as your
 | Control+Alt+P | Pin result to inbox |
 | Control+Alt+Q | Quick capture to inbox |
 | Control+Alt+' | Read selection context |
+| Control+Alt+; | Read selection marker status |
 | Control+Alt+R | Rewrite selection in simpler language |
 | Control+Alt+Shift+R | Open system report |
 | Control+Alt+RightArrow | Next result block |
@@ -360,6 +365,27 @@ cmd.capture.quickInbox
 cmd.capture.quickInbox.list
 cmd.capture.quickInbox.route
 
+[ai]
+cmd.ai.billingStatus
+cmd.ai.doc.ask
+cmd.ai.doc.followUp
+cmd.ai.doc.upload
+cmd.ai.image.generate
+cmd.ai.key.delete
+cmd.ai.key.set
+cmd.ai.prompt.create
+cmd.ai.prompt.delete
+cmd.ai.prompt.insert
+cmd.ai.prompt.list
+cmd.ai.session.clear
+cmd.ai.session.delete
+cmd.ai.session.list
+cmd.ai.session.load
+cmd.ai.session.new
+cmd.ai.session.save
+cmd.ai.tool.run
+cmd.ai.transcribe
+
 [clip]
 cmd.clip.browser.batchAction
 cmd.clip.browser.compare
@@ -386,6 +412,7 @@ cmd.clip.library.renameFolder
 cmd.clip.library.restoreToSlot
 cmd.clip.library.retainSlotAlias
 cmd.clip.library.setRetentionPolicy
+cmd.clip.library.timeline
 cmd.clip.pasteFromSlot
 cmd.clip.protectSlot
 cmd.clip.unprotectSlot
@@ -398,7 +425,9 @@ cmd.contacts.search
 cmd.contacts.syncGoogle
 
 [context]
+cmd.context.capabilityEnvelope
 cmd.context.returnSource
+cmd.context.returnSourceDriftSafe
 cmd.context.whereAmI
 
 [cuts]
@@ -420,23 +449,39 @@ cmd.date.insert
 
 [db]
 cmd.db.create
+cmd.db.dashboard
 cmd.db.delete
 cmd.db.entry.add
 cmd.db.entry.delete
 cmd.db.entry.detail
 cmd.db.entry.edit
+cmd.db.entry.grid
 cmd.db.entry.list
 cmd.db.export.csv
+cmd.db.export.json
 cmd.db.export.text
 cmd.db.field.define
+cmd.db.list
 cmd.db.restore
 cmd.db.search
+cmd.db.search.advanced
 cmd.db.select
 cmd.db.sort
+cmd.db.template.apply
 
 [diary]
 cmd.diary.create
 cmd.diary.listMonth
+
+[file]
+cmd.file.browse
+cmd.file.copy
+cmd.file.delete
+cmd.file.move
+cmd.file.path.copy
+cmd.file.rename
+cmd.file.tag.batch
+cmd.file.zip.create
 
 [help]
 cmd.help.availableHotkeys
@@ -447,6 +492,9 @@ cmd.jamal.import
 cmd.jamal.launch
 cmd.jamal.return
 cmd.jamal.sync
+cmd.jamal.sync.applyPlan
+cmd.jamal.sync.plan
+cmd.jamal.sync.rollback
 
 [joplin]
 cmd.joplin.export
@@ -458,6 +506,7 @@ cmd.joplin.refresh.rollback
 [journal]
 cmd.journal.list
 cmd.journal.rollback
+cmd.journal.trends
 
 [mail]
 cmd.mail.attachments.action
@@ -481,14 +530,19 @@ cmd.missions.status
 
 [notes]
 cmd.notes.attachment.add
+cmd.notes.attachment.action
+cmd.notes.backup.export
+cmd.notes.backup.restore
 cmd.notes.category.create
 cmd.notes.category.move
+cmd.notes.category.tree
 cmd.notes.field.set
 cmd.notes.help.resolve
 cmd.notes.help.set
 cmd.notes.mode.set
 cmd.notes.quickCapture
 cmd.notes.relate
+cmd.notes.related.graph
 cmd.notes.snapshot.create
 cmd.notes.snapshot.restore
 
@@ -527,8 +581,12 @@ cmd.result.virtualOpen
 [retrieve]
 cmd.retrieve.parse
 cmd.retrieve.query
+cmd.retrieve.anchor.set
 cmd.retrieve.revisit
 cmd.retrieve.summarize
+cmd.retrieve.trail.open
+cmd.retrieve.trail.return
+cmd.retrieve.visited.report
 
 [selection]
 cmd.selection.cancel
@@ -536,6 +594,7 @@ cmd.selection.extractActions
 cmd.selection.jumpStart
 cmd.selection.markEnd
 cmd.selection.markStart
+cmd.selection.markerStatus
 cmd.selection.readContext
 cmd.selection.rewriteBeginner
 cmd.selection.summarize
@@ -702,4 +761,3 @@ There is no pressure to learn everything at once. Here is a gentle week-by-week 
 - **Day 7:** Look at backup and portability so your setup is protected.
 
 Once you can open the palette, capture a thought, save and reuse a clip, and run one daily planning command — you are already getting real value from Spellforge. Everything else is there when you are ready for it.
-

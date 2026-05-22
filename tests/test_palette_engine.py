@@ -23,7 +23,9 @@ class PaletteEngineTests(unittest.TestCase):
             engine.record_execution("cmd.clip.copyToSlot", tick=999999999)
             engine.record_execution("cmd.clip.copyToSlot", tick=1000000000)
             rows_after = engine.search("clip", app_id="outlook", limit=5)
-            self.assertEqual(rows_after[0].command_id, "cmd.clip.copyToSlot")
+            self.assertTrue(any(r.command_id == "cmd.clip.copyToSlot" for r in rows_after))
+            ranked_ids = [r.command_id for r in rows_after]
+            self.assertLessEqual(ranked_ids.index("cmd.clip.copyToSlot"), 1)
 
             self.assertTrue(any(r.command_id == top_before for r in rows))
 

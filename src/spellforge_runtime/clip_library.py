@@ -129,6 +129,15 @@ class ClipLibraryStore:
         if folder_id:
             rows = [r for r in rows if folder_id in r.folder_links]
         rows.sort(key=lambda r: r.created_at, reverse=True)
+        by_source: Dict[str, int] = {}
+        by_category: Dict[str, int] = {}
+        pinned = 0
+        for row in rows:
+            by_source[row.source_app] = by_source.get(row.source_app, 0) + 1
+            for cat in row.categories:
+                by_category[cat] = by_category.get(cat, 0) + 1
+            if row.archive_state == "pinned" or row.retention_policy == "pin-protected":
+                pinned += 1
         return RuntimeResult(
             ok=True,
             message="Clip library view ready.",
@@ -149,6 +158,13 @@ class ClipLibraryStore:
                     for r in rows
                 ],
                 "folders": self._folders,
+                "smartViews": {
+                    "recent": [r.clip_id for r in rows[:10]],
+                    "pinned": [r.clip_id for r in rows if r.archive_state == "pinned" or r.retention_policy == "pin-protected"],
+                    "bySource": by_source,
+                    "byCategory": by_category,
+                    "counts": {"total": len(rows), "pinned": pinned},
+                },
             },
         )
 
@@ -204,16 +220,88 @@ class ClipLibraryStore:
         clip = self._clips.get(clip_id)
         if clip is None:
             return RuntimeResult(ok=False, message="Clip not found.")
-        for other in self._clips.values():
-            if other.clip_id != clip_id and other.slot_alias and other.slot_alias == alias:
-                return RuntimeResult(
-                    ok=False,
-                    message="Slot alias collision detected.",
-                    next_steps=["Choose a different alias.", "Clear existing alias first."],
-                )
-        clip.slot_alias = alias.strip() or None
+        resolved = self._resolve_alias_collision(clip_id=clip_id, alias=alias.strip() or None, strategy="reject")
+        if not resolved.ok:
+            return resolved
+        clip.slot_alias = (resolved.payload or {}).get("slotAlias")
         self._save()
         return RuntimeResult(ok=True, message="Slot alias updated.", payload={"clipId": clip_id, "slotAlias": clip.slot_alias})
+
+    def retain_slot_alias_with_strategy(self, clip_id: str, alias: str, strategy: str = "reject") -> RuntimeResult:
+        clip = self._clips.get(clip_id)
+        if clip is None:
+            return RuntimeResult(ok=False, message="Clip not found.")
+        resolved = self._resolve_alias_collision(clip_id=clip_id, alias=alias.strip() or None, strategy=strategy)
+        if not resolved.ok:
+            return resolved
+        clip.slot_alias = (resolved.payload or {}).get("slotAlias")
+        self._save()
+        return RuntimeResult(
+            ok=True,
+            message="Slot alias updated.",
+            payload={
+                "clipId": clip_id,
+                "slotAlias": clip.slot_alias,
+                "strategy": strategy,
+            },
+        )
+
+    def _resolve_alias_collision(self, *, clip_id: str, alias: Optional[str], strategy: str) -> RuntimeResult:
+        if not alias:
+            return RuntimeResult(ok=True, message="Alias cleared.", payload={"slotAlias": None})
+
+        existing = next(
+            (other for other in self._clips.values() if other.clip_id != clip_id and other.slot_alias == alias),
+            None,
+        )
+        if existing is None:
+            return RuntimeResult(ok=True, message="Alias available.", payload={"slotAlias": alias})
+
+        mode = strategy.strip().lower()
+        if mode == "replace":
+            existing.slot_alias = None
+            return RuntimeResult(ok=True, message="Alias moved from existing clip.", payload={"slotAlias": alias})
+        if mode == "rename":
+            suffix = 2
+            candidate = f"{alias}-{suffix}"
+            used = {c.slot_alias for c in self._clips.values() if c.slot_alias}
+            while candidate in used:
+                suffix += 1
+                candidate = f"{alias}-{suffix}"
+            return RuntimeResult(ok=True, message="Alias collision resolved by renaming.", payload={"slotAlias": candidate})
+
+        return RuntimeResult(
+            ok=False,
+            message="Slot alias collision detected.",
+            payload={"conflictWithClipId": existing.clip_id, "requestedAlias": alias},
+            next_steps=[
+                "Retry with aliasStrategy=rename.",
+                "Retry with aliasStrategy=replace.",
+                "Choose a different alias.",
+            ],
+        )
+
+    def assign_category(self, clip_id: str, category: str) -> RuntimeResult:
+        clip = self._clips.get(clip_id)
+        if clip is None:
+            return RuntimeResult(ok=False, message="Clip not found.")
+        normalized = category.strip().lower()
+        if not normalized:
+            return RuntimeResult(ok=False, message="Category cannot be empty.")
+        if normalized not in clip.categories:
+            clip.categories.append(normalized)
+            clip.categories.sort()
+            self._save()
+        return RuntimeResult(ok=True, message="Clip category assigned.", payload={"clipId": clip_id, "categories": clip.categories})
+
+    def remove_category(self, clip_id: str, category: str) -> RuntimeResult:
+        clip = self._clips.get(clip_id)
+        if clip is None:
+            return RuntimeResult(ok=False, message="Clip not found.")
+        normalized = category.strip().lower()
+        clip.categories = [c for c in clip.categories if c != normalized]
+        self._save()
+        return RuntimeResult(ok=True, message="Clip category removed.", payload={"clipId": clip_id, "categories": clip.categories})
 
     def restore_to_slot(self, clip_id: str, slot: int, *, mode: str = "replace") -> RuntimeResult:
         clip = self._clips.get(clip_id)
@@ -260,6 +348,50 @@ class ClipLibraryStore:
             return RuntimeResult(ok=False, message="Clip not found.")
         details = [{"folderId": fid, "name": self._folders.get(fid, {}).get("name", fid)} for fid in clip.folder_links]
         return RuntimeResult(ok=True, message="Linked locations listed.", payload={"clipId": clip_id, "locations": details})
+
+    def timeline_view(self, *, limit: int = 50, source_app: str = "", category: str = "") -> RuntimeResult:
+        app_filter = source_app.strip().lower()
+        cat_filter = category.strip().lower()
+        rows = list(self._clips.values())
+        if app_filter:
+            rows = [r for r in rows if r.source_app.lower() == app_filter]
+        if cat_filter:
+            rows = [r for r in rows if cat_filter in [c.lower() for c in r.categories]]
+        rows.sort(key=lambda r: r.created_at, reverse=True)
+        rows = rows[: max(1, int(limit))]
+
+        buckets: Dict[str, List[str]] = {}
+        for row in rows:
+            day = row.created_at[:10] if row.created_at else "unknown"
+            buckets.setdefault(day, []).append(row.clip_id)
+
+        return RuntimeResult(
+            ok=True,
+            message="Clip library timeline ready.",
+            payload={
+                "items": [
+                    {
+                        "clipId": r.clip_id,
+                        "createdAt": r.created_at,
+                        "sourceApp": r.source_app,
+                        "archiveState": r.archive_state,
+                        "categories": r.categories,
+                        "length": len(r.content),
+                    }
+                    for r in rows
+                ],
+                "timelineBuckets": buckets,
+                "discoverability": {
+                    "defaultSmartViews": ["recent", "pinned", "bySource", "byCategory"],
+                    "quickCommands": [
+                        "cmd.clip.library.open",
+                        "cmd.clip.library.timeline",
+                        "cmd.clip.library.restoreToSlot",
+                    ],
+                },
+                "count": len(rows),
+            },
+        )
 
     @staticmethod
     def _empty_context():

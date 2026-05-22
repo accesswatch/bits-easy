@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .diagnostics import get_logger
 
@@ -144,11 +144,12 @@ class DriftAwareAdapter(AppAdapter):
 class SpellforgeRuntime:
     def __init__(self, adapters: Dict[str, AppAdapter], storage_path: Optional[Path | str] = None):
         self.adapters = adapters
-        self._selection_markers: Dict[str, Dict[str, int]] = {}
+        self._selection_markers: Dict[str, Dict[str, Any]] = {}
         self._selection_cache: Dict[str, SelectionRange] = {}
         self._source_anchor: Optional[SourceAnchor] = None
         self._slots: Dict[int, ClipSlot] = {i: ClipSlot() for i in range(1, 13)}
         self._storage_path: Optional[Path] = Path(storage_path) if storage_path else None
+        self._marker_metrics: Dict[str, Any] = {"global": {}, "apps": {}}
 
         self._merge_mode = "append"
         self._merge_divider = "\n"
@@ -175,6 +176,71 @@ class SpellforgeRuntime:
                 next_steps=["Choose a slot in the range 1 to 12."],
             )
         return self._slots[slot], None
+
+    @staticmethod
+    def _selection_preview_payload(selection: SelectionRange, snippet: int = 18) -> Dict[str, Any]:
+        preview = selection.text.strip()
+        head = preview[:snippet]
+        tail = preview[-snippet:] if len(preview) > snippet else preview
+        return {
+            "startSnippet": head,
+            "endSnippet": tail,
+            "confidence": selection.confidence,
+            "length": len(selection.text),
+        }
+
+    @staticmethod
+    def _surface_key(context: AppContext) -> str:
+        return f"{context.app_id}:{context.window_id}:{context.control_id}"
+
+    def _marker_meta(self, context: AppContext) -> Dict[str, Any]:
+        return {
+            "appId": context.app_id,
+            "windowId": context.window_id,
+            "controlId": context.control_id,
+            "surfaceKey": self._surface_key(context),
+            "capturedAt": self._now(),
+        }
+
+    @staticmethod
+    def _marker_caret(markers: Dict[str, Any], key: str) -> Optional[int]:
+        value = markers.get(key)
+        if isinstance(value, int):
+            return value
+        return None
+
+    def _record_marker_metric(self, app_id: str, metric: str) -> None:
+        metric_key = metric.strip()
+        if not metric_key:
+            return
+        global_metrics = self._marker_metrics.setdefault("global", {})
+        app_metrics = self._marker_metrics.setdefault("apps", {}).setdefault(app_id, {})
+        global_metrics[metric_key] = int(global_metrics.get(metric_key, 0)) + 1
+        app_metrics[metric_key] = int(app_metrics.get(metric_key, 0)) + 1
+
+    @staticmethod
+    def _metric_rate(numerator: int, denominator: int) -> float:
+        if denominator <= 0:
+            return 0.0
+        return round(numerator / denominator, 4)
+
+    def _marker_telemetry_payload(self, app_id: str) -> Dict[str, Any]:
+        global_metrics = dict(self._marker_metrics.get("global", {}))
+        app_metrics = dict((self._marker_metrics.get("apps", {}) or {}).get(app_id, {}))
+        app_attempts = int(app_metrics.get("markEndAttempt", 0))
+        app_captured = int(app_metrics.get("markEndCaptured", 0))
+        app_fallback = int(app_metrics.get("fallbackUsed", 0))
+        app_surface_drift = int(app_metrics.get("surfaceDriftDetected", 0))
+        return {
+            "appId": app_id,
+            "app": app_metrics,
+            "global": global_metrics,
+            "rates": {
+                "captureSuccessRate": self._metric_rate(app_captured, app_attempts),
+                "fallbackRate": self._metric_rate(app_fallback, app_attempts),
+                "surfaceDriftRate": self._metric_rate(app_surface_drift, app_attempts),
+            },
+        }
 
     def _serialize_slots(self) -> Dict[str, dict]:
         payload: Dict[str, dict] = {}
@@ -292,8 +358,11 @@ class SpellforgeRuntime:
         )
 
     def mark_selection_start(self, context: AppContext) -> RuntimeResult:
-        self._selection_markers.setdefault(context.app_id, {})["start"] = context.caret
+        markers = self._selection_markers.setdefault(context.app_id, {})
+        markers["start"] = context.caret
+        markers["startMeta"] = self._marker_meta(context)
         self.save_source_anchor(context)
+        self._record_marker_metric(context.app_id, "markStartSet")
         return RuntimeResult(
             ok=True,
             message=f"Selection start marker set at {context.caret}.",
@@ -302,7 +371,9 @@ class SpellforgeRuntime:
 
     def mark_selection_end(self, context: AppContext) -> RuntimeResult:
         markers = self._selection_markers.setdefault(context.app_id, {})
-        if "start" not in markers:
+        start_caret = self._marker_caret(markers, "start")
+        if start_caret is None:
+            self._record_marker_metric(context.app_id, "markEndMissingStart")
             return RuntimeResult(
                 ok=False,
                 code=RuntimeErrorCode.NO_SELECTION,
@@ -313,39 +384,66 @@ class SpellforgeRuntime:
                 ],
             )
 
+        self._record_marker_metric(context.app_id, "markEndAttempt")
         markers["end"] = context.caret
+        markers["endMeta"] = self._marker_meta(context)
+        start_meta = markers.get("startMeta", {})
+        if isinstance(start_meta, dict):
+            start_surface = str(start_meta.get("surfaceKey", ""))
+            if start_surface and start_surface != self._surface_key(context):
+                self._record_marker_metric(context.app_id, "surfaceDriftDetected")
+
         adapter = self._adapter_for(context.app_id)
         try:
-            selection = adapter.normalize_range(context, markers["start"], markers["end"])
+            selection = adapter.normalize_range(context, start_caret, context.caret)
             self._selection_cache[context.app_id] = selection
+            payload = self._selection_preview_payload(selection)
+            payload.update(
+                {
+                    "start": selection.start,
+                    "end": selection.end,
+                    "startMeta": markers.get("startMeta"),
+                    "endMeta": markers.get("endMeta"),
+                }
+            )
+            self._record_marker_metric(context.app_id, "markEndCaptured")
             return RuntimeResult(
                 ok=True,
                 message=f"Selection range captured, {len(selection.text)} characters.",
-                payload={
-                    "start": selection.start,
-                    "end": selection.end,
-                    "length": len(selection.text),
-                    "confidence": selection.confidence,
-                },
+                payload=payload,
             )
         except UnsupportedSurfaceError:
             fallback_text = context.clipboard_text.strip()
             if fallback_text:
-                self._selection_cache[context.app_id] = SelectionRange(
+                fallback_selection = SelectionRange(
                     app_id=context.app_id,
-                    start=markers["start"],
+                    start=start_caret,
                     end=context.caret,
                     text=fallback_text,
                     confidence=0.6,
                 )
+                self._selection_cache[context.app_id] = fallback_selection
+                payload = self._selection_preview_payload(fallback_selection)
+                payload.update(
+                    {
+                        "fallbackUsed": True,
+                        "start": start_caret,
+                        "end": context.caret,
+                        "startMeta": markers.get("startMeta"),
+                        "endMeta": markers.get("endMeta"),
+                    }
+                )
+                self._record_marker_metric(context.app_id, "markEndCaptured")
+                self._record_marker_metric(context.app_id, "fallbackUsed")
                 return RuntimeResult(
                     ok=True,
                     message="Selection surface unsupported. Captured fallback text from clipboard.",
                     code=RuntimeErrorCode.UNSUPPORTED_SURFACE,
-                    payload={"confidence": 0.6, "fallbackUsed": True},
+                    payload=payload,
                     next_steps=["Review captured text before applying mutating actions."],
                 )
 
+            self._record_marker_metric(context.app_id, "unsupportedSurfaceFailure")
             return RuntimeResult(
                 ok=False,
                 code=RuntimeErrorCode.UNSUPPORTED_SURFACE,
@@ -355,6 +453,9 @@ class SpellforgeRuntime:
                     "Open palette with fallback actions.",
                 ],
             )
+        finally:
+            if context.app_id in self._selection_cache:
+                markers["lastRangeMeta"] = self._selection_preview_payload(self._selection_cache[context.app_id], snippet=32)
 
     def read_selection_context(self, context: AppContext, snippet: int = 18) -> RuntimeResult:
         if context.app_id not in self._selection_cache:
@@ -365,24 +466,116 @@ class SpellforgeRuntime:
                 next_steps=["Set selection start and end markers first."],
             )
 
+        self._record_marker_metric(context.app_id, "readContext")
         selection = self._selection_cache[context.app_id]
-        preview = selection.text.strip()
-        head = preview[:snippet]
-        tail = preview[-snippet:] if len(preview) > snippet else preview
         return RuntimeResult(
             ok=True,
             message="Selection context ready.",
+            payload=self._selection_preview_payload(selection, snippet=snippet),
+        )
+
+    def describe_selection_markers(self, context: AppContext, snippet: int = 18) -> RuntimeResult:
+        markers = self._selection_markers.get(context.app_id, {})
+        selection = self._selection_cache.get(context.app_id)
+        has_start = self._marker_caret(markers, "start") is not None
+        has_end = self._marker_caret(markers, "end") is not None
+        start_meta = markers.get("startMeta") if isinstance(markers.get("startMeta"), dict) else {}
+        end_meta = markers.get("endMeta") if isinstance(markers.get("endMeta"), dict) else {}
+        current_surface = self._surface_key(context)
+        surface_drift_from_start = bool(start_meta.get("surfaceKey")) and str(start_meta.get("surfaceKey")) != current_surface
+        self._record_marker_metric(context.app_id, "statusRead")
+
+        if selection is not None:
+            payload = self._selection_preview_payload(selection, snippet=snippet)
+            payload.update(
+                {
+                    "startMarkerSet": has_start,
+                    "endMarkerSet": has_end,
+                    "startCaret": self._marker_caret(markers, "start"),
+                    "endCaret": self._marker_caret(markers, "end"),
+                    "activeRangeStart": selection.start,
+                    "activeRangeEnd": selection.end,
+                    "startMeta": start_meta,
+                    "endMeta": end_meta,
+                    "currentSurfaceKey": current_surface,
+                    "surfaceDriftFromStart": surface_drift_from_start,
+                    "telemetry": self._marker_telemetry_payload(context.app_id),
+                }
+            )
+            return RuntimeResult(
+                ok=True,
+                message="Selection markers and range are ready.",
+                payload=payload,
+            )
+
+        if has_start and has_end:
+            return RuntimeResult(
+                ok=True,
+                message="Selection markers are set, but no active range is cached yet.",
+                payload={
+                    "startMarkerSet": True,
+                    "endMarkerSet": True,
+                    "startCaret": self._marker_caret(markers, "start"),
+                    "endCaret": self._marker_caret(markers, "end"),
+                    "startMeta": start_meta,
+                    "endMeta": end_meta,
+                    "currentSurfaceKey": current_surface,
+                    "surfaceDriftFromStart": surface_drift_from_start,
+                    "telemetry": self._marker_telemetry_payload(context.app_id),
+                },
+                next_steps=["Run Mark selection end again to refresh the selection range."],
+            )
+
+        if has_start:
+            return RuntimeResult(
+                ok=True,
+                message="Selection start marker is set. End marker is not set yet.",
+                payload={
+                    "startMarkerSet": True,
+                    "endMarkerSet": False,
+                    "startCaret": self._marker_caret(markers, "start"),
+                    "startMeta": start_meta,
+                    "currentSurfaceKey": current_surface,
+                    "surfaceDriftFromStart": surface_drift_from_start,
+                    "telemetry": self._marker_telemetry_payload(context.app_id),
+                },
+                next_steps=["Set selection end marker to capture a range."],
+            )
+
+        if has_end:
+            return RuntimeResult(
+                ok=False,
+                code=RuntimeErrorCode.NO_SELECTION,
+                message="Selection end marker exists without a start marker.",
+                payload={
+                    "startMarkerSet": False,
+                    "endMarkerSet": True,
+                    "endCaret": self._marker_caret(markers, "end"),
+                    "endMeta": end_meta,
+                    "currentSurfaceKey": current_surface,
+                    "telemetry": self._marker_telemetry_payload(context.app_id),
+                },
+                next_steps=["Cancel selection markers and set selection start marker first."],
+            )
+
+        return RuntimeResult(
+            ok=False,
+            code=RuntimeErrorCode.NO_SELECTION,
+            message="No selection markers are set.",
             payload={
-                "startSnippet": head,
-                "endSnippet": tail,
-                "confidence": selection.confidence,
-                "length": len(selection.text),
+                "startMarkerSet": False,
+                "endMarkerSet": False,
+                "currentSurfaceKey": current_surface,
+                "telemetry": self._marker_telemetry_payload(context.app_id),
             },
+            next_steps=["Set selection start marker first."],
         )
 
     def jump_selection_start(self, context: AppContext) -> RuntimeResult:
         markers = self._selection_markers.get(context.app_id, {})
-        if "start" not in markers:
+        start_caret = self._marker_caret(markers, "start")
+        if start_caret is None:
+            self._record_marker_metric(context.app_id, "jumpMissingStart")
             return RuntimeResult(
                 ok=False,
                 code=RuntimeErrorCode.NO_SELECTION,
@@ -390,13 +583,15 @@ class SpellforgeRuntime:
                 next_steps=["Set a selection start marker first."],
             )
 
-        target = min(max(markers["start"], 0), len(context.buffer))
+        target = min(max(start_caret, 0), len(context.buffer))
         context.caret = target
+        self._record_marker_metric(context.app_id, "jumpStartSuccess")
         return RuntimeResult(ok=True, message="Jumped to selection start.", payload={"caret": target})
 
     def cancel_selection(self, context: AppContext) -> RuntimeResult:
         self._selection_markers.pop(context.app_id, None)
         self._selection_cache.pop(context.app_id, None)
+        self._record_marker_metric(context.app_id, "cancelSelection")
         return RuntimeResult(ok=True, message="Selection markers cleared.")
 
     def copy_to_slot(self, context: AppContext, slot: int, text: Optional[str] = None) -> RuntimeResult:

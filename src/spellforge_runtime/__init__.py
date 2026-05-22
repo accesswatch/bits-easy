@@ -60,6 +60,7 @@ from .utility_ops import UtilityOpsService
 from .missions_context import MissionsContextService
 from .workflow_portability import WorkflowPortabilityService
 from .spellcheck import SpellCheckService
+from .diagnostics import get_logger, log_and_default, run_with_default
 
 __all__ = [
     "AppAdapter",
@@ -150,4 +151,7 @@ __all__ = [
     "MissionsContextService",
     "WorkflowPortabilityService",
     "SpellCheckService",
+    "get_logger",
+    "log_and_default",
+    "run_with_default",
 ]

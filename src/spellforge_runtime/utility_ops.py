@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.utility_ops")
 
 
 class UtilityOpsService:
@@ -28,6 +31,7 @@ class UtilityOpsService:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading utility ops state at %s failed", self._storage_path)
             return
         self._rules = payload.get("rules", {}) if isinstance(payload.get("rules", {}), dict) else {}
         self._rules_backup = payload.get("rulesBackup", {}) if isinstance(payload.get("rulesBackup", {}), dict) else {}

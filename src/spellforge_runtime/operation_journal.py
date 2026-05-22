@@ -6,7 +6,10 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.operation_journal")
 
 
 @dataclass
@@ -66,6 +69,7 @@ class OperationJournal:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading operation journal at %s failed", self._storage_path)
             return
 
         self._counter = int(payload.get("counter", 0))

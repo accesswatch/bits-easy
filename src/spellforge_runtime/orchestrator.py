@@ -4,8 +4,11 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .diagnostics import get_logger
 from .dispatcher import DispatchOutcome, RuntimeDispatcher
 from .engine import AppContext
+
+_logger = get_logger("spellforge.orchestrator")
 
 
 class CommandOrchestrator:
@@ -39,6 +42,7 @@ class CommandOrchestrator:
         try:
             payload = json.loads(self.intent_store_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading intent store at %s failed", self.intent_store_path)
             return
 
         intents = payload.get("intentMemory", {})

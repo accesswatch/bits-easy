@@ -4,6 +4,10 @@ import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from .diagnostics import get_logger
+
+_logger = get_logger("spellforge.settings")
+
 
 @dataclass
 class SpellforgeSettings:
@@ -39,6 +43,7 @@ class SettingsStore:
                 enable_multi_press_gestures=bool(payload.get("enable_multi_press_gestures", True)),
             )
         except Exception:
+            _logger.exception("Spellforge: loading settings store at %s failed", self.path)
             return SpellforgeSettings()
 
     def save(self, settings: SpellforgeSettings) -> None:

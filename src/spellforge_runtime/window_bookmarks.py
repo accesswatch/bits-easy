@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Dict
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.window_bookmarks")
 
 
 class WindowBookmarks:
@@ -29,6 +32,7 @@ class WindowBookmarks:
                 if str(k).isdigit()
             }
         except Exception:
+            _logger.exception("Spellforge: loading window bookmarks at %s failed", self.storage_path)
             self._slots = {}
 
     def _save(self) -> None:

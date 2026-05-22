@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.joplin_bridge")
 
 
 class JoplinBridge:
@@ -27,6 +30,7 @@ class JoplinBridge:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading Joplin mapping at %s failed", self._storage_path)
             return
         mp = payload.get("mappingProfile", {})
         self._mapping_profile = mp if isinstance(mp, dict) else {"tagMap": {}, "attachmentMap": {}}

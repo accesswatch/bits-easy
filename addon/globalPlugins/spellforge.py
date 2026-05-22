@@ -10,12 +10,20 @@ import globalPluginHandler
 import scriptHandler
 import ui
 
+try:
+    from logHandler import log
+except Exception:  # pragma: no cover - logHandler is always present inside NVDA
+    import logging
+
+    log = logging.getLogger("spellforge.addon")
+
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     scriptCategory = "Spellforge"
 
     def __init__(self):
         super().__init__()
+        log.info("Spellforge: GlobalPlugin __init__ start")
         self._runtime = None
         self._dispatcher = None
         self._config = None
@@ -30,6 +38,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         self._hotkey_overrides_path = None
         self._tools_menu_id = None
         self._initialize_runtime()
+        log.info("Spellforge: GlobalPlugin __init__ complete")
 
     def _get_focus_snapshot(self):
         try:
@@ -39,6 +48,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             focus = api.getFocusObject()
             return snapshot_from_focus_object(focus)
         except Exception:
+            log.exception("Spellforge: _get_focus_snapshot failed")
             return None
 
     def _refresh_context_from_focus(self):
@@ -61,6 +71,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         src_path = repo_root / "src"
         if str(src_path) not in sys.path:
             sys.path.insert(0, str(src_path))
+        log.info(
+            "Spellforge: _initialize_runtime start — repo_root=%s, src_on_path=%s",
+            repo_root,
+            src_path.exists(),
+        )
 
         try:
             from spellforge_runtime import (
@@ -80,6 +95,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
             storage_dir = Path(os.getenv("APPDATA", str(repo_root))) / "Spellforge"
             storage_dir.mkdir(parents=True, exist_ok=True)
+            log.info("Spellforge: storage dir ready at %s", storage_dir)
             storage_path = storage_dir / "clip-slots.json"
             settings_path = storage_dir / "settings.json"
             palette_history_path = storage_dir / "palette-history.json"
@@ -87,6 +103,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
             self._settings_store = SettingsStore(settings_path)
             self._settings = self._settings_store.load()
+            log.info(
+                "Spellforge: settings loaded — profile=%s, global_hotkeys=%s",
+                self._settings.profile_id,
+                self._settings.enable_global_hotkeys,
+            )
 
             def snapshot_provider():
                 return self._get_focus_snapshot()
@@ -100,7 +121,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 "firefox": BrowserLiveAdapter("firefox", snapshot_provider=snapshot_provider),
             }
             self._runtime = SpellforgeRuntime(adapters=adapters, storage_path=storage_path)
+            log.info("Spellforge: runtime constructed with %d adapters", len(adapters))
             self._config = load_runtime_config(repo_root)
+            log.info(
+                "Spellforge: runtime config loaded — %d commands, %d bindings",
+                len(self._config.command_catalog),
+                len(self._config.keymap_bindings),
+            )
             self._load_hotkey_overrides()
             self._dispatcher = RuntimeDispatcher(
                 runtime=self._runtime,
@@ -108,12 +135,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 profile_id=self._settings.profile_id,
             )
             self._dispatcher.multi_press_enabled_override = self._settings.enable_multi_press_gestures
+            log.info("Spellforge: dispatcher constructed for profile=%s", self._settings.profile_id)
             self._palette = PaletteEngine(config=self._config, history_path=palette_history_path)
             self._hotkeys = GlobalHotkeyService(
                 on_command=self._on_os_hotkey_command,
                 emulate_capslock_prefix=self._settings.emulate_capslock_prefix_for_os_hotkeys,
             )
             self._restart_hotkeys()
+            log.info("Spellforge: OS hotkey service started")
 
             focus_snapshot = self._get_focus_snapshot()
             app_id = "nvda"
@@ -143,9 +172,19 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 set_settings=self._set_settings,
                 open_hotkey_editor=self._open_hotkey_editor,
             )
+            log.info(
+                "Spellforge: settings panel registered=%s",
+                self._settings_panel_class is not None,
+            )
             self._register_tools_menu_item()
+            log.info(
+                "Spellforge: tools menu registered=%s",
+                self._tools_menu_id is not None,
+            )
+            log.info("Spellforge: runtime ready, announcing load")
             ui.message("Spellforge loaded")
         except Exception as exc:
+            log.exception("Spellforge: failed to load runtime")
             self._runtime = None
             self._dispatcher = None
             self._config = None
@@ -163,13 +202,15 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             return
         try:
             if not self._hotkey_overrides_path.exists():
+                log.info("Spellforge: no hotkey overrides file present, using shipped keymap")
                 return
             payload = json.loads(self._hotkey_overrides_path.read_text(encoding="utf-8"))
             bindings = payload.get("bindings", []) if isinstance(payload, dict) else []
             if isinstance(bindings, list) and bindings:
                 self._config.keymap_bindings = [dict(row) for row in bindings if isinstance(row, dict)]
+                log.info("Spellforge: applied %d hotkey overrides", len(self._config.keymap_bindings))
         except Exception:
-            pass
+            log.exception("Spellforge: loading hotkey overrides failed")
 
     def _save_hotkey_overrides(self, bindings: list[dict]):
         if self._hotkey_overrides_path is None:
@@ -178,14 +219,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._hotkey_overrides_path.parent.mkdir(parents=True, exist_ok=True)
             payload = {"version": "v1", "bindings": bindings}
             self._hotkey_overrides_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            log.info("Spellforge: saved %d hotkey overrides", len(bindings))
         except Exception:
-            pass
+            log.exception("Spellforge: saving hotkey overrides failed")
 
     def _register_tools_menu_item(self):
         try:
             import gui
             import wx
         except Exception:
+            log.exception("Spellforge: tools menu gui/wx import failed")
             return
 
         try:
@@ -194,6 +237,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._tools_menu_id = int(item.GetId())
             gui.mainFrame.Bind(wx.EVT_MENU, self._on_tools_menu_open_hotkeys, id=self._tools_menu_id)
         except Exception:
+            log.exception("Spellforge: tools menu append failed")
             self._tools_menu_id = None
 
     def _unregister_tools_menu_item(self):
@@ -207,7 +251,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             menu = gui.mainFrame.sysTrayIcon.toolsMenu
             menu.Delete(self._tools_menu_id)
         except Exception:
-            pass
+            log.exception("Spellforge: tools menu unregister failed")
         finally:
             self._tools_menu_id = None
 
@@ -222,6 +266,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             import gui
             from spellforge_settings import open_hotkey_editor_dialog
         except Exception:
+            log.exception("Spellforge: hotkey editor import failed")
             ui.message("Hotkey editor is unavailable")
             return
 
@@ -250,6 +295,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
             queueHandler.queueFunction(queueHandler.eventQueue, _run)
         except Exception:
+            log.exception("Spellforge: queueHandler import failed; running OS hotkey inline")
             _run()
 
     def _restart_hotkeys(self):
@@ -265,6 +311,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._hotkeys.start(self._config.keymap_bindings)
 
     def terminate(self):
+        log.info("Spellforge: terminate start")
         try:
             self._unregister_tools_menu_item()
             if self._hotkeys is not None:
@@ -273,8 +320,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
             unregister_settings_panel(self._settings_panel_class)
         except Exception:
-            pass
+            log.exception("Spellforge: terminate cleanup failed")
         super().terminate()
+        log.info("Spellforge: terminate complete")
 
     def _get_settings(self):
         return self._settings
@@ -340,6 +388,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             import wx
             import gui
         except Exception:
+            log.exception("Spellforge: command palette wx/gui import failed")
             ui.message("Command palette UI is unavailable")
             return
 

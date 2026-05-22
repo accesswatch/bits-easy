@@ -4,5 +4,32 @@
   "brailleMode": "compact",
   "confirmPolicy": "adaptive",
   "hotkeyHints": true,
+  "multiPressEnabled": true,
+  "fallbackOrder": [
+    "binding",
+    "palette"
+  ],
+  "commandPolicies": [
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "confirmation": "adaptive",
+      "preview": "when-long"
+    },
+    {
+      "commandId": "cmd.clip.deleteSlot",
+      "confirmation": "always",
+      "preview": "when-long"
+    },
+    {
+      "commandId": "cmd.clip.editSlot",
+      "confirmation": "adaptive",
+      "preview": "when-long"
+    },
+    {
+      "commandId": "cmd.selection.readContext",
+      "confirmation": "inherit",
+      "preview": "when-long"
+    }
+  ],
   "appOverrides": []
 }

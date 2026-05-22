@@ -30,6 +30,45 @@
     "hotkeyHints": {
       "type": "boolean"
     },
+    "multiPressEnabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "fallbackOrder": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["binding", "palette", "none"]
+      },
+      "default": ["binding", "palette"]
+    },
+    "commandPolicies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "commandId",
+          "confirmation",
+          "preview"
+        ],
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "pattern": "^cmd\\.[A-Za-z0-9]+(\\.[A-Za-z0-9]+)+$"
+          },
+          "confirmation": {
+            "type": "string",
+            "enum": ["inherit", "always", "adaptive", "never"]
+          },
+          "preview": {
+            "type": "string",
+            "enum": ["inherit", "always", "when-long", "never"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    },
     "appOverrides": {
       "type": "array",
       "items": {

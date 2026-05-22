@@ -2,6 +2,13 @@
 .DS_Store
 Thumbs.db
 
+# Python compiled files
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 # Editor / local history
 .history/
 .vscode/*.log

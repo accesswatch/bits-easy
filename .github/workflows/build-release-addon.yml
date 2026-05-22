@@ -44,11 +44,17 @@ jobs:
           python scripts/build_addon.py --output-dir dist
 
       - name: Optional detached signature
-        if: ${{ secrets.ADDON_SIGNING_KEY_PEM != '' }}
         shell: pwsh
+        env:
+          ADDON_SIGNING_KEY_PEM: ${{ secrets.ADDON_SIGNING_KEY_PEM }}
         run: |
+          if ([string]::IsNullOrWhiteSpace($env:ADDON_SIGNING_KEY_PEM)) {
+            Write-Host "No signing key configured; skipping detached signature build."
+            exit 0
+          }
+
           $keyPath = Join-Path $PWD "signing-key.pem"
-          [IO.File]::WriteAllText($keyPath, "${{ secrets.ADDON_SIGNING_KEY_PEM }}")
+          [IO.File]::WriteAllText($keyPath, $env:ADDON_SIGNING_KEY_PEM)
           python scripts/build_addon.py --output-dir dist --signing-key-pem $keyPath
           Remove-Item $keyPath -Force
 

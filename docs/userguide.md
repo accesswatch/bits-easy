@@ -1,796 +1,580 @@
 # Spellforge User Guide
 
-Welcome to Spellforge — a productivity add-on for NVDA that brings a powerful set of commands right to your fingertips, all without leaving the keyboard. This guide will walk you through everything you need to know, step by step, in plain language.
+Welcome. Spellforge is a calm, keyboard-first companion for NVDA. It listens for one friendly key chord, helps you do useful things with selected text and your clipboard, and gently keeps your work safe and reversible across every application you use.
 
-If you are new here, start with the [10-Minute Quick Start](#4-10-minute-quick-start). You can always come back to the other sections as you explore more.
+This guide is written to be read in order the first time. After that, jump to any section you need. Nothing here assumes prior experience with Spellforge.
 
----
-
-## 1. What Is Spellforge?
-
-Spellforge sits quietly alongside NVDA and gives you a set of keyboard shortcuts and tools you can use from any application on your computer. Think of it as a personal assistant that is always ready when you press the right key.
-
-Here is a flavour of what you can do:
-
-- **Open a command palette** — a searchable list of everything Spellforge can do, so you never have to memorise a hotkey to get started.
-- **Work with text** — summarise, rewrite, or extract action items from anything you have selected.
-- **Save and reuse text** — store clips in numbered slots and paste them back whenever you need them.
-- **Capture ideas quickly** — press one key to save a thought to your inbox before it slips away.
-- **Read long results comfortably** — navigate through structured output block by block at your own pace.
-- **Stay safe** — Spellforge will ask before doing anything significant, and there is always an emergency stop if something feels wrong.
+If you only have ten minutes, read sections 1 - 4. If you have an afternoon, read everything. You will not need to memorise commands - Spellforge will tell you what is available whenever you ask.
 
 ---
 
-## 2. How Spellforge Works
+## 1. What Spellforge Is
 
-You do not need to understand the internals to use Spellforge, but here is the short version if you are curious.
+Spellforge sits quietly alongside NVDA. It does not change how NVDA reads the screen and it does not take over the keyboard. It adds:
 
-When you press a hotkey or choose a command from the palette, Spellforge looks at what application and text you are currently working with. It then runs the command at the right level of care — asking for confirmation when something is irreversible, and giving you a preview when the output is long. Results are announced through speech and braille, and anything you might want to revisit is available as a navigable virtual view.
+1. One Spellforge key chord that is always ready to help.
+2. A small set of trustworthy hotkeys for daily work.
+3. A searchable command palette for everything else.
+4. Selection and clipboard tools that work across applications.
+5. A virtualized reading surface for long results.
+6. Optional AI augmentation that never replaces your deterministic results.
+7. Safe recovery, previews, and an emergency stop you can rely on.
+
+Spellforge keeps your data on your computer. AI provider keys, when you choose to add them, live in secure storage that you can verify at any time.
 
 ---
 
-## 3. Getting Started
+## 2. Installing Spellforge
 
-### 3.0 Compatibility Requirements
+### 2.1 Requirements
 
-Before you install Spellforge, confirm these requirements:
-
-1. Windows 10 or 11, 64-bit.
+1. Windows 10 or Windows 11, 64-bit.
 2. NVDA 2026.1, 64-bit.
-3. Spellforge `.nvda-addon` package.
+3. The Spellforge `.nvda-addon` package.
 
-For this release, support is intentionally limited to NVDA 2026.1 x64.
+### 2.2 Install steps
 
-### 3.1 Installing Spellforge
+1. In NVDA, open `Tools` and choose `Manage add-ons`.
+2. Press `Install` and select the Spellforge `.nvda-addon` file.
+3. Restart NVDA when prompted.
+4. When NVDA returns, Spellforge announces `Spellforge loaded`.
 
-1. Get the `spellforgeHotkeys` add-on file (it ends in `.nvda-addon`).
-2. In NVDA, open **Tools**, then choose **Manage add-ons**.
-3. Press **Install** and select the add-on file you downloaded.
-4. Restart NVDA when it asks you to.
+### 2.3 First-run check
 
-That is all there is to it. When NVDA comes back, you will hear a confirmation that Spellforge has loaded.
+Press `Control+Alt+Slash`. Spellforge will read a short summary of what you can press right now. If you hear that summary, the add-on is working.
 
-### 3.1.1 Optional Dependencies for Advanced Integrations
+### 2.4 Optional integrations
 
-Most users do not need to install any extra libraries. If you use Google Calendar or Google Contacts integration features, install:
+Most workflows need nothing extra. Install these only if you intend to use Google Calendar or Google Contacts:
 
 1. `google-api-python-client`
 2. `google-auth`
 3. `google-auth-oauthlib`
 4. `google-auth-httplib2`
 
-If you are not using those integrations, you can skip these packages.
+---
 
-### 3.1.2 Tester Quick Copy
+## 3. Choose Your Profile
 
-Use this quick checklist when handing the add-on to a tester.
+Spellforge has three profiles. They change how much it talks, how often it confirms, and how quickly it acts. Your commands and hotkeys stay the same in every profile.
 
-1. Confirm tester machine is Windows 10 or 11, 64-bit.
-2. Confirm NVDA version is 2026.1, 64-bit.
-3. Send the tester the Spellforge .nvda-addon file.
-4. In NVDA, open Tools > Manage add-ons > Install.
-5. Select the Spellforge .nvda-addon file and restart NVDA.
-6. After restart, press Control+Alt+Slash.
-7. If hotkeys are announced, installation passed.
-8. If hotkeys are not announced, run Control+Alt+D for diagnostics and capture the spoken result.
+1. **Beginner.** Friendly explanations, more previews, explicit confirmations. The kindest starting point.
+2. **Balanced.** Concise feedback, confirmations only when something matters. The most common everyday choice.
+3. **Expert.** Minimal speech, fastest action, fewest prompts. Choose this when commands feel second nature.
 
-Optional Google integration setup for testers who need Calendar or Contacts scenarios:
+Open `NVDA Settings` and find the `Spellforge` panel to switch profiles, toggle multi-press gestures, choose whether OS-level global hotkeys are active, and open the keyboard mappings editor.
 
-1. Install Python 3.13 x64.
-2. Run: pip install google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2
-
-### 3.2 Checking That Everything Is Working
-
-After NVDA restarts, try pressing `Control+Alt+Slash`. Spellforge will read out the hotkeys available to you. If you hear that list, you are up and running.
-
-### 3.3 Adjusting Your Settings
-
-You can find Spellforge's settings inside the NVDA Settings dialog — just look for the **Spellforge** panel. Here you can change:
-
-- **Profile** — choose Beginner, Balanced, or Expert (see [Section 5](#5-choosing-a-profile) for what these mean).
-- **Surface announcements** — whether Spellforge tells you which mode it is operating in.
-- **Contextual fallback steps** — whether Spellforge offers alternative suggestions when a command cannot run as expected.
-- **Command palette** — turn the palette on or off.
-- **OS-level global hotkeys** — whether hotkeys work in all applications system-wide.
-- **Control+Alt prefix emulation** — how the Control+Alt-based shortcuts are registered with Windows.
-- **Multi-press gestures** — whether double-press and hold gestures are active.
-- **Keyboard mappings editor** — edit command key chords and enabled state from a dedicated editor dialog.
-
-You can open the keyboard mappings editor in two ways:
-
-1. NVDA Settings > Spellforge > Edit keyboard mappings.
-2. NVDA Tools menu > Spellforge keyboard mappings.
-
-In the editor, turn on Advanced mode if you need to change scope, app override target, or trigger kind.
-
-Use Run NVDA gesture scrub in the editor to detect:
-
-1. Internal collisions between Spellforge bindings.
-2. Potential collisions with known NVDA gestures.
-
-### 3.4 Spellforge Key Model
-
-Spellforge includes a dedicated Spellforge key chord for helper actions.
-
-1. Primary model: Control+Alt based hotkeys (for example Control+Alt+S, Control+Alt+Q).
-2. Dedicated Spellforge helper key: Control+Alt+Space (single, double, triple, and hold variants).
-3. OS hook compatibility model: CapsLock prefix can be emulated as Control+Alt for registration.
-
-This avoids base NVDA gesture conflicts while still giving a single Spellforge-oriented entry point similar to a leader key workflow.
+You can change profile any time. Your saved clips, notes, and workflows are unaffected.
 
 ---
 
-## 4. 10-Minute Quick Start
+## 4. The Spellforge Key: Your Magical Door
 
-Here are eight things to try right now, each taking about a minute:
+Before anything else, learn one chord: `Control+Alt+Space`. This is the Spellforge key. You can press it from almost any application and it will do the right thing for the way you press it.
 
-1. Press `NVDA Key+Shift+P` to open the **command palette**. Type a word like "summarise" and press Enter to run a command.
-2. Select some text in any application and press `Control+Alt+S` to **summarise** it.
-3. With text selected, press `Control+Alt+1` to **save it to clip slot 1**.
-4. Press `Control+Alt+2` to **paste it back** from slot 1.
-5. Press `Control+Alt+Q` to **capture a quick note** to your inbox.
-6. Press `Control+Alt+V` to **reopen the last result** in a navigable view.
-7. Press `Control+Alt+Backspace` to **return to where you were** before Spellforge opened a view.
-8. If anything feels stuck, press `Control+Alt+Escape` to **stop everything** immediately.
+| How you press it | What happens |
+| --- | --- |
+| Single press | Opens the command palette so you can search every Spellforge command in plain language. |
+| Double press | Reads `What can I press` - a concise list of hotkeys available right now. |
+| Triple press | Opens hotkey diagnostics so you can see what is registered and whether anything is conflicting. |
+| Press and hold | Reads `What can I press` in a calmer, more guided form. |
 
----
+This is the magic Spellforge promises:
 
-## 5. Choosing a Profile
+1. You never have to remember everything.
+2. One key tells you what you can do.
+3. The same key lets you ask for anything by name.
+4. The same key shows you the truth when something feels wrong.
 
-Spellforge has three built-in profiles that control how much it talks, how often it asks for confirmation, and how quickly it acts. You can switch at any time from the settings panel.
+If you ever feel lost, press `Control+Alt+Space` twice. Spellforge will tell you what you can press from where you are.
 
-**Beginner**
-Spellforge explains more, asks before doing most things, and gives you previews so you always know what is about to happen. This is the best place to start.
+### 4.1 Companion helpers
 
-**Balanced**
-A good everyday setting. Output is concise, Spellforge only asks when it really needs to, and previews appear for longer operations.
+These three keys travel alongside the Spellforge key and never change meaning:
 
-**Expert**
-Minimal speech, fast execution, and fewer prompts. Ideal once you know the commands well and want to move quickly.
+1. `Control+Alt+Slash` - read available hotkeys for the current surface.
+2. `Control+Alt+D` - open hotkey diagnostics.
+3. `Control+Alt+Escape` - emergency stop. Spellforge halts whatever it was doing and returns you to a quiet state.
 
-You can change your profile at any time — your commands stay the same, only the level of guidance changes.
-
----
-
-## 6. What You Can Do — Feature by Feature
-
-### 6.1 The Command Palette
-
-If you ever forget a hotkey, the palette is your starting point. Press `NVDA Key+Shift+P` to open it, type a word or two describing what you want to do, and press Enter to run the matching command.
-
-You can also press `Control+Alt+Slash` at any time to hear a spoken summary of available hotkeys.
-
-If you want to see diagnostics — for example, to check whether a hotkey is registered correctly — press `Control+Alt+D`.
-
-AI commands in the palette are context-aware:
-
-- AI setup and status commands stay visible so you can always configure or check AI.
-- Selection-driven AI commands appear when Spellforge has selection context and an AI key is configured.
-
-### 6.2 Working with Selected Text
-
-Spellforge can act on text you have selected in any application.
-
-- Press `Control+Alt+S` to get a **summary** of the selected text.
-- Press `Control+Alt+A` to **extract action items** — useful for emails and meeting notes.
-- Press `Control+Alt+R` to **rewrite** the text in simpler language.
-
-When an AI key is configured, Spellforge can attach optional AI augmentation to these selection workflows while preserving the deterministic primary result.
-
-If you want to mark a region manually (for example when your application does not support standard selection), use `Control+Alt+[` to mark the start and `Control+Alt+]` to mark the end. Press `Control+Alt+'` to hear a description of your current selection context, `Control+Alt+;` to hear marker status and cross-surface drift hints, `Control+Alt+J` to jump back to where your selection started, and `Control+Alt+X` to clear the markers.
-
-From the palette you can also run `cmd.selection.markerStatus` to hear whether start and end markers are set and whether a usable range is already cached.
-
-### 6.3 Clip Slots and the Clip Library
-
-Clip slots let you save up to ten pieces of text and reuse them freely, even across applications.
-
-- **Save to a slot:** Press `Control+Alt+1` (or 2 through 0 for other slots).
-- **Paste from a slot:** Press `Control+Alt+2` (matching the slot number you used).
-- **Hear what is in a slot:** Press `Control+Alt+4`.
-- **Open the clip library:** Press `Control+Alt+6` to browse, organise, and manage saved clips in folders.
-
-You can also combine clips using the **MergeBoard**. Set whether clips should be joined end-to-end or replace each other (`Control+Alt+M` for append, `Control+Alt+Shift+M` for replace), choose how they are separated (line, space, or paragraph), and then commit the merge when your stack is ready.
-
-From the palette, advanced PocketClips workflows now include search in slot browser (`cmd.clip.browser.search`), pin or unpin favorite slots via batch action (`action=pin` or `action=unpin`), clip category assignment (`cmd.clip.library.assignCategory`), and alias conflict handling strategy for retained slot aliases (`aliasStrategy=rename|replace|reject`).
-
-### 6.4 Reading Long Results
-
-When Spellforge returns a long result — a summary, extracted actions, or a retrieval response — it opens a navigable virtual view so you can read through it at your own pace.
-
-- **Open the latest result:** `Control+Alt+V`
-- **Move to the next block:** `Control+Alt+RightArrow`
-- **Move to the previous block:** `Control+Alt+LeftArrow`
-- **Copy the current block:** `Control+Alt+C`
-- **Copy everything:** `Control+Alt+Shift+C`
-- **Search inside the result:** `Control+Alt+Control+F`
-- **Check how confident Spellforge is:** `Control+Alt+K`
-- **See alternative suggestions:** `Control+Alt+F`
-- **Save the result to your inbox:** `Control+Alt+P`
-- **Return to where you came from:** `Control+Alt+Backspace`
-
-### 6.5 Quick Capture and Your Inbox
-
-Press `Control+Alt+Q` any time to capture what you are thinking about or working on. It goes straight to your inbox so you can deal with it later. From the palette you can list inbox items and route them to the right place when you are ready.
-
-When AI is configured, quick capture can include optional AI augmentation (for example a compact summary suggestion) without changing the base capture output.
-
-Spellforge also keeps a journal of recent operations. If you need to undo something that was supported, you can roll it back from the palette.
-
-### 6.6 Text Expansion
-
-Build up a personal shorthand dictionary — type a short trigger and Spellforge expands it into the full phrase. You can create, list, and delete expansions from the palette. Press `Control+Alt+0` for a quick insert when you want to drop a saved piece of text directly into your work.
-
-### 6.7 Shortcuts and the Launcher
-
-Shortcuts let you jump to files, folders, websites, or applications with a single keypress. Press `Control+Alt+7` to open the shortcut launcher and run anything you have set up. Press `Control+Alt+9` to add the application you are currently using as a shortcut. `Control+Alt+8` lists any drive aliases you have mapped.
-
-You can group shortcuts into categories and presets, and run a whole preset at once from the palette.
-
-### 6.8 Tags, Tables, and Speech History
-
-- **Tag your current session** for easy retrieval later: `Control+Alt+T`
-- **Tag an Outlook message:** `Control+Alt+Shift+T`
-- **Browse your speech history** — what NVDA has recently announced: `Control+Alt+H`
-- **Open speech history as a navigable view:** `Control+Alt+Shift+H`
-- **Capture a table** from an application into Spellforge: use the palette and search "table capture."
-
-### 6.9 Tasks, Time, Diary, Contacts, and More
-
-Spellforge has a full personal workflow suite you can access from the palette:
-
-- **Tasks:** Create, list, and mark tasks complete. Export to a calendar file or sync with Google Calendar.
-- **Time tools:** Speak the current time, insert a timestamp, run a stopwatch or countdown, and set alarms.
-- **Diary:** Write and list diary entries by month.
-- **Contacts:** Create, search, and sync contacts. Insert or copy individual fields.
-- **Mail helpers:** Extract the sender from an email or take action on attachments.
-
-### 6.10 Notes, Authoring, and Retrieval
-
-- **Quick capture a note:** Use the palette and search "quick capture note."
-- **Organise notes** with categories, custom fields, and relations.
-- **Author content** in Markdown or HTML, with built-in accessibility checking.
-- **Retrieve information** — query, parse, summarise, and revisit results.
-- **Structured records:** Define fields, manage entries, search, sort, and export to text or CSV.
-- **Joplin and Jamal integration:** Import, export, and sync notes with your preferred note app.
-- **Workflow packs:** Export and import your entire workflow setup so you can take it with you.
-
-When AI is configured, note quick capture and note help text workflows can include optional AI rewrite augmentation while keeping the original note pipeline unchanged.
-
-### 6.12 AI Keys and Storage Diagnostics
-
-Spellforge supports AI provider keys, including Llama Cloud.
-
-Use these commands from the palette:
-
-- `cmd.ai.key.set` - set or update a provider key.
-- `cmd.ai.key.status` - check whether keys are configured.
-- `cmd.ai.key.storeStatus` - report which key storage backend is active.
-
-Key storage behavior:
-
-1. On Windows, Spellforge stores provider keys in Windows Credential Manager when available.
-2. Provider keys are not persisted in plain JSON state files.
-3. If secure storage is unavailable, Spellforge falls back safely and reports the backend through `cmd.ai.key.storeStatus`.
-
-When you run `cmd.ai.key.storeStatus`, Spellforge speaks a plain-language summary that includes backend, security/persistence mode, and configured provider count.
-
-### 6.11 Diagnostics and Utilities
-
-If something does not seem right, these tools can help:
-
-- `Control+Alt+D` — run hotkey diagnostics to see what is registered and why.
-- Open the palette and search "integration health" to check that Spellforge's components are all working.
-- `Control+Alt+=` — search for a special character by name or description.
-- `Control+Alt+-` — recall a recently used special character.
-- `Control+Alt+W` — jump back to a bookmarked window. `Control+Alt+Shift+W` lists all your bookmarks.
-- `Control+Alt+R` — open the system report.
+You can use these from any application. They never modify your files or change focus permanently.
 
 ---
 
-## 7. Staying Safe
+## 5. Selection Magic Across Applications
 
-Spellforge is designed to give you confidence, not anxiety. Here is how it protects you:
+Spellforge treats selected text as a first-class object. It understands native selections, marker-based selections you set yourself, and cross-app drift when a selection moves between programs.
 
-- **Confirmations:** Actions that cannot be undone will ask before they run.
-- **Previews:** When Spellforge is about to change something significant, it shows you what will happen first.
-- **Fallback suggestions:** If a command cannot run in your current application, Spellforge offers alternatives rather than just failing silently.
-- **Operation history:** Many actions are logged so you can review or roll back recent changes from the palette.
-- **Emergency stop:** Press `Control+Alt+Escape` at any time to halt whatever is happening immediately.
-- **Return to source:** Press `Control+Alt+Backspace` to close a virtual view and return to exactly where you were.
+### 5.1 The simple path
 
-A simple rule of thumb: start on the **Beginner** profile while you are learning, move to **Balanced** for everyday use, and switch to **Expert** once the commands feel second nature.
+If your application supports normal selection (Outlook, Word, Notepad, Edge, Firefox, Chrome, VS Code, and most editors), select text the usual way. Then choose one:
+
+1. `Control+Alt+S` - summarise the selection.
+2. `Control+Alt+A` - extract action items.
+3. `Control+Alt+R` - rewrite for beginners (with a preview before applying).
+4. `Control+Alt+1` - save the selection to clip slot 1.
+
+Spellforge will announce a short, friendly result, and offer a virtualized view if the output is long.
+
+### 5.2 When the application is unfriendly
+
+Some surfaces are not selection-friendly. Spellforge gives you a deterministic marker workflow instead:
+
+1. `Control+Alt+[` - mark the start of your range.
+2. `Control+Alt+]` - mark the end of your range.
+3. `Control+Alt+'` - read the start and end snippets with confidence.
+4. `Control+Alt+;` - read marker status and any drift hints.
+5. `Control+Alt+J` - jump back to the start marker.
+6. `Control+Alt+X` - cancel markers cleanly.
+
+Once your range is set, every selection command above behaves exactly the same as if you had used native selection.
+
+### 5.3 What every app feels like
+
+Spellforge tunes its behavior for the application you are in:
+
+1. **Outlook.** Summarise long threads, extract action items, draft a reply from selection, tag a message, batch-copy, batch-move, batch-delete, and report tagged messages. Try `Control+Alt+S` on a thread, then `Control+Alt+Shift+T` to tag it.
+2. **Word.** Rewrite for beginners with preview and rollback, summarise a section, capture a passage to a clip slot, and extract action items from a meeting note. Mutating commands always preview first.
+3. **Notepad.** Quick capture is instant. Slot operations work even when Notepad has no rich selection. Selection markers cover any awkward range you cannot select natively.
+4. **Edge, Chrome, Firefox.** Page-wide selection, paragraph capture, heading-block fallback, source-tagged merge into the active MergeBoard. If selection is hard, the fallback menu suggests `paragraph`, `heading block`, or `guided capture`.
+5. **VS Code.** Selection survives moving between editor and terminal. Slot copy and paste preserve indentation. Markdown and HTML authoring helpers (see section 11) produce content that pastes cleanly back in.
+6. **Other applications.** If a command cannot run safely in the current surface, Spellforge offers alternatives instead of failing silently. Press `Control+Alt+F` to see them.
+
+### 5.4 If a selection drifts
+
+When focus moves and your selection markers no longer match the document, Spellforge does not pretend. It announces the drift, suggests the nearest valid restore point, and lets you choose:
+
+1. Keep the existing range and continue.
+2. Re-mark the range at the nearest valid anchor.
+3. Cancel markers and start over.
+
+You will never be left guessing where your selection went.
 
 ---
 
-## 8. Hotkey Reference
+## 6. Clipboard Magic: PocketClips and MergeBoard
 
-These are all the built-in hotkeys. The NVDA Key is the key you have set as your NVDA modifier — typically Insert or CapsLock.
+The clipboard inside Spellforge is calmer, deeper, and safer than the system clipboard. Two surfaces work together: PocketClips (ten numbered slots plus a library) and MergeBoard (deterministic joining of captured pieces).
+
+### 6.1 Ten slots that remember source and time
+
+Each slot stores not just text but also which application produced it, when it was captured, its size, and whether it is protected from overwrite.
+
+1. `Control+Alt+1` - copy current selection (or system clipboard) to slot 1.
+2. `Control+Alt+2` - paste from slot 1.
+3. `Control+Alt+3` - delete the current slot.
+4. `Control+Alt+4` - describe the current slot in plain language.
+5. `Control+Alt+6` - open the clip library.
+
+Slots 1 through 10 follow the same pattern. The palette lets you protect, unprotect, edit, search, sort, pin favourites, batch-act, split, merge, compare, export, and import slot packs.
+
+### 6.2 The Clip Library
+
+The library is where slots become long-term knowledge. Open it with `Control+Alt+6` or from the palette.
+
+You can:
+
+1. Create folders and categories.
+2. Move a clip into a folder or link it into several folders without duplication.
+3. Retain a familiar slot number alias even after a clip moves into the library.
+4. Choose how alias conflicts resolve (rename, replace, or reject).
+5. Set retention rules - keep forever, age out, or pin-protected.
+6. Restore an archived clip back into an active slot.
+7. Browse a timeline of how a clip evolved.
+
+Every action announces a short summary and is recorded in the operation journal, so you can roll back.
+
+### 6.3 MergeBoard: build up output without losing your place
+
+MergeBoard joins captured pieces deterministically. Set the mode once, then capture from wherever you like.
+
+1. `Control+Alt+M` - set merge mode to append.
+2. `Control+Alt+Shift+M` - set merge mode to replace.
+3. `Control+Alt+L` - divider: line.
+4. `Control+Alt+U` - divider: single space.
+5. `Control+Alt+N` - divider: paragraph.
+6. `Control+Alt+I` - toggle `clear-on-paste`.
+
+Use a merge profile (meeting notes, research digest, email drafting) from the palette and Spellforge will apply the right divider, optional source tags, and clear policy automatically. Then commit the merge wherever you need the result.
+
+### 6.4 Across applications
+
+Slot capture in Edge and Chrome carries page provenance. Slot capture in Outlook carries sender and subject context. Slot paste into Word, Notepad, and VS Code preserves clean text. Slot paste into a webmail compose field tries to retain paragraph structure. Whenever a target surface refuses a paste, the fallback menu offers `paste as plain text`, `open in virtual view first`, or `open the palette`.
+
+---
+
+## 7. Quick Capture and Your Inbox
+
+Some thoughts cannot wait. Press `Control+Alt+Q` from anywhere and Spellforge captures a quick note to your inbox without changing your focus or interrupting your flow. The capture remembers source application, timestamp, and any tag you give it.
+
+Later, from the palette:
+
+1. `cmd.capture.quickInbox.list` - browse what you captured.
+2. `cmd.capture.quickInbox.route` - turn an inbox item into a task, a note, a draft, or a slot.
+
+When an AI key is configured, Spellforge can attach an optional augmentation, such as a short summary suggestion, without changing the base capture. The original text is always preserved.
+
+---
+
+## 8. Reading Long Results: The Virtualized Surface
+
+When a command produces something longer than a sentence, Spellforge opens a virtualized reading view. You stay in your application, but a calm structured surface holds the output.
+
+1. `Control+Alt+V` - open the latest virtualized result.
+2. `Control+Alt+RightArrow` - next block.
+3. `Control+Alt+LeftArrow` - previous block.
+4. `Control+Alt+C` - copy current block.
+5. `Control+Alt+Shift+C` - copy the entire result.
+6. `Control+Alt+Control+F` - search inside the result.
+7. `Control+Alt+K` - read the confidence summary.
+8. `Control+Alt+F` - open the fallback menu of alternatives.
+9. `Control+Alt+P` - pin the result to your inbox for later.
+10. `Control+Alt+Backspace` - return to exactly where you came from.
+
+Toggles for output density live alongside:
+
+1. `Control+Alt+B` - toggle speech density.
+2. `Control+Alt+Z` - toggle braille density.
+
+You never lose your place. You never have to scroll a long output inside an application that was not meant for it.
+
+---
+
+## 9. Text Expansion and Quick Insert
+
+Build a personal shorthand. Type a short trigger and Spellforge expands it. Insert frequently used snippets with one press.
+
+1. `Control+Alt+0` - quick insert a saved piece of text.
+2. From the palette: create, list, rename, set primary, expand, and delete expansions.
+
+Text expansion is local, deterministic, and works in any text field that accepts normal typing.
+
+---
+
+## 10. Shortcuts and the Launcher
+
+Shortcuts are your personal jump points. They can target a file, a folder, a website, or an application. They live in categories and can be grouped into presets.
+
+1. `Control+Alt+7` - open the shortcut launcher.
+2. `Control+Alt+9` - add the application you are currently using as a shortcut.
+3. `Control+Alt+8` - list mapped drive aliases.
+4. `Control+Alt+5` - open the shortcuts dashboard.
+
+Presets let you launch a full set of resources for a project, a meeting, or a daily routine, in one step.
+
+---
+
+## 11. Notes, Authoring, and Retrieval
+
+Spellforge is a small, friendly authoring environment.
+
+### 11.1 Notes
+
+Quick capture into the notes workspace, organise into categories, set custom fields, relate notes to each other, attach files, snapshot for safety, and restore. From the palette, search `notes` to see every command.
+
+When AI is configured, note quick capture and note help text can include an optional AI rewrite augmentation. Your original note is never overwritten without preview.
+
+### 11.2 Markdown authoring
+
+Markdown commands help you build structured content that pastes cleanly into any markdown-aware editor (VS Code, Obsidian, Joplin, GitHub web editors).
+
+1. `cmd.author.markdown.insert` - insert structured markdown for headings, lists, tables, callouts, or code blocks.
+2. `cmd.author.a11y.lint` - check the markdown you have for accessibility issues such as missing alt text, ambiguous link text, skipped heading levels, and emoji that should be removed.
+3. `cmd.author.a11y.fixPreview` - preview the accessibility fixes Spellforge suggests before applying any of them.
+4. `cmd.author.export.html` - export markdown to clean semantic HTML.
+5. `cmd.author.export.word` - export to a Word-compatible stub.
+
+### 11.3 HTML authoring
+
+When you need accessible HTML directly:
+
+1. `cmd.author.html.semantic` - generate semantic HTML with `article`, `header`, and `section` structure from a title and a list of items.
+2. `cmd.author.html.validate` - validate HTML for common accessibility and structure issues, with concise per-issue guidance.
+
+These helpers produce output suitable for documentation sites, email templates, intranet articles, and any place where semantic structure matters.
+
+### 11.4 Retrieval
+
+Spellforge can read structured information back to you on demand: parse a body of text, query it, summarise, revisit, anchor your place, return to the anchor, and report what you have visited.
+
+1. `cmd.retrieve.parse`, `cmd.retrieve.query`, `cmd.retrieve.summarize`.
+2. `cmd.retrieve.anchor.set`, `cmd.retrieve.revisit`, `cmd.retrieve.trail.open`, `cmd.retrieve.trail.return`, `cmd.retrieve.visited.report`.
+
+### 11.5 Structured records, integrations, and workflow packs
+
+Define typed fields, manage entries, search, sort, and export to text, CSV, or JSON. Sync with Joplin or with the Jamal bridge using plan / apply-plan / rollback. Export and import full workflow packs so your setup travels with you.
+
+---
+
+## 12. Working Across Your Day
+
+Here is what Spellforge feels like in the applications you use most.
+
+### 12.1 Outlook
+
+1. Triage a long thread. Select it, press `Control+Alt+S` for a summary. Press `Control+Alt+A` for action items.
+2. Draft a reply from extracted actions through the palette.
+3. Tag a message with `Control+Alt+Shift+T`. Report tagged messages with `cmd.tags.outlook.report`.
+4. Batch-copy, batch-move, or batch-delete tagged messages from the palette.
+
+### 12.2 Word
+
+1. Select a rough paragraph. Press `Control+Alt+R` for rewrite-for-beginners. A preview opens with confidence and main changes.
+2. Save a passage with `Control+Alt+1` for later reuse.
+3. Capture a multi-page passage with selection markers if the cursor cannot reach the end natively.
+
+### 12.3 Notepad
+
+1. Spellforge fits Notepad like a glove. Quick capture works instantly with `Control+Alt+Q`.
+2. Slot save and paste use the deterministic clip path.
+3. Use markers for any range Notepad cannot select cleanly.
+
+### 12.4 Edge, Chrome, Firefox
+
+1. Read a long article. Select a section, press `Control+Alt+S`. The virtual view opens for calm reading.
+2. Capture multiple snippets into MergeBoard with `Control+Alt+M`, divide them with `Control+Alt+L`, and commit a clean digest into your notes.
+3. When a page is awkward to select, press `Control+Alt+F` to choose `paragraph`, `heading block`, or `guided capture`.
+
+### 12.5 VS Code
+
+1. Select a code block and capture it to a slot for reuse in another file.
+2. Use the markdown authoring helpers to insert structured documentation directly.
+3. Run `cmd.author.html.validate` against generated HTML output.
+4. Selection survives moving between the editor pane and the integrated terminal.
+
+### 12.6 Anywhere else
+
+If Spellforge cannot perform a command in the current application, it tells you and offers alternatives. Press `Control+Alt+F` to see them. Press `Control+Alt+Space` and ask in plain language.
+
+---
+
+## 13. AI Augmentation, Without Surprises
+
+Spellforge ships strong deterministic results for every selection command. AI is optional, additive, and always under your control.
+
+### 13.1 Setting up an AI key
+
+From the palette:
+
+1. `cmd.ai.key.set` - set or update a provider key (for example, Llama Cloud).
+2. `cmd.ai.key.status` - check whether keys are configured.
+3. `cmd.ai.key.storeStatus` - report the active key storage backend.
+4. `cmd.ai.key.delete` - remove a key.
+
+On Windows, Spellforge prefers Windows Credential Manager and never stores provider keys in plain JSON. If secure storage is unavailable, Spellforge falls back safely and tells you what the backend is.
+
+### 13.2 What AI augments
+
+When a key is configured and Spellforge has a real selection or capture, AI may add an optional augmentation to:
+
+1. Selection summarise, action extraction, and rewrite-for-beginners.
+2. Quick capture (an optional summary suggestion).
+3. Notes quick capture and notes help text.
+4. Spellcheck augmentation for word choice in long passages.
+
+The deterministic primary result is always produced first. AI augmentation is presented as a suggestion, never silently applied.
+
+### 13.3 What AI never does
+
+1. It does not run if no key is configured.
+2. It does not persist your text outside the workflow you ran it in.
+3. It does not bypass previews, confirmations, or the operation journal.
+
+### 13.4 Documents, images, prompts, and sessions
+
+Optional AI workflows from the palette include `cmd.ai.doc.ask`, `cmd.ai.doc.upload`, `cmd.ai.doc.followUp`, `cmd.ai.image.generate`, `cmd.ai.prompt.create/list/insert/delete`, `cmd.ai.transcribe`, and AI session management with new, save, load, list, clear, and delete. Each is documented in the palette and respects the same safety story.
+
+---
+
+## 14. Safety, Recovery, and Diagnostics
+
+### 14.1 Safety by design
+
+1. **Confirmations** for any command that cannot be undone.
+2. **Previews** before any substantial change to your text.
+3. **Fallback suggestions** instead of silent failure.
+4. **Operation journal** for rollback of supported actions.
+5. **Emergency stop** at `Control+Alt+Escape`.
+6. **Return to source** at `Control+Alt+Backspace` after any virtual view.
+
+### 14.2 Diagnostics
+
+1. `Control+Alt+D` - hotkey diagnostics with conflict detection.
+2. `Control+Alt+Slash` - available hotkeys for the current surface.
+3. `cmd.profile.integrationHealth` - end-to-end module health.
+4. `cmd.utility.systemReport.open` and `cmd.utility.systemReport.export` - rich system report.
+
+### 14.3 Where am I?
+
+If context feels off, press `Control+Alt+Backspace` first. If the question remains, open the palette and search `where am I`. Spellforge will announce focus, surface, selection, and active markers in a single calm message.
+
+---
+
+## 15. The Command Palette In Depth
+
+The Spellforge key chord (`Control+Alt+Space`) opens the palette. `NVDA+Shift+P` opens it too. The palette is a searchable, plain-language entry point to every Spellforge command.
+
+1. Type one or two words describing what you want.
+2. Browse the matching results with the arrow keys.
+3. Press Enter to run.
+
+The palette is context-aware. AI setup and status commands are always visible. Selection-driven AI commands appear only when Spellforge has selection context and a key is configured. Commands that cannot run in the current surface are dimmed and offer their nearest fallback.
+
+You never need to memorise commands. The palette is the answer when you cannot remember the hotkey.
+
+---
+
+## 16. Hotkey Reference
+
+These are the built-in hotkeys. The NVDA Key is the key you set as NVDA modifier - typically `Insert` or `CapsLock`.
 
 | Hotkey | What it does |
-|---|---|
-| Control+Alt+0 | Quick insert saved text |
-| Control+Alt+1 | Save to clip slot 1 |
+| --- | --- |
+| Control+Alt+Space | Open command palette |
+| Control+Alt+Space (double) | Read available hotkeys |
+| Control+Alt+Space (triple) | Hotkey diagnostics |
+| Control+Alt+Space (hold) | Guided hotkey help |
+| NVDA Key+Shift+P | Open command palette |
+| Control+Alt+Slash | Read available hotkeys |
+| Control+Alt+D | Hotkey diagnostics |
+| Control+Alt+Escape | Emergency stop |
+| Control+Alt+Backspace | Return to source anchor |
+| Control+Alt+S | Summarise selection |
+| Control+Alt+A | Extract action items |
+| Control+Alt+R | Rewrite selection for beginners |
+| Control+Alt+[ | Mark selection start |
+| Control+Alt+] | Mark selection end |
+| Control+Alt+' | Read selection context |
+| Control+Alt+; | Read selection marker status |
+| Control+Alt+J | Jump to selection start |
+| Control+Alt+X | Cancel selection markers |
+| Control+Alt+1 | Copy to clip slot 1 |
 | Control+Alt+2 | Paste from clip slot 1 |
 | Control+Alt+3 | Delete clip slot |
 | Control+Alt+4 | Describe clip slot |
-| Control+Alt+5 | Open Shortcuts dashboard |
+| Control+Alt+5 | Open shortcuts dashboard |
 | Control+Alt+6 | Open clip library |
 | Control+Alt+7 | Open shortcut launcher |
 | Control+Alt+8 | List drive aliases |
-| Control+Alt+9 | Add focused app to launcher |
-| Control+Alt+A | Extract action items from selection |
-| Control+Alt+B | Toggle speech density |
-| Control+Alt+Backspace | Return to source |
-| Control+Alt+C | Copy current result block |
-| Control+Alt+[ | Mark selection start |
-| Control+Alt+] | Mark selection end |
-| Control+Alt+Control+F | Search inside current result |
-| Control+Alt+D | Hotkey diagnostics |
-| Control+Alt+= | Search for a symbol |
-| Control+Alt+Escape | Emergency stop |
-| Control+Alt+F | Open fallback suggestions |
-| Control+Alt+H | Browse speech history |
-| Control+Alt+I | Set merge divider to paragraph |
-| Control+Alt+J | Jump to selection start |
-| Control+Alt+K | Read confidence summary |
-| Control+Alt+L | Set merge divider to line |
-| Control+Alt+LeftArrow | Previous result block |
-| Control+Alt+M | Set merge mode to append |
-| Control+Alt+- | Recall recent symbol |
-| Control+Alt+N | Toggle braille density |
-| Control+Alt+P | Pin result to inbox |
-| Control+Alt+Q | Quick capture to inbox |
-| Control+Alt+' | Read selection context |
-| Control+Alt+; | Read selection marker status |
-| Control+Alt+R | Rewrite selection in simpler language |
-| Control+Alt+Shift+R | Open system report |
-| Control+Alt+RightArrow | Next result block |
-| Control+Alt+S | Summarise selection |
-| Control+Alt+Shift+7 | Detect dialog insertion surface |
+| Control+Alt+9 | Add focused app as shortcut |
+| Control+Alt+0 | Quick insert saved text |
+| Control+Alt+V | Open latest virtualized result |
+| Control+Alt+RightArrow | Next virtual block |
+| Control+Alt+LeftArrow | Previous virtual block |
+| Control+Alt+C | Copy current virtual block |
 | Control+Alt+Shift+C | Copy full result |
+| Control+Alt+Control+F | Search in virtualized result |
+| Control+Alt+K | Read confidence summary |
+| Control+Alt+F | Open fallback menu |
+| Control+Alt+P | Pin result to inbox |
+| Control+Alt+B | Toggle speech density |
+| Control+Alt+Z | Toggle braille density |
+| Control+Alt+Q | Quick capture to inbox |
+| Control+Alt+M | Merge mode: append |
+| Control+Alt+Shift+M | Merge mode: replace |
+| Control+Alt+L | Merge divider: line |
+| Control+Alt+U | Merge divider: space |
+| Control+Alt+N | Merge divider: paragraph |
+| Control+Alt+I | Toggle merge clear-on-paste |
+| Control+Alt+T | Tag current session |
+| Control+Alt+Shift+T | Tag Outlook message |
+| Control+Alt+H | Browse speech history |
 | Control+Alt+Shift+H | Open speech history as virtual view |
-| Control+Alt+Shift+M | Set merge mode to replace |
-| NVDA Key+Shift+P | Open command palette |
-| Control+Alt+Shift+T | Report tagged Outlook messages |
-| Control+Alt+Shift+W | List window bookmarks |
-| Control+Alt+Slash | What can I press? (hotkey help) |
-| Control+Alt+Space | Open command palette |
-| Control+Alt+Space (hold) | What can I press? (hotkey help) |
-| Control+Alt+Space (double) | What can I press? (hotkey help) |
-| Control+Alt+Space (triple) | Hotkey diagnostics |
-| Control+Alt+T | Report tagged files |
-| Control+Alt+U | Set merge divider to space |
-| Control+Alt+V | Open latest result |
 | Control+Alt+W | Recall window bookmark |
-| Control+Alt+X | Cancel selection markers |
+| Control+Alt+Shift+W | List window bookmarks |
+| Control+Alt+= | Search symbol by name |
+| Control+Alt+- | Recent symbol |
+
+If you would like to change a chord, open `NVDA Settings > Spellforge > Edit keyboard mappings`, or use `Tools > Spellforge keyboard mappings`. Run `Run NVDA gesture scrub` in the editor to detect internal collisions and clashes with known NVDA gestures.
 
 ---
 
-## 9. All Available Commands
+## 17. Command Catalogue
 
-Below is the complete list of commands you can access from the palette. You do not need to memorise these — just open the palette with `NVDA Key+Shift+P` and type a word or two to find what you need.
+The palette holds every command. Use it as your discovery surface. Here is a grouped overview so you know what exists before you search for it.
 
-```text
-[author]
-cmd.author.a11y.fixPreview
-cmd.author.a11y.lint
-cmd.author.export.html
-cmd.author.export.word
-cmd.author.html.semantic
-cmd.author.html.validate
-cmd.author.markdown.insert
+1. **author** - markdown insert, HTML semantic, HTML validate, accessibility lint, accessibility fix preview, export HTML, export Word.
+2. **backup** - migrate, run selected, create settings backup, restore settings, add source, set target.
+3. **capture** - quick capture to inbox, list captures, route captures.
+4. **ai** - key set, key delete, key status, key store status, billing status, doc ask, doc follow-up, doc upload, image generate, prompt create/list/insert/delete, session new/save/load/list/clear/delete, tool run, transcribe.
+5. **clip** - slot copy/paste/delete/describe/edit/protect/unprotect, browser open/search/filter/sort/batch action/compare/split/merge/reorder/export/import, library open/create folder/rename folder/delete folder/move/link/list linked locations/retain alias/restore to slot/set retention policy/timeline.
+6. **contacts** - create, search, copy field, insert field, sync Google.
+7. **context** - capability envelope, return source, drift-safe return source, where am I.
+8. **cuts** - quick cuts launch, list, assign category, create preset, run preset, export presets, import presets, dashboard.
+9. **date** - insert, day of week, add days.
+10. **db** - create, list, select, delete, restore, template apply, field define, entry add/edit/delete/list/grid/detail, search, advanced search, sort, export CSV/JSON/text, dashboard.
+11. **diary** - create, list month.
+12. **file** - browse, copy, move, rename, delete, copy path, zip create, batch tag.
+13. **help** - available hotkeys.
+14. **jamal** - launch, export, import, sync, plan, apply plan, rollback, return.
+15. **joplin** - import, export, refresh, refresh rollback, set mapping.
+16. **journal** - list, rollback, trends.
+17. **mail** - extract sender, attachments action.
+18. **merge** - mode append/replace, divider line/space/paragraph, custom separator, toggle clear on paste, apply profile, commit.
+19. **missions** - start, complete, status.
+20. **notes** - quick capture, mode set, field set, relate, related graph, category create/move/tree, attachment add/action, backup export/restore, snapshot create/restore, help set, help resolve.
+21. **nvda** - readiness API, baseline, security.
+22. **palette** - open.
+23. **profile** - hotkey chain create/list/run, hotkey diagnostics, hotkey preset export/import, integration health, portability backup/restore.
+24. **result** - virtual open, block next/previous/copy, copy all, search, read confidence, toggle speech density, toggle braille density, open fallbacks, pin inbox.
+25. **retrieve** - parse, query, summarize, anchor set, revisit, trail open, trail return, visited report.
+26. **selection** - mark start, mark end, read context, marker status, jump start, cancel, summarize, extract actions, rewrite beginner.
+27. **shortcuts** - create, list, dialog detect, dialog insert path, drive list/map/unmap, launcher add/add focused app/open/remove/restore defaults, assign category, create preset, run preset.
+28. **social** - nickname upsert/replace, notifications set, orbit summary.
+29. **speech** - history browse/capture/copy item/copy range/virtual view.
+30. **system** - emergency stop.
+31. **table** - capture, capture clear buffer, capture export clipboard.
+32. **tags** - Outlook tag/untag/cancel/report/batch copy/batch move/batch delete, session tag/untag/cancel/count/report/batch copy/batch cut/batch delete/batch playlist add.
+33. **tasks** - create, complete, list, export ICS, sync Google Calendar.
+34. **text** - expansion upsert/list/rename/expand/delete/set primary, quick insert.
+35. **time** - speak, speak seconds, insert, alarm set/status/cancel, countdown start/status/stop, monitor start/status/stop, stopwatch start/stop/elapsed/clear/set precision.
+36. **utility** - audio cycle card/split/restore balance, notifications import/restore, progress cues plan, symbol insert by code/recent/search, system report open/export, window bookmark assign/list/recall/rename.
+37. **whatsapp** - recent, voice.
+38. **workflow** - pack export, pack import.
+39. **x** - timeline.
 
-[backup]
-cmd.backup.migrate
-cmd.backup.selected.run
-cmd.backup.settings.create
-cmd.backup.settings.restore
-cmd.backup.source.add
-cmd.backup.target.set
-
-[capture]
-cmd.capture.quickInbox
-cmd.capture.quickInbox.list
-cmd.capture.quickInbox.route
-
-[ai]
-cmd.ai.billingStatus
-cmd.ai.doc.ask
-cmd.ai.doc.followUp
-cmd.ai.doc.upload
-cmd.ai.image.generate
-cmd.ai.key.delete
-cmd.ai.key.set
-cmd.ai.key.status
-cmd.ai.key.storeStatus
-cmd.ai.prompt.create
-cmd.ai.prompt.delete
-cmd.ai.prompt.insert
-cmd.ai.prompt.list
-cmd.ai.session.clear
-cmd.ai.session.delete
-cmd.ai.session.list
-cmd.ai.session.load
-cmd.ai.session.new
-cmd.ai.session.save
-cmd.ai.tool.run
-cmd.ai.transcribe
-
-[clip]
-cmd.clip.browser.batchAction
-cmd.clip.browser.compare
-cmd.clip.browser.exportPack
-cmd.clip.browser.filter
-cmd.clip.browser.importPack
-cmd.clip.browser.merge
-cmd.clip.browser.open
-cmd.clip.browser.reorder
-cmd.clip.browser.sort
-cmd.clip.browser.split
-cmd.clip.copyToSlot
-cmd.clip.deleteSlot
-cmd.clip.describeSlot
-cmd.clip.editSlot
-cmd.clip.library.createFolder
-cmd.clip.library.deleteFolder
-cmd.clip.library.ingestSlot
-cmd.clip.library.linkToFolder
-cmd.clip.library.listLinkedLocations
-cmd.clip.library.moveToFolder
-cmd.clip.library.open
-cmd.clip.library.renameFolder
-cmd.clip.library.restoreToSlot
-cmd.clip.library.retainSlotAlias
-cmd.clip.library.setRetentionPolicy
-cmd.clip.library.timeline
-cmd.clip.pasteFromSlot
-cmd.clip.protectSlot
-cmd.clip.unprotectSlot
-
-[contacts]
-cmd.contacts.copyField
-cmd.contacts.create
-cmd.contacts.insertField
-cmd.contacts.search
-cmd.contacts.syncGoogle
-
-[context]
-cmd.context.capabilityEnvelope
-cmd.context.returnSource
-cmd.context.returnSourceDriftSafe
-cmd.context.whereAmI
-
-[cuts]
-cmd.cuts.assignCategory
-cmd.cuts.create
-cmd.cuts.createPreset
-cmd.cuts.dashboard
-cmd.cuts.delete
-cmd.cuts.exportPresets
-cmd.cuts.importPresets
-cmd.cuts.launch
-cmd.cuts.list
-cmd.cuts.runPreset
-
-[date]
-cmd.date.addDays
-cmd.date.dayOfWeek
-cmd.date.insert
-
-[db]
-cmd.db.create
-cmd.db.dashboard
-cmd.db.delete
-cmd.db.entry.add
-cmd.db.entry.delete
-cmd.db.entry.detail
-cmd.db.entry.edit
-cmd.db.entry.grid
-cmd.db.entry.list
-cmd.db.export.csv
-cmd.db.export.json
-cmd.db.export.text
-cmd.db.field.define
-cmd.db.list
-cmd.db.restore
-cmd.db.search
-cmd.db.search.advanced
-cmd.db.select
-cmd.db.sort
-cmd.db.template.apply
-
-[diary]
-cmd.diary.create
-cmd.diary.listMonth
-
-[file]
-cmd.file.browse
-cmd.file.copy
-cmd.file.delete
-cmd.file.move
-cmd.file.path.copy
-cmd.file.rename
-cmd.file.tag.batch
-cmd.file.zip.create
-
-[help]
-cmd.help.availableHotkeys
-
-[jamal]
-cmd.jamal.export
-cmd.jamal.import
-cmd.jamal.launch
-cmd.jamal.return
-cmd.jamal.sync
-cmd.jamal.sync.applyPlan
-cmd.jamal.sync.plan
-cmd.jamal.sync.rollback
-
-[joplin]
-cmd.joplin.export
-cmd.joplin.import
-cmd.joplin.mapping.set
-cmd.joplin.refresh
-cmd.joplin.refresh.rollback
-
-[journal]
-cmd.journal.list
-cmd.journal.rollback
-cmd.journal.trends
-
-[mail]
-cmd.mail.attachments.action
-cmd.mail.extractSender
-
-[merge]
-cmd.merge.applyProfile
-cmd.merge.commit
-cmd.merge.setCustomSeparator
-cmd.merge.setDividerLine
-cmd.merge.setDividerParagraph
-cmd.merge.setDividerSpace
-cmd.merge.setModeAppend
-cmd.merge.setModeReplace
-cmd.merge.toggleClearOnPaste
-
-[missions]
-cmd.missions.complete
-cmd.missions.start
-cmd.missions.status
-
-[notes]
-cmd.notes.attachment.add
-cmd.notes.attachment.action
-cmd.notes.backup.export
-cmd.notes.backup.restore
-cmd.notes.category.create
-cmd.notes.category.move
-cmd.notes.category.tree
-cmd.notes.field.set
-cmd.notes.help.resolve
-cmd.notes.help.set
-cmd.notes.mode.set
-cmd.notes.quickCapture
-cmd.notes.relate
-cmd.notes.related.graph
-cmd.notes.snapshot.create
-cmd.notes.snapshot.restore
-
-[nvda]
-cmd.nvda.readiness.api
-cmd.nvda.readiness.baseline
-cmd.nvda.readiness.security
-
-[palette]
-cmd.palette.open
-
-[profile]
-cmd.profile.hotkeyChainCreate
-cmd.profile.hotkeyChainList
-cmd.profile.hotkeyChainRun
-cmd.profile.hotkeyDiagnostics
-cmd.profile.hotkeyPresetExport
-cmd.profile.hotkeyPresetImport
-cmd.profile.integrationHealth
-cmd.profile.portabilityBackup
-cmd.profile.portabilityRestore
-
-[result]
-cmd.result.block.copy
-cmd.result.block.next
-cmd.result.block.previous
-cmd.result.copyAll
-cmd.result.openFallbacks
-cmd.result.pinInbox
-cmd.result.readConfidence
-cmd.result.search
-cmd.result.toggleBrailleDensity
-cmd.result.toggleSpeechDensity
-cmd.result.virtualOpen
-
-[retrieve]
-cmd.retrieve.parse
-cmd.retrieve.query
-cmd.retrieve.anchor.set
-cmd.retrieve.revisit
-cmd.retrieve.summarize
-cmd.retrieve.trail.open
-cmd.retrieve.trail.return
-cmd.retrieve.visited.report
-
-[selection]
-cmd.selection.cancel
-cmd.selection.extractActions
-cmd.selection.jumpStart
-cmd.selection.markEnd
-cmd.selection.markStart
-cmd.selection.markerStatus
-cmd.selection.readContext
-cmd.selection.rewriteBeginner
-cmd.selection.summarize
-
-[shortcuts]
-cmd.shortcuts.assignCategory
-cmd.shortcuts.create
-cmd.shortcuts.createPreset
-cmd.shortcuts.dialog.detect
-cmd.shortcuts.dialog.insertPath
-cmd.shortcuts.drive.list
-cmd.shortcuts.drive.map
-cmd.shortcuts.drive.unmap
-cmd.shortcuts.launcher.add
-cmd.shortcuts.launcher.addFocusedApp
-cmd.shortcuts.launcher.open
-cmd.shortcuts.launcher.remove
-cmd.shortcuts.launcher.restoreDefaults
-cmd.shortcuts.list
-cmd.shortcuts.runPreset
-
-[social]
-cmd.social.nickname.replace
-cmd.social.nickname.upsert
-cmd.social.notifications.set
-cmd.social.orbit.summary
-
-[speech]
-cmd.speech.history.browse
-cmd.speech.history.capture
-cmd.speech.history.copyItem
-cmd.speech.history.copyRange
-cmd.speech.history.virtualView
-
-[system]
-cmd.system.emergencyStop
-
-[table]
-cmd.table.capture
-cmd.table.capture.clearBuffer
-cmd.table.capture.exportClipboard
-
-[tags]
-cmd.tags.outlook.batchCopy
-cmd.tags.outlook.batchDelete
-cmd.tags.outlook.batchMove
-cmd.tags.outlook.cancel
-cmd.tags.outlook.report
-cmd.tags.outlook.tag
-cmd.tags.outlook.untag
-cmd.tags.session.batchCopy
-cmd.tags.session.batchCut
-cmd.tags.session.batchDelete
-cmd.tags.session.batchPlaylistAdd
-cmd.tags.session.cancel
-cmd.tags.session.count
-cmd.tags.session.report
-cmd.tags.session.tag
-cmd.tags.session.untag
-
-[tasks]
-cmd.tasks.complete
-cmd.tasks.create
-cmd.tasks.exportIcs
-cmd.tasks.list
-cmd.tasks.syncGoogleCalendar
-
-[text]
-cmd.text.expansion.delete
-cmd.text.expansion.expand
-cmd.text.expansion.list
-cmd.text.expansion.rename
-cmd.text.expansion.setPrimary
-cmd.text.expansion.upsert
-cmd.text.quickInsert
-
-[time]
-cmd.time.alarm.cancel
-cmd.time.alarm.set
-cmd.time.alarm.status
-cmd.time.countdown.start
-cmd.time.countdown.status
-cmd.time.countdown.stop
-cmd.time.insert
-cmd.time.monitor.start
-cmd.time.monitor.status
-cmd.time.monitor.stop
-cmd.time.speak
-cmd.time.speakSeconds
-cmd.time.stopwatch.clear
-cmd.time.stopwatch.elapsed
-cmd.time.stopwatch.setPrecision
-cmd.time.stopwatch.start
-cmd.time.stopwatch.stop
-
-[utility]
-cmd.utility.audio.cycleCard
-cmd.utility.audio.restoreBalance
-cmd.utility.audio.split
-cmd.utility.notifications.import
-cmd.utility.notifications.restore
-cmd.utility.progressCues.plan
-cmd.utility.symbol.insertByCode
-cmd.utility.symbol.recent
-cmd.utility.symbol.search
-cmd.utility.systemReport.export
-cmd.utility.systemReport.open
-cmd.utility.windowBookmark.assign
-cmd.utility.windowBookmark.list
-cmd.utility.windowBookmark.recall
-cmd.utility.windowBookmark.rename
-
-[whatsapp]
-cmd.whatsapp.recent
-cmd.whatsapp.voice
-
-[workflow]
-cmd.workflow.pack.export
-cmd.workflow.pack.import
-
-[x]
-cmd.x.timeline
-```
+You do not need to remember any of these. Press `Control+Alt+Space` and ask in plain language.
 
 ---
 
-## 10. Your Data and Portability
+## 18. Your Data and Portability
 
-Spellforge saves your clips, settings, palette history, and other personal data to a folder under your Windows user profile (usually in AppData\Spellforge). Everything stays on your own computer.
+Spellforge stores your clips, settings, palette history, notes, journals, and other personal data under your Windows user profile, typically `AppData\Spellforge`. Everything stays on your computer.
 
-AI provider keys are handled separately from regular JSON state. When available, Spellforge stores them in Windows Credential Manager. Use `cmd.ai.key.storeStatus` to confirm the active key storage backend on your system.
-
-If you ever need to move to a new machine or reinstall, you can use the portability and backup commands from the palette to export and restore your complete setup — clips, shortcuts, workflow packs, and all.
-
----
-
-## 11. If Something Goes Wrong
-
-**A hotkey does not seem to do anything**
-Open the palette with `NVDA Key+Shift+P` and check that the command you expect is listed. Then press `Control+Alt+D` to run hotkey diagnostics — it will tell you whether the key is registered and whether anything is conflicting.
-
-**Spellforge is talking too much or not enough**
-Try a different profile. Open NVDA Settings, go to the Spellforge panel, and switch between Beginner, Balanced, and Expert.
-
-**A command says it cannot run in this application**
-Press `Control+Alt+F` to see if there are alternative suggestions, or open the palette and search for a related command that works differently.
-
-**Something got stuck or feels out of control**
-Press `Control+Alt+Escape` immediately. That will stop whatever is running.
-
-**You are not sure where you are**
-Press `Control+Alt+Backspace` to return to where you started, or open the palette and search "where am I" for an orientation report.
+1. AI provider keys live in secure storage (Windows Credential Manager when available) and not in plain JSON.
+2. Use `cmd.ai.key.storeStatus` to confirm the active backend.
+3. Use `cmd.profile.portabilityBackup` and `cmd.profile.portabilityRestore` to move your full setup to a new machine.
+4. Use `cmd.workflow.pack.export` and `cmd.workflow.pack.import` to take whole workflows with you.
 
 ---
 
-## 12. Building Up Your Skills
+## 19. Troubleshooting
 
-There is no pressure to learn everything at once. Here is a gentle week-by-week path if you want one:
+**A hotkey did nothing.** Press `Control+Alt+D` for hotkey diagnostics. Open the palette and search the command name to confirm it exists in your current build.
 
-- **Day 1:** Get comfortable with the palette and hotkey help. Try quick capture and text summarise.
-- **Day 2:** Explore clip slots and the virtual result view.
-- **Day 3:** Set up a few text expansions and try the merge modes.
-- **Day 4:** Use the tasks, diary, and time tools for your daily planning.
-- **Day 5:** Explore notes and the retrieval tools.
-- **Day 6:** Set up shortcuts and try the tagging features.
-- **Day 7:** Look at backup and portability so your setup is protected.
+**Spellforge is talking too much, or not enough.** Switch profile in `NVDA Settings > Spellforge`.
 
-Once you can open the palette, capture a thought, save and reuse a clip, and run one daily planning command — you are already getting real value from Spellforge. Everything else is there when you are ready for it.
+**A command cannot run in this application.** Press `Control+Alt+F` for alternatives, or open the palette and ask Spellforge in plain language.
+
+**Something feels stuck.** Press `Control+Alt+Escape`. Spellforge stops.
+
+**You feel lost.** Press `Control+Alt+Backspace` to return to source. If you are still uncertain, press `Control+Alt+Space` twice to hear what you can press right now.
+
+**An AI command says it is unavailable.** Run `cmd.ai.key.status` to check whether a key is configured, then `cmd.ai.key.storeStatus` to confirm secure storage. Deterministic primary results never require AI.
+
+---
+
+## 20. A Gentle Path Through Your First Week
+
+There is no pressure to learn everything at once. Here is a one-week shape if it helps.
+
+1. **Day 1.** Press `Control+Alt+Space` and read the palette. Press it twice and hear your hotkeys. Try `Control+Alt+Q` to capture a thought.
+2. **Day 2.** Select text in a browser and press `Control+Alt+S`. Read the result in the virtual view with `Control+Alt+V`.
+3. **Day 3.** Save two passages into slots 1 and 2. Paste them somewhere. Open the clip library with `Control+Alt+6`.
+4. **Day 4.** Set up two text expansions. Add the application you use most as a shortcut with `Control+Alt+9`.
+5. **Day 5.** Try the markdown authoring helpers and the accessibility lint on a notes file.
+6. **Day 6.** Add tasks, diary entries, or time alarms from the palette.
+7. **Day 7.** Run `cmd.profile.integrationHealth` and `cmd.profile.portabilityBackup` so your setup is safe.
+
+Once you can open the palette, capture a thought, save and reuse a clip, and read one long result in the virtual view, Spellforge is already earning its place. Everything else is here when you are ready.
+
+Welcome aboard.

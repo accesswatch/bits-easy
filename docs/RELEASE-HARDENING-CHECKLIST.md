@@ -45,11 +45,15 @@ Each release note should include:
 5. Added file operations command family (browse, copy/move/rename/delete, zip create, full path copy, tag batch).
 6. Added journal trend reporting and clip library timeline/discoverability payload.
 7. Improved clip compare payload quality with similarity and line-diff preview.
+8. Added secure secret-store abstraction for AI provider keys with Windows Credential Manager backend and safe fallback.
+9. Added AI key diagnostics commands (`cmd.ai.key.status`, `cmd.ai.key.storeStatus`) including plain-language spoken backend summary in NVDA.
+10. Added additive AI augmentation to existing text workflows (selection summarize/extract/rewrite, quick capture, notes quick capture/help, spellcheck) while preserving deterministic primary outputs.
 
 ### Migration Notes Draft
 
 1. New persisted runtime files:
    - `ai-assistant.json`
+   - `secret_store` runtime backend state is provider-key storage abstraction; provider keys are no longer persisted in plaintext JSON.
    - `retrieval-memory.json` additions (anchors/trail)
    - `notes-workspace.json` additions (backup/category graph metadata)
    - `structured-records.json` additions (sync plans)

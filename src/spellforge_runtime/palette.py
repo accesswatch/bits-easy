@@ -83,9 +83,59 @@ class PaletteEngine:
             return 1.5 + token_hits
         return -100.0
 
-    def search(self, query: str, app_id: str, limit: int = 25) -> List[PaletteItem]:
+    @staticmethod
+    def _is_ai_command(command_id: str) -> bool:
+        return command_id.startswith("cmd.ai.")
+
+    @staticmethod
+    def _selection_driven_ai_commands() -> set[str]:
+        return {
+            "cmd.ai.tool.run",
+            "cmd.ai.doc.ask",
+            "cmd.ai.doc.followUp",
+        }
+
+    def _is_visible(
+        self,
+        command_id: str,
+        *,
+        query: str,
+        ai_key_enabled: bool,
+        has_selection_activity: bool,
+    ) -> bool:
+        if not self._is_ai_command(command_id):
+            return True
+
+        if command_id in {"cmd.ai.key.set", "cmd.ai.key.status", "cmd.ai.key.storeStatus"}:
+            return True
+
+        if not ai_key_enabled:
+            return False
+
+        if command_id in self._selection_driven_ai_commands() and not has_selection_activity and not query.strip():
+            return False
+
+        return True
+
+    def search(
+        self,
+        query: str,
+        app_id: str,
+        limit: int = 25,
+        *,
+        ai_key_enabled: bool = False,
+        has_selection_activity: bool = False,
+    ) -> List[PaletteItem]:
         rows: List[PaletteItem] = []
         for command_id, meta in self.config.command_catalog.items():
+            if not self._is_visible(
+                command_id,
+                query=query,
+                ai_key_enabled=ai_key_enabled,
+                has_selection_activity=has_selection_activity,
+            ):
+                continue
+
             name = str(meta.get("name", command_id))
             score = self._query_score(query, command_id, name)
             if score < 0:

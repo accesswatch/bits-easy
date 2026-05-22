@@ -6,6 +6,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from spellforge_runtime import AppAdapter, AppContext, RuntimeDispatcher, SpellforgeRuntime, load_runtime_config
+from spellforge_runtime.ai_assistant import AiAssistantService
+from spellforge_runtime.secret_store import InMemorySecretStore
 
 
 class AiAssistantPlatformTests(unittest.TestCase):
@@ -31,6 +33,16 @@ class AiAssistantPlatformTests(unittest.TestCase):
             ctx = self._ctx()
 
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.ai.key.set", provider="openai", key="k-123").result.ok)
+            state_path = base / "data" / "ai-assistant.json"
+            self.assertTrue(state_path.exists())
+            raw_state = state_path.read_text(encoding="utf-8")
+            self.assertNotIn("k-123", raw_state)
+
+            store_status = dispatcher.dispatch_command(ctx, "cmd.ai.key.storeStatus")
+            self.assertTrue(store_status.result.ok)
+            self.assertIn("backend", store_status.result.payload)
+            self.assertIn("providerCount", store_status.result.payload)
+
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.ai.billingStatus", provider="openai").result.ok)
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.ai.session.new", title="Release prep").result.ok)
             sessions = dispatcher.dispatch_command(ctx, "cmd.ai.session.list")
@@ -84,6 +96,17 @@ class AiAssistantPlatformTests(unittest.TestCase):
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.ai.session.delete", sessionId=sid).result.ok)
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.ai.key.delete", provider="openai").result.ok)
 
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.ai.key.set", provider="Llama Cloud", key="llx-123").result.ok)
+            status = dispatcher.dispatch_command(ctx, "cmd.ai.key.status", provider="llamacloud")
+            self.assertTrue(status.result.ok)
+            self.assertTrue(status.result.payload["hasAnyKey"])
+            self.assertTrue(status.result.payload["hasKey"])
+            self.assertIn("llama-cloud", status.result.payload["providers"])
+            billing = dispatcher.dispatch_command(ctx, "cmd.ai.billingStatus", provider="llama cloud")
+            self.assertTrue(billing.result.ok)
+            self.assertIn("cloud.llamaindex.ai", billing.result.payload["url"])
+            self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.ai.key.delete", provider="llama cloud").result.ok)
+
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.capture.quickInbox").result.ok)
             trends = dispatcher.dispatch_command(ctx, "cmd.journal.trends", windowDays=30)
             self.assertTrue(trends.result.ok)
@@ -94,6 +117,34 @@ class AiAssistantPlatformTests(unittest.TestCase):
             timeline = dispatcher.dispatch_command(ctx, "cmd.clip.library.timeline", limit=20)
             self.assertTrue(timeline.result.ok)
             self.assertIn("discoverability", timeline.result.payload)
+
+    def test_legacy_plaintext_key_migrates_to_secret_store(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            storage = Path(tmpdir) / "ai-assistant.json"
+            storage.write_text(
+                '{\n'
+                '  "keys": {"openai": "legacy-secret"},\n'
+                '  "sessions": {},\n'
+                '  "prompts": {},\n'
+                '  "documents": {},\n'
+                '  "activeSession": "",\n'
+                '  "sessionCounter": 0,\n'
+                '  "docCounter": 0\n'
+                '}\n',
+                encoding="utf-8",
+            )
+
+            secret_store = InMemorySecretStore()
+            service = AiAssistantService(storage_path=storage, secret_store=secret_store)
+            status = service.key_status("openai")
+            self.assertTrue(status.ok)
+            self.assertTrue(status.payload["hasKey"])
+            self.assertEqual(secret_store.get_secret("spellforge.ai.provider-key", "openai"), "legacy-secret")
+
+            migrated = storage.read_text(encoding="utf-8")
+            self.assertNotIn("legacy-secret", migrated)
+            self.assertIn("keyProviders", migrated)
+            self.assertNotIn('"keys"', migrated)
 
 
 if __name__ == "__main__":

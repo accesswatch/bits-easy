@@ -131,6 +131,52 @@ class RuntimeDispatcher:
         }
         self._last_action = ""
 
+    def _ai_enabled(self) -> bool:
+        status = self._ai.key_status()
+        if not status.ok:
+            return False
+        return bool((status.payload or {}).get("hasAnyKey", False))
+
+    def _attach_ai_augmentation(self, result: RuntimeResult, *, tool: str, source: str, replace: bool = False) -> None:
+        if not result.ok or not source.strip() or not self._ai_enabled():
+            return
+        if result.payload is None:
+            result.payload = {}
+        if "aiAugmentation" in result.payload:
+            return
+
+        ai = self._ai.tool_run(tool=tool, text=source, replace=replace)
+        if not ai.ok:
+            return
+        ai_payload = ai.payload or {}
+        result.payload["aiAugmentation"] = {
+            "enabled": True,
+            "tool": str(ai_payload.get("tool", tool)),
+            "text": str(ai_payload.get("text", "")),
+            "replaceSuggested": bool(ai_payload.get("replaceSuggested", replace)),
+        }
+
+    def _attach_ai_spellcheck_augmentation(self, result: RuntimeResult, *, source: str) -> None:
+        if not result.ok or not source.strip() or not self._ai_enabled():
+            return
+        if result.payload is None:
+            result.payload = {}
+        if "aiAugmentation" in result.payload:
+            return
+
+        ai = self._ai.tool_run(tool="spellcheck", text=source, replace=False)
+        if not ai.ok:
+            return
+        ai_payload = ai.payload or {}
+        ai_text = str(ai_payload.get("text", "")).strip()
+        suggestions = [] if not ai_text or ai_text == source else [ai_text]
+        result.payload["aiAugmentation"] = {
+            "enabled": True,
+            "tool": "spellcheck",
+            "text": ai_text,
+            "suggestions": suggestions,
+        }
+
     def _rollback_action_for(self, command_id: str, kwargs: Dict[str, Any], result: RuntimeResult) -> Optional[Dict[str, Any]]:
         if command_id == "cmd.capture.quickInbox.route":
             payload = result.payload or {}
@@ -434,6 +480,7 @@ class RuntimeDispatcher:
         elif command_id == "cmd.selection.summarize":
             source = context.clipboard_text.strip() or context.buffer.strip()
             result = self._adaptive.summarize(source)
+            self._attach_ai_augmentation(result, tool="summarize", source=source)
             if result.ok:
                 self._latest_result = {
                     "confidence": float((result.payload or {}).get("confidence", 0.0)),
@@ -443,6 +490,7 @@ class RuntimeDispatcher:
         elif command_id == "cmd.selection.extractActions":
             source = context.clipboard_text.strip() or context.buffer.strip()
             result = self._adaptive.extract_actions(source)
+            self._attach_ai_augmentation(result, tool="extract-actions", source=source)
             if result.ok:
                 items = list((result.payload or {}).get("items", []))
                 self._latest_result = {
@@ -453,6 +501,7 @@ class RuntimeDispatcher:
         elif command_id == "cmd.selection.rewriteBeginner":
             source = context.clipboard_text.strip() or context.buffer.strip()
             result = self._adaptive.rewrite_beginner(source)
+            self._attach_ai_augmentation(result, tool="a11y-rewrite", source=source)
             if result.ok:
                 self._latest_result = {
                     "confidence": float((result.payload or {}).get("confidence", 0.0)),
@@ -461,9 +510,13 @@ class RuntimeDispatcher:
                 }
         elif command_id == "cmd.spell.checkCurrentWord":
             result = self._spellcheck.check_current_word(context.buffer, context.caret)
+            if result.ok:
+                checked_word = str((result.payload or {}).get("word", ""))
+                self._attach_ai_spellcheck_augmentation(result, source=checked_word)
         elif command_id == "cmd.capture.quickInbox":
             text = context.clipboard_text.strip() or context.buffer.strip()
             result = self._capture.capture(text, source_app=context.app_id, window_id=context.window_id)
+            self._attach_ai_augmentation(result, tool="summarize", source=text)
         elif command_id == "cmd.capture.quickInbox.route":
             result = self._capture.route(
                 str(kwargs.get("captureId", "")),
@@ -517,6 +570,10 @@ class RuntimeDispatcher:
             )
         elif command_id == "cmd.ai.key.delete":
             result = self._ai.key_delete(provider=str(kwargs.get("provider", "")))
+        elif command_id == "cmd.ai.key.status":
+            result = self._ai.key_status(provider=str(kwargs.get("provider", "")))
+        elif command_id == "cmd.ai.key.storeStatus":
+            result = self._ai.key_store_status()
         elif command_id == "cmd.ai.billingStatus":
             result = self._ai.billing_status(provider=str(kwargs.get("provider", "")))
         elif command_id == "cmd.ai.session.new":
@@ -847,7 +904,9 @@ class RuntimeDispatcher:
         elif command_id == "cmd.file.tag.batch":
             result = self._file_ops.tag_batch([str(x) for x in list(kwargs.get("paths", []))])
         elif command_id == "cmd.notes.quickCapture":
-            result = self._notes.quick_note(str(kwargs.get("text", "")), context.app_id)
+            note_text = str(kwargs.get("text", ""))
+            result = self._notes.quick_note(note_text, context.app_id)
+            self._attach_ai_augmentation(result, tool="rewrite", source=note_text)
         elif command_id == "cmd.notes.mode.set":
             result = self._notes.set_mode(str(kwargs.get("mode", "simple")))
         elif command_id == "cmd.notes.category.create":
@@ -877,12 +936,14 @@ class RuntimeDispatcher:
                 str(kwargs.get("value", "")),
             )
         elif command_id == "cmd.notes.help.set":
+            help_text = str(kwargs.get("text", ""))
             result = self._notes.help_set(
-                str(kwargs.get("text", "")),
+                help_text,
                 app_id=str(kwargs.get("appId", "")),
                 domain=str(kwargs.get("domain", "")),
                 page=str(kwargs.get("page", "")),
             )
+            self._attach_ai_augmentation(result, tool="rewrite", source=help_text)
         elif command_id == "cmd.notes.help.resolve":
             result = self._notes.help_resolve(
                 app_id=str(kwargs.get("appId", context.app_id)),

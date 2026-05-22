@@ -170,6 +170,41 @@ class OperationJournal:
             },
         )
 
+    def trend_report(self, *, window_days: int = 30) -> RuntimeResult:
+        days = max(1, int(window_days))
+        by_command: Dict[str, int] = {}
+        by_app: Dict[str, int] = {}
+        by_action: Dict[str, int] = {}
+        rollback_status: Dict[str, int] = {"none": 0, "applied": 0, "failed": 0}
+        reversible = 0
+        for e in self._entries:
+            by_command[e.command_id] = by_command.get(e.command_id, 0) + 1
+            by_app[e.app_id] = by_app.get(e.app_id, 0) + 1
+            by_action[e.action_type] = by_action.get(e.action_type, 0) + 1
+            if e.rollback_status in rollback_status:
+                rollback_status[e.rollback_status] += 1
+            else:
+                rollback_status[e.rollback_status] = rollback_status.get(e.rollback_status, 0) + 1
+            if e.reversible:
+                reversible += 1
+        top_commands = sorted(by_command.items(), key=lambda kv: (-kv[1], kv[0]))[:10]
+        top_apps = sorted(by_app.items(), key=lambda kv: (-kv[1], kv[0]))[:10]
+        top_actions = sorted(by_action.items(), key=lambda kv: (-kv[1], kv[0]))[:10]
+        return RuntimeResult(
+            ok=True,
+            message="Journal trend report ready.",
+            payload={
+                "windowDays": days,
+                "totalEntries": len(self._entries),
+                "reversibleCount": reversible,
+                "reversibleRate": (float(reversible) / float(len(self._entries))) if self._entries else 0.0,
+                "topCommands": [{"commandId": k, "count": v} for k, v in top_commands],
+                "topApps": [{"appId": k, "count": v} for k, v in top_apps],
+                "topActionTypes": [{"actionType": k, "count": v} for k, v in top_actions],
+                "rollbackStatus": rollback_status,
+            },
+        )
+
     def mark_rollback_applied(self, entry_id: str, *, success: bool) -> RuntimeResult:
         eid = entry_id.strip()
         entry = next((e for e in self._entries if e.entry_id == eid), None)

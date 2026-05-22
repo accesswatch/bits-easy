@@ -34,6 +34,8 @@ This starter pack provides implementation-ready artifacts for direct hotkey work
 1. Local script: scripts/validate-hotkey-config.ps1
 2. VS Code task: .vscode/tasks.json with label Validate hotkey configs
 3. CI workflow: .github/workflows/validate-hotkeys.yml
+4. Release hardening checklist: docs/RELEASE-HARDENING-CHECKLIST.md
+5. Cross-app parity smoke suite: tests/test_release_parity_matrix.py
 
 ### How To Run Locally
 

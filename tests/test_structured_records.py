@@ -71,6 +71,39 @@ class StructuredRecordServiceTests(unittest.TestCase):
             applied = svc.jamal_sync([{"entryId": "rec-00001", "values": {"name": "item-b"}}], apply=True)
             self.assertTrue(applied.ok)
 
+    def test_templates_grid_dashboard_and_json_export(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            svc = StructuredRecordService(Path(tmpdir) / "records.json")
+            templated = svc.apply_template("tasks", database_name="team-tasks")
+            self.assertTrue(templated.ok)
+
+            listed = svc.list_databases()
+            self.assertTrue(listed.ok)
+            self.assertGreaterEqual(listed.payload["count"], 1)
+
+            add_one = svc.add_entry({"title": "Ship v4", "status": "todo", "owner": "alice"})
+            add_two = svc.add_entry({"title": "Demo", "status": "doing", "owner": "bob"})
+            self.assertTrue(add_one.ok)
+            self.assertTrue(add_two.ok)
+
+            advanced = svc.search_advanced(text_query="ship", filters={"status": "todo"}, limit=10)
+            self.assertTrue(advanced.ok)
+            self.assertEqual(advanced.payload["count"], 1)
+
+            grid = svc.entry_grid(sort_by="title", descending=False, limit=1, offset=0)
+            self.assertTrue(grid.ok)
+            self.assertEqual(grid.payload["count"], 1)
+            self.assertGreaterEqual(grid.payload["total"], 2)
+
+            dashboard = svc.dashboard()
+            self.assertTrue(dashboard.ok)
+            self.assertIn("completenessRate", dashboard.payload)
+
+            json_out = Path(tmpdir) / "out.json"
+            exported = svc.export_json(json_out)
+            self.assertTrue(exported.ok)
+            self.assertTrue(json_out.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

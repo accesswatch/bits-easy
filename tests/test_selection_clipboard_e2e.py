@@ -38,15 +38,31 @@ class SelectionClipboardE2E(unittest.TestCase):
                 ctx = self._ctx(app_id, "alpha bravo charlie delta", 6)
                 start = self.runtime.mark_selection_start(ctx)
                 self.assertTrue(start.ok)
+                marker_state_start = self.runtime.describe_selection_markers(ctx)
+                self.assertTrue(marker_state_start.ok)
+                self.assertTrue(marker_state_start.payload["startMarkerSet"])
+                self.assertFalse(marker_state_start.payload["endMarkerSet"])
+                self.assertEqual(marker_state_start.payload["startMeta"]["appId"], app_id)
 
                 ctx.caret = 18
                 end = self.runtime.mark_selection_end(ctx)
                 self.assertTrue(end.ok)
                 self.assertEqual(end.payload["length"], 12)
+                self.assertIn("startSnippet", end.payload)
+                self.assertIn("endSnippet", end.payload)
+                self.assertIn("startMeta", end.payload)
+                self.assertIn("endMeta", end.payload)
 
                 read = self.runtime.read_selection_context(ctx)
                 self.assertTrue(read.ok)
                 self.assertIn("bravo", read.payload["startSnippet"])
+
+                marker_state_ready = self.runtime.describe_selection_markers(ctx)
+                self.assertTrue(marker_state_ready.ok)
+                self.assertEqual(marker_state_ready.payload["activeRangeStart"], 6)
+                self.assertEqual(marker_state_ready.payload["activeRangeEnd"], 18)
+                self.assertIn("telemetry", marker_state_ready.payload)
+                self.assertGreaterEqual(marker_state_ready.payload["telemetry"]["app"].get("markEndCaptured", 0), 1)
 
                 ctx.caret = 1
                 jump = self.runtime.jump_selection_start(ctx)

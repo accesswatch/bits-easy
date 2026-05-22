@@ -233,6 +233,14 @@
       "safetyGate": "none"
     },
     {
+      "commandId": "cmd.selection.markerStatus",
+      "keyChord": "Control+Alt+Semicolon",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
       "commandId": "cmd.selection.jumpStart",
       "keyChord": "Control+Alt+J",
       "scope": "global",

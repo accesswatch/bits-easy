@@ -194,6 +194,22 @@ All items in this document are considered fully mapped only when all criteria ar
 8. Historical library supports folder creation, move, link, restore, and alias retention with deterministic outcomes.
 9. Linked clips maintain consistent metadata across all linked folder views.
 
+## Implementation Reconciliation Snapshot (2026-05-22)
+
+This section reconciles planning intent with current runtime behavior so roadmap and implementation are not interpreted as contradictory.
+
+### Implemented now (runtime + tests)
+
+1. Selection marker lifecycle, context, jump, cancel, marker status metadata, and telemetry payloads.
+2. PocketClips browser open/filter/sort/search, compare, split, merge, reorder, batch actions, export/import.
+3. Favorite slot pin/unpin state in browser workflows.
+4. Clip library open/create/rename/delete folder, move/link, retain alias with deterministic conflict strategies, restore to slot, retention policy, linked locations.
+5. Smart-view style library payload summaries (recent, pinned, by-source, by-category counts).
+
+### Planned scope still not fully closed in implementation depth
+
+1. Cross-app UX parity tuning in live NVDA usage remains a manual validation stream.
+
 ## Implementation Notes
 
 1. Use existing E01 and E17 tracks as execution base.

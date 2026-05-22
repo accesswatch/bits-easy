@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.notes_workspace")
 
 
 class NotesWorkspaceService:
@@ -42,6 +45,7 @@ class NotesWorkspaceService:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading notes workspace at %s failed", self._storage_path)
             return
         self._notes = payload.get("notes", {}) if isinstance(payload.get("notes", {}), dict) else {}
         self._categories = payload.get("categories", {}) if isinstance(payload.get("categories", {}), dict) else {}

@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
+from .diagnostics import get_logger
 from .engine import AppContext, RuntimeResult
+
+_logger = get_logger("spellforge.missions_context")
 
 
 class MissionsContextService:
@@ -30,6 +33,7 @@ class MissionsContextService:
         try:
             payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
         except Exception:
+            _logger.exception("Spellforge: loading missions progress at %s failed", self._storage_path)
             return
         self._progress = payload.get("progress", {}) if isinstance(payload.get("progress", {}), dict) else {}
 

@@ -2,6 +2,13 @@ from __future__ import annotations
 
 from typing import Callable
 
+try:
+    from logHandler import log
+except Exception:  # pragma: no cover - logHandler is always present inside NVDA
+    import logging
+
+    log = logging.getLogger("spellforge.addon.settings")
+
 
 _KNOWN_NVDA_GESTURES = {
     "NVDA+N",
@@ -143,6 +150,7 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
     try:
         import wx
     except Exception:
+        log.exception("Spellforge: hotkey editor wx import failed")
         return False
 
     class HotkeyEditorDialog(wx.Dialog):
@@ -388,6 +396,7 @@ def register_settings_panel(
         import wx
         from gui.settingsDialogs import NVDASettingsDialog, SettingsPanel
     except Exception:
+        log.exception("Spellforge: settings panel gui import failed")
         return None
 
     class SpellforgeSettingsPanel(SettingsPanel):
@@ -446,6 +455,7 @@ def register_settings_panel(
             settings_store.save(settings)
 
     NVDASettingsDialog.categoryClasses.append(SpellforgeSettingsPanel)
+    log.info("Spellforge: settings panel registered")
     return SpellforgeSettingsPanel
 
 
@@ -455,7 +465,9 @@ def unregister_settings_panel(panel_class):
     try:
         from gui.settingsDialogs import NVDASettingsDialog
     except Exception:
+        log.exception("Spellforge: settings panel gui import failed during unregister")
         return
 
     if panel_class in NVDASettingsDialog.categoryClasses:
         NVDASettingsDialog.categoryClasses.remove(panel_class)
+        log.info("Spellforge: settings panel unregistered")

@@ -5,7 +5,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional
 
+from .diagnostics import get_logger
 from .engine import RuntimeResult
+
+_logger = get_logger("spellforge.text_expansion")
 
 
 @dataclass
@@ -36,6 +39,7 @@ class TextExpansionStore:
                     title=str(item.get("title", abbr)),
                 )
         except Exception:
+            _logger.exception("Spellforge: loading text expansions at %s failed", self.storage_path)
             self._entries = {}
             self._primary = None
 

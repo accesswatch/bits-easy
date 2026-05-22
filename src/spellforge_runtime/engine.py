@@ -7,6 +7,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+from .diagnostics import get_logger
+
+_logger = get_logger("spellforge.engine")
+
 
 class RuntimeErrorCode(str, Enum):
     UNSUPPORTED_SURFACE = "unsupported-surface"
@@ -232,7 +236,7 @@ class SpellforgeRuntime:
             if isinstance(payload, dict):
                 self._deserialize_slots(payload)
         except Exception:
-            # Leave default empty slot state if persisted storage is unreadable.
+            _logger.exception("Spellforge: loading clip slots at %s failed", self._storage_path)
             return
 
     def save_source_anchor(self, context: AppContext) -> RuntimeResult:

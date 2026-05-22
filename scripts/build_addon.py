@@ -82,7 +82,14 @@ def main() -> int:
         stage_root = Path(tmpdir) / "addon-stage"
         stage_root.mkdir(parents=True, exist_ok=True)
 
-        _copy_tree(repo_root / "addon", stage_root / "addon")
+        # NVDA expects globalPlugins/, doc/, and installTasks.py at the addon
+        # zip root — they live in addon/ in the repo for organization, so we
+        # flatten the layout when staging.
+        _copy_tree(repo_root / "addon" / "globalPlugins", stage_root / "globalPlugins")
+        _copy_tree(repo_root / "addon" / "doc", stage_root / "doc")
+        install_tasks = repo_root / "addon" / "installTasks.py"
+        if install_tasks.exists():
+            shutil.copy2(install_tasks, stage_root / "installTasks.py")
         _copy_tree(repo_root / "config" / "hotkeys", stage_root / "config" / "hotkeys")
         _copy_tree(repo_root / "src" / "spellforge_runtime", stage_root / "spellforge_runtime")
 

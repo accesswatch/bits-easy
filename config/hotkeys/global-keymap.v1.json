@@ -3,7 +3,7 @@
   "bindings": [
     {
       "commandId": "cmd.palette.open",
-      "keyChord": "NVDA+Shift+P",
+      "keyChord": "Control+Alt+Space",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -11,7 +11,7 @@
     },
     {
       "commandId": "cmd.capture.quickInbox",
-      "keyChord": "NVDA+Q",
+      "keyChord": "Control+Alt+Q",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -19,7 +19,7 @@
     },
     {
       "commandId": "cmd.selection.summarize",
-      "keyChord": "NVDA+S",
+      "keyChord": "Control+Alt+S",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -27,7 +27,7 @@
     },
     {
       "commandId": "cmd.selection.extractActions",
-      "keyChord": "NVDA+A",
+      "keyChord": "Control+Alt+A",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -35,7 +35,7 @@
     },
     {
       "commandId": "cmd.selection.rewriteBeginner",
-      "keyChord": "NVDA+R",
+      "keyChord": "Control+Alt+R",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -43,7 +43,7 @@
     },
     {
       "commandId": "cmd.result.virtualOpen",
-      "keyChord": "NVDA+V",
+      "keyChord": "Control+Alt+V",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -51,7 +51,7 @@
     },
     {
       "commandId": "cmd.result.block.copy",
-      "keyChord": "NVDA+C",
+      "keyChord": "Control+Alt+C",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -59,7 +59,7 @@
     },
     {
       "commandId": "cmd.result.block.next",
-      "keyChord": "NVDA+RightArrow",
+      "keyChord": "Control+Alt+RightArrow",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -67,7 +67,7 @@
     },
     {
       "commandId": "cmd.result.block.previous",
-      "keyChord": "NVDA+LeftArrow",
+      "keyChord": "Control+Alt+LeftArrow",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -75,7 +75,7 @@
     },
     {
       "commandId": "cmd.context.returnSource",
-      "keyChord": "NVDA+Backspace",
+      "keyChord": "Control+Alt+Backspace",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -83,7 +83,7 @@
     },
     {
       "commandId": "cmd.help.availableHotkeys",
-      "keyChord": "NVDA+Slash",
+      "keyChord": "Control+Alt+Slash",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -91,7 +91,7 @@
     },
     {
       "commandId": "cmd.system.emergencyStop",
-      "keyChord": "NVDA+Escape",
+      "keyChord": "Control+Alt+Escape",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -99,7 +99,7 @@
     },
     {
       "commandId": "cmd.result.copyAll",
-      "keyChord": "NVDA+Shift+C",
+      "keyChord": "Control+Alt+Shift+C",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -107,7 +107,7 @@
     },
     {
       "commandId": "cmd.result.pinInbox",
-      "keyChord": "NVDA+P",
+      "keyChord": "Control+Alt+P",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -115,7 +115,7 @@
     },
     {
       "commandId": "cmd.result.readConfidence",
-      "keyChord": "NVDA+K",
+      "keyChord": "Control+Alt+K",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -123,15 +123,23 @@
     },
     {
       "commandId": "cmd.result.openFallbacks",
-      "keyChord": "NVDA+F",
+      "keyChord": "Control+Alt+F",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
       "safetyGate": "none"
     },
     {
+      "commandId": "cmd.palette.open",
+      "keyChord": "NVDA+Shift+P",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
       "commandId": "cmd.help.availableHotkeys",
-      "keyChord": "NVDA+Space",
+      "keyChord": "Control+Alt+Space",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -144,7 +152,7 @@
     },
     {
       "commandId": "cmd.profile.hotkeyDiagnostics",
-      "keyChord": "NVDA+Space",
+      "keyChord": "Control+Alt+Space",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -157,7 +165,7 @@
     },
     {
       "commandId": "cmd.help.availableHotkeys",
-      "keyChord": "NVDA+Space",
+      "keyChord": "Control+Alt+Space",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -170,7 +178,7 @@
     },
     {
       "commandId": "cmd.result.toggleSpeechDensity",
-      "keyChord": "NVDA+B",
+      "keyChord": "Control+Alt+B",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -178,7 +186,7 @@
     },
     {
       "commandId": "cmd.result.toggleBrailleDensity",
-      "keyChord": "NVDA+N",
+      "keyChord": "Control+Alt+Z",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -186,7 +194,7 @@
     },
     {
       "commandId": "cmd.result.search",
-      "keyChord": "NVDA+Control+F",
+      "keyChord": "Control+Alt+Shift+F",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -194,7 +202,7 @@
     },
     {
       "commandId": "cmd.profile.hotkeyDiagnostics",
-      "keyChord": "NVDA+D",
+      "keyChord": "Control+Alt+D",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -202,7 +210,7 @@
     },
     {
       "commandId": "cmd.selection.markStart",
-      "keyChord": "NVDA+OpenBracket",
+      "keyChord": "Control+Alt+OpenBracket",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -210,7 +218,7 @@
     },
     {
       "commandId": "cmd.selection.markEnd",
-      "keyChord": "NVDA+CloseBracket",
+      "keyChord": "Control+Alt+CloseBracket",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -218,7 +226,7 @@
     },
     {
       "commandId": "cmd.selection.readContext",
-      "keyChord": "NVDA+Quote",
+      "keyChord": "Control+Alt+Quote",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -226,7 +234,7 @@
     },
     {
       "commandId": "cmd.selection.jumpStart",
-      "keyChord": "NVDA+J",
+      "keyChord": "Control+Alt+J",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -234,7 +242,7 @@
     },
     {
       "commandId": "cmd.selection.cancel",
-      "keyChord": "NVDA+X",
+      "keyChord": "Control+Alt+X",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -242,7 +250,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "NVDA+1",
+      "keyChord": "Control+Alt+1",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -250,7 +258,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "NVDA+2",
+      "keyChord": "Control+Alt+2",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -258,7 +266,7 @@
     },
     {
       "commandId": "cmd.clip.deleteSlot",
-      "keyChord": "NVDA+3",
+      "keyChord": "Control+Alt+3",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -266,7 +274,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "NVDA+4",
+      "keyChord": "Control+Alt+4",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -274,7 +282,7 @@
     },
     {
       "commandId": "cmd.text.quickInsert",
-      "keyChord": "NVDA+0",
+      "keyChord": "Control+Alt+0",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -282,7 +290,7 @@
     },
     {
       "commandId": "cmd.cuts.dashboard",
-      "keyChord": "NVDA+5",
+      "keyChord": "Control+Alt+5",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -290,7 +298,7 @@
     },
     {
       "commandId": "cmd.clip.library.open",
-      "keyChord": "NVDA+6",
+      "keyChord": "Control+Alt+6",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -298,7 +306,7 @@
     },
     {
       "commandId": "cmd.shortcuts.launcher.open",
-      "keyChord": "NVDA+7",
+      "keyChord": "Control+Alt+7",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -306,7 +314,7 @@
     },
     {
       "commandId": "cmd.shortcuts.drive.list",
-      "keyChord": "NVDA+8",
+      "keyChord": "Control+Alt+8",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -314,7 +322,7 @@
     },
     {
       "commandId": "cmd.shortcuts.launcher.addFocusedApp",
-      "keyChord": "NVDA+9",
+      "keyChord": "Control+Alt+9",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -322,7 +330,7 @@
     },
     {
       "commandId": "cmd.tags.session.report",
-      "keyChord": "NVDA+T",
+      "keyChord": "Control+Alt+T",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -330,7 +338,7 @@
     },
     {
       "commandId": "cmd.tags.outlook.report",
-      "keyChord": "NVDA+Shift+T",
+      "keyChord": "Control+Alt+Shift+T",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -338,7 +346,7 @@
     },
     {
       "commandId": "cmd.shortcuts.dialog.detect",
-      "keyChord": "NVDA+Shift+7",
+      "keyChord": "Control+Alt+Shift+7",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -346,7 +354,7 @@
     },
     {
       "commandId": "cmd.speech.history.browse",
-      "keyChord": "NVDA+H",
+      "keyChord": "Control+Alt+H",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -354,7 +362,7 @@
     },
     {
       "commandId": "cmd.speech.history.virtualView",
-      "keyChord": "NVDA+Shift+H",
+      "keyChord": "Control+Alt+Shift+H",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -362,7 +370,7 @@
     },
     {
       "commandId": "cmd.utility.symbol.search",
-      "keyChord": "NVDA+Equals",
+      "keyChord": "Control+Alt+Equals",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -370,7 +378,7 @@
     },
     {
       "commandId": "cmd.utility.symbol.recent",
-      "keyChord": "NVDA+Minus",
+      "keyChord": "Control+Alt+Minus",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -378,7 +386,7 @@
     },
     {
       "commandId": "cmd.utility.windowBookmark.recall",
-      "keyChord": "NVDA+W",
+      "keyChord": "Control+Alt+W",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -386,7 +394,7 @@
     },
     {
       "commandId": "cmd.utility.windowBookmark.list",
-      "keyChord": "NVDA+Shift+W",
+      "keyChord": "Control+Alt+Shift+W",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -394,7 +402,7 @@
     },
     {
       "commandId": "cmd.utility.systemReport.open",
-      "keyChord": "NVDA+R",
+      "keyChord": "Control+Alt+Shift+R",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -402,7 +410,7 @@
     },
     {
       "commandId": "cmd.merge.setModeAppend",
-      "keyChord": "NVDA+M",
+      "keyChord": "Control+Alt+M",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -410,7 +418,7 @@
     },
     {
       "commandId": "cmd.merge.setModeReplace",
-      "keyChord": "NVDA+Shift+M",
+      "keyChord": "Control+Alt+Shift+M",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -418,7 +426,7 @@
     },
     {
       "commandId": "cmd.merge.setDividerLine",
-      "keyChord": "NVDA+L",
+      "keyChord": "Control+Alt+L",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -426,7 +434,7 @@
     },
     {
       "commandId": "cmd.merge.setDividerSpace",
-      "keyChord": "NVDA+U",
+      "keyChord": "Control+Alt+U",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -434,7 +442,7 @@
     },
     {
       "commandId": "cmd.merge.setDividerParagraph",
-      "keyChord": "NVDA+I",
+      "keyChord": "Control+Alt+I",
       "scope": "global",
       "appId": null,
       "enabled": true,

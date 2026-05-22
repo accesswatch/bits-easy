@@ -1,4 +1,5 @@
 import sys
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -14,7 +15,12 @@ class SettingsStoreTests(unittest.TestCase):
             store = SettingsStore(Path(tmpdir) / "missing.json")
             settings = store.load()
             self.assertEqual(settings.profile_id, "balanced")
+            self.assertTrue(settings.announce_surface_mode)
+            self.assertTrue(settings.enable_contextual_fallbacks)
             self.assertTrue(settings.enable_command_palette)
+            self.assertTrue(settings.enable_global_hotkeys)
+            self.assertTrue(settings.emulate_capslock_prefix_for_os_hotkeys)
+            self.assertTrue(settings.enable_multi_press_gestures)
 
     def test_roundtrip_save_load(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -36,6 +42,28 @@ class SettingsStoreTests(unittest.TestCase):
             self.assertFalse(loaded.enable_command_palette)
             self.assertEqual(loaded.slot_default, 3)
             self.assertEqual(loaded.preview_threshold_chars, 128)
+
+    def test_legacy_settings_missing_palette_flag_defaults_enabled(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "settings.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "profile_id": "balanced",
+                        "announce_surface_mode": True,
+                        "enable_contextual_fallbacks": True,
+                        "slot_default": 1,
+                        "preview_threshold_chars": 240,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            store = SettingsStore(path)
+            settings = store.load()
+            self.assertTrue(settings.enable_command_palette)
+            self.assertTrue(settings.enable_global_hotkeys)
+            self.assertTrue(settings.emulate_capslock_prefix_for_os_hotkeys)
+            self.assertTrue(settings.enable_multi_press_gestures)
 
 
 if __name__ == "__main__":

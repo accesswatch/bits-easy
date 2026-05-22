@@ -46,7 +46,7 @@ The following table defines v1 direct-hotkey commands.
 
 | Command ID | Command Name | Safety Class | Default Hotkey | Requires Confirmation |
 | --- | --- | --- | --- | --- |
-| cmd.palette.open | Open palette | Safe | CapsLock+Space | No |
+| cmd.palette.open | Open palette | Safe | NVDA+Shift+P | No |
 | cmd.capture.quickInbox | Quick capture to inbox | Safe | CapsLock+Q | No |
 | cmd.selection.summarize | Summarize selection | Adaptive | CapsLock+S | Low confidence only |
 | cmd.selection.extractActions | Extract action items | Adaptive | CapsLock+A | Low confidence only |
@@ -272,7 +272,7 @@ The following table defines v1 direct-hotkey commands.
   "bindings": [
     {
       "commandId": "cmd.palette.open",
-      "keyChord": "CapsLock+Space",
+      "keyChord": "NVDA+Shift+P",
       "scope": "global",
       "appId": null,
       "enabled": true,

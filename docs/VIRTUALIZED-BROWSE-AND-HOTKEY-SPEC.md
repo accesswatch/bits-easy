@@ -144,7 +144,7 @@ The following table defines baseline reserved hotkeys.
 
 | Command | Default Hotkey | Behavior |
 | --- | --- | --- |
-| Open palette | CapsLock+Space | Opens StarKey palette |
+| Open palette | NVDA+Shift+P | Opens StarKey palette |
 | Quick capture to inbox | CapsLock+Q | Captures current selection or guided fallback |
 | Summarize selection | CapsLock+S | Runs summarize action with confidence output |
 | Extract action items | CapsLock+A | Extracts tasks from current context |

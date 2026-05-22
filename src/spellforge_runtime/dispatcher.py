@@ -42,6 +42,7 @@ from .nvda_readiness import NvdaReadinessService
 from .utility_ops import UtilityOpsService
 from .missions_context import MissionsContextService
 from .workflow_portability import WorkflowPortabilityService
+from .spellcheck import SpellCheckService
 
 
 @dataclass
@@ -117,6 +118,7 @@ class RuntimeDispatcher:
         self._utility_ops = UtilityOpsService(base_dir / "utility-ops.json")
         self._missions = MissionsContextService(base_dir / "missions.json")
         self._workflow_pack = WorkflowPortabilityService()
+        self._spellcheck = SpellCheckService()
         self._latest_result: Dict[str, Any] = {
             "confidence": 0.0,
             "fallbacks": ["cmd.palette.open"],
@@ -452,6 +454,8 @@ class RuntimeDispatcher:
                     "fallbacks": list((result.payload or {}).get("fallbacks", ["cmd.palette.open"])),
                     "summary": str((result.payload or {}).get("content", ""))[:120],
                 }
+        elif command_id == "cmd.spell.checkCurrentWord":
+            result = self._spellcheck.check_current_word(context.buffer, context.caret)
         elif command_id == "cmd.capture.quickInbox":
             text = context.clipboard_text.strip() or context.buffer.strip()
             result = self._capture.capture(text, source_app=context.app_id, window_id=context.window_id)

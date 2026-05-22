@@ -13,7 +13,7 @@ class SpellforgeSettings:
     enable_command_palette: bool = True
     slot_default: int = 1
     preview_threshold_chars: int = 240
-    enable_global_hotkeys: bool = False
+    enable_global_hotkeys: bool = True
     emulate_capslock_prefix_for_os_hotkeys: bool = True
     enable_multi_press_gestures: bool = True
 
@@ -34,7 +34,7 @@ class SettingsStore:
                 enable_command_palette=bool(payload.get("enable_command_palette", True)),
                 slot_default=int(payload.get("slot_default", 1)),
                 preview_threshold_chars=int(payload.get("preview_threshold_chars", 240)),
-                enable_global_hotkeys=bool(payload.get("enable_global_hotkeys", False)),
+                enable_global_hotkeys=bool(payload.get("enable_global_hotkeys", True)),
                 emulate_capslock_prefix_for_os_hotkeys=bool(payload.get("emulate_capslock_prefix_for_os_hotkeys", True)),
                 enable_multi_press_gestures=bool(payload.get("enable_multi_press_gestures", True)),
             )

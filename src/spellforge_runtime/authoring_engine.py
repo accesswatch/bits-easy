@@ -2,12 +2,126 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from .engine import RuntimeResult
 
 
 class AuthoringEngine:
+    def __init__(self) -> None:
+        self._undo_stack: List[Dict[str, str]] = []
+
+    def _push_undo(self, *, source: str, output: str, flow: str) -> str:
+        token = f"author-undo-{len(self._undo_stack) + 1:04d}"
+        self._undo_stack.append({"token": token, "source": source, "output": output, "flow": flow})
+        return token
+
+    def _normalize_markdown(self, text: str) -> str:
+        rows = [line.rstrip() for line in text.replace("\r", "").split("\n")]
+        return "\n".join(rows).strip("\n")
+
+    def markdown_polish_pipeline(self, text: str) -> RuntimeResult:
+        source = text or ""
+        if not source.strip():
+            return RuntimeResult(ok=False, message="Source text is required.")
+
+        stages: List[Dict[str, Any]] = []
+        transformed = self._normalize_markdown(source)
+        stages.append(
+            {
+                "stage": "transform",
+                "changed": transformed != source,
+                "summary": "Normalized spacing and trailing whitespace.",
+            }
+        )
+
+        structured = transformed
+        if not structured.lstrip().startswith("# "):
+            structured = f"# Draft\n\n{structured}".strip()
+        stages.append(
+            {
+                "stage": "structure-check",
+                "changed": structured != transformed,
+                "summary": "Ensured top-level heading exists.",
+            }
+        )
+
+        styled = structured.replace("[click here]", "[open the detailed guide]")
+        stages.append(
+            {
+                "stage": "style-pass",
+                "changed": styled != structured,
+                "summary": "Upgraded ambiguous link text to descriptive wording.",
+            }
+        )
+
+        undo_token = self._push_undo(source=source, output=styled, flow="markdown-polish")
+        return RuntimeResult(
+            ok=True,
+            message="Markdown polish flow ready.",
+            payload={
+                "source": source,
+                "output": styled,
+                "insertText": styled,
+                "stages": stages,
+                "undoToken": undo_token,
+                "confidence": 0.94,
+                "nextAction": "Review polished output, then apply undo if you want to restore the original draft.",
+            },
+        )
+
+    def markdown_template_apply(self, template: str, topic: str) -> RuntimeResult:
+        t = template.strip().lower() or "release-notes"
+        subject = topic.strip() or "this update"
+        if t != "release-notes":
+            return RuntimeResult(ok=False, message="Unsupported template. Use release-notes.")
+
+        output = (
+            f"# Release Notes: {subject}\n\n"
+            "## Highlights\n"
+            "- Added:\n"
+            "- Improved:\n"
+            "- Fixed:\n\n"
+            "## Upgrade Notes\n"
+            "- Prerequisites:\n"
+            "- Breaking changes:\n\n"
+            "## Verification\n"
+            "- Smoke test:\n"
+            "- Rollback check:\n"
+        )
+        undo_token = self._push_undo(source="", output=output, flow="markdown-template")
+        return RuntimeResult(
+            ok=True,
+            message="Template output ready.",
+            payload={
+                "template": t,
+                "topic": subject,
+                "output": output,
+                "insertText": output,
+                "guided": True,
+                "undoToken": undo_token,
+                "nextAction": "Fill the placeholder bullets and run polish when draft details are complete.",
+            },
+        )
+
+    def pipeline_undo(self, undo_token: str) -> RuntimeResult:
+        token = undo_token.strip()
+        if not token:
+            return RuntimeResult(ok=False, message="Undo token is required.")
+        row = next((item for item in reversed(self._undo_stack) if item.get("token") == token), None)
+        if row is None:
+            return RuntimeResult(ok=False, message="Undo token was not found.")
+        return RuntimeResult(
+            ok=True,
+            message="Undo content ready.",
+            payload={
+                "undoToken": token,
+                "restored": row.get("source", ""),
+                "insertText": row.get("source", ""),
+                "flow": row.get("flow", ""),
+            },
+        )
+
     def markdown_insert(self, kind: str, text: str) -> RuntimeResult:
         value = text or ""
         k = kind.strip().lower()
@@ -80,3 +194,50 @@ class AuthoringEngine:
     def accessibility_fix_preview(self, markdown: str) -> RuntimeResult:
         preview = markdown.replace("click here", "open the detailed guide")
         return RuntimeResult(ok=True, message="Accessibility fix preview ready.", payload={"preview": preview})
+
+    def html_fix_preview(self, html: str) -> RuntimeResult:
+        source = html or ""
+        preview = source
+        changes: List[Dict[str, str]] = []
+        if "click here" in preview.lower():
+            preview = re.sub(r"click here", "open the detailed guide", preview, flags=re.IGNORECASE)
+            changes.append(
+                {
+                    "rule": "link-purpose",
+                    "before": "click here",
+                    "after": "open the detailed guide",
+                }
+            )
+        if "<main" not in preview.lower() and "<article" in preview.lower():
+            preview = preview.replace("<article", "<main><article", 1)
+            preview = preview.replace("</article>", "</article></main>", 1)
+            changes.append(
+                {
+                    "rule": "landmark-main",
+                    "before": "article without main",
+                    "after": "wrapped article in main landmark",
+                }
+            )
+        return RuntimeResult(
+            ok=True,
+            message="HTML fix preview ready.",
+            payload={
+                "original": source,
+                "preview": preview,
+                "changes": changes,
+                "count": len(changes),
+                "nonDestructive": True,
+                "nextAction": "Apply the preview when changes look correct, or keep original HTML unchanged.",
+            },
+        )
+
+    def html_fix_apply(self, html: str) -> RuntimeResult:
+        pre = self.html_fix_preview(html)
+        if not pre.ok:
+            return pre
+        payload = pre.payload or {}
+        output = str(payload.get("preview", ""))
+        undo_token = self._push_undo(source=html or "", output=output, flow="html-fix")
+        payload["undoToken"] = undo_token
+        payload["insertText"] = output
+        return RuntimeResult(ok=True, message="HTML fixes prepared for apply.", payload=payload)

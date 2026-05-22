@@ -74,6 +74,30 @@
     "fallbackCommandIds": []
   },
   {
+    "id": "cmd.journal.undoLast",
+    "name": "Undo last reversible action",
+    "safetyClass": "mutating",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Control+Alt+Shift+J",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.journal.rollbackCoverage",
+    "name": "Rollback coverage report",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
     "id": "cmd.selection.summarize",
     "name": "Summarize selection",
     "safetyClass": "adaptive",
@@ -391,12 +415,24 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+1",
+    "defaultHotkey": "CapsLock+Shift+F1 to CapsLock+Shift+F12",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.capture.quickInbox",
       "cmd.palette.open"
     ]
+  },
+  {
+    "id": "cmd.clip.selectSlot",
+    "name": "Select active clip slot",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "CapsLock+F1 to CapsLock+F12",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
   },
   {
     "id": "cmd.clip.pasteFromSlot",
@@ -406,7 +442,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+2",
+    "defaultHotkey": "CapsLock+Control+F1 to CapsLock+Control+F12",
     "requiresConfirmation": true,
     "fallbackCommandIds": [
       "cmd.palette.open"
@@ -420,7 +456,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "",
+    "defaultHotkey": "Control+Alt+Shift+P",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -432,7 +468,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "",
+    "defaultHotkey": "Control+Alt+Shift+U",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -456,7 +492,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "",
+    "defaultHotkey": "Control+Alt+Shift+E",
     "requiresConfirmation": true,
     "fallbackCommandIds": []
   },
@@ -468,7 +504,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+4",
+    "defaultHotkey": "CapsLock+Windows+F1 to CapsLock+Windows+F12",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -720,7 +756,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "",
+    "defaultHotkey": "Control+Alt+Shift+6",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1009,6 +1045,30 @@
     "supportsPalette": true,
     "supportsVirtualized": false,
     "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.tags.session.toggleCurrent",
+    "name": "Toggle tag for current item",
+    "safetyClass": "mutating",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Control+Alt+G",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.tags.session.tagFromSelection",
+    "name": "Tag from current selection",
+    "safetyClass": "mutating",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Control+Alt+Shift+G",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -2297,6 +2357,42 @@
     "fallbackCommandIds": []
   },
   {
+    "id": "cmd.author.pipeline.polish",
+    "name": "Author Pipeline Polish",
+    "safetyClass": "mutating",
+    "executionMode": "preview-first",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Control+Alt+Shift+A",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.author.pipeline.undo",
+    "name": "Author Pipeline Undo",
+    "safetyClass": "mutating",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Control+Alt+Shift+Z",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.author.template.apply",
+    "name": "Author Template Apply",
+    "safetyClass": "mutating",
+    "executionMode": "preview-first",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Control+Alt+Shift+N",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
     "id": "cmd.author.a11y.lint",
     "name": "Author A 11 Y Lint",
     "safetyClass": "safe",
@@ -2349,6 +2445,30 @@
     "name": "Author Html Validate",
     "safetyClass": "safe",
     "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.author.html.fixPreview",
+    "name": "Author Html Fix Preview",
+    "safetyClass": "safe",
+    "executionMode": "preview-first",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.author.html.fixApply",
+    "name": "Author Html Fix Apply",
+    "safetyClass": "mutating",
+    "executionMode": "preview-first",
     "supportsHotkey": false,
     "supportsPalette": true,
     "supportsVirtualized": false,

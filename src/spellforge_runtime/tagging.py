@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Set
+from datetime import datetime, timezone
+from typing import Dict, List
 
 from .engine import RuntimeResult
 
@@ -9,29 +10,68 @@ from .engine import RuntimeResult
 @dataclass
 class TaggedItem:
     path: str
+    tagged_at: str
 
 
 class TaggingSession:
     def __init__(self):
-        self._tagged: Set[str] = set()
+        self._tagged: Dict[str, TaggedItem] = {}
+
+    @staticmethod
+    def _now() -> str:
+        return datetime.now(timezone.utc).isoformat()
+
+    @staticmethod
+    def _normalize_path(path: str) -> str:
+        p = path.strip().strip('"').strip("'")
+        if "\n" in p:
+            p = p.splitlines()[0].strip()
+        return p
 
     def tag(self, path: str) -> RuntimeResult:
-        p = path.strip()
+        p = self._normalize_path(path)
         if not p:
             return RuntimeResult(ok=False, message="Path is required.")
-        self._tagged.add(p)
-        return RuntimeResult(ok=True, message="File tagged.", payload={"path": p, "count": len(self._tagged)})
+        if p in self._tagged:
+            return RuntimeResult(
+                ok=True,
+                message="File is already tagged.",
+                payload={"path": p, "count": len(self._tagged), "alreadyTagged": True},
+            )
+        self._tagged[p] = TaggedItem(path=p, tagged_at=self._now())
+        return RuntimeResult(ok=True, message="File tagged.", payload={"path": p, "count": len(self._tagged), "alreadyTagged": False})
 
     def untag(self, path: str) -> RuntimeResult:
-        p = path.strip()
+        p = self._normalize_path(path)
         if p not in self._tagged:
             return RuntimeResult(ok=False, message="File is not tagged.")
-        self._tagged.remove(p)
+        del self._tagged[p]
         return RuntimeResult(ok=True, message="File untagged.", payload={"path": p, "count": len(self._tagged)})
 
+    def toggle(self, path: str) -> RuntimeResult:
+        p = self._normalize_path(path)
+        if not p:
+            return RuntimeResult(ok=False, message="Path is required.")
+        if p in self._tagged:
+            out = self.untag(p)
+            if out.ok and out.payload is not None:
+                out.payload["toggledTo"] = "untagged"
+            return out
+        out = self.tag(p)
+        if out.ok and out.payload is not None:
+            out.payload["toggledTo"] = "tagged"
+        return out
+
     def report(self) -> RuntimeResult:
-        items = [{"path": p} for p in sorted(self._tagged)]
-        return RuntimeResult(ok=True, message="Tagged file report ready.", payload={"items": items})
+        items = [
+            {
+                "index": idx + 1,
+                "path": row.path,
+                "taggedAt": row.tagged_at,
+            }
+            for idx, row in enumerate(self._tagged.values())
+        ]
+        return RuntimeResult(ok=True, message="Tagged file report ready.", payload={"items": items, "count": len(items)})
 
     def count(self) -> RuntimeResult:
         return RuntimeResult(ok=True, message="Tag count ready.", payload={"count": len(self._tagged)})
@@ -45,7 +85,7 @@ class TaggingSession:
         act = action.strip().lower()
         if act not in ("copy", "cut", "delete", "playlist-add"):
             return RuntimeResult(ok=False, message="Unsupported batch action.")
-        items = sorted(self._tagged)
+        items = [row.path for row in self._tagged.values()]
         if not items:
             return RuntimeResult(ok=False, message="No tagged files in current session.")
         if act in ("copy", "cut", "playlist-add") and not target.strip():

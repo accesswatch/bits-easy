@@ -3,7 +3,7 @@
   "bindings": [
     {
       "commandId": "cmd.palette.open",
-      "keyChord": "Control+Alt+Space",
+      "keyChord": "CapsLock+Space",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -90,6 +90,14 @@
       "safetyGate": "none"
     },
     {
+      "commandId": "cmd.journal.undoLast",
+      "keyChord": "Control+Alt+Shift+J",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
       "commandId": "cmd.system.emergencyStop",
       "keyChord": "Control+Alt+Escape",
       "scope": "global",
@@ -139,7 +147,7 @@
     },
     {
       "commandId": "cmd.help.availableHotkeys",
-      "keyChord": "Control+Alt+Space",
+      "keyChord": "CapsLock+Space",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -152,7 +160,7 @@
     },
     {
       "commandId": "cmd.profile.hotkeyDiagnostics",
-      "keyChord": "Control+Alt+Space",
+      "keyChord": "CapsLock+Space",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -165,7 +173,7 @@
     },
     {
       "commandId": "cmd.help.availableHotkeys",
-      "keyChord": "Control+Alt+Space",
+      "keyChord": "CapsLock+Space",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -273,6 +281,22 @@
       "safetyGate": "always-confirm"
     },
     {
+      "commandId": "cmd.clip.protectSlot",
+      "keyChord": "Control+Alt+Shift+P",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.unprotectSlot",
+      "keyChord": "Control+Alt+Shift+U",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
       "commandId": "cmd.clip.deleteSlot",
       "keyChord": "Control+Alt+3",
       "scope": "global",
@@ -287,6 +311,14 @@
       "appId": null,
       "enabled": true,
       "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.editSlot",
+      "keyChord": "Control+Alt+Shift+E",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "always-confirm"
     },
     {
       "commandId": "cmd.text.quickInsert",
@@ -307,6 +339,14 @@
     {
       "commandId": "cmd.clip.library.open",
       "keyChord": "Control+Alt+6",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.browser.open",
+      "keyChord": "Control+Alt+Shift+6",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -337,6 +377,22 @@
       "safetyGate": "none"
     },
     {
+      "commandId": "cmd.tags.session.toggleCurrent",
+      "keyChord": "Control+Alt+G",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.tags.session.tagFromSelection",
+      "keyChord": "Control+Alt+Shift+G",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
       "commandId": "cmd.tags.session.report",
       "keyChord": "Control+Alt+T",
       "scope": "global",
@@ -347,6 +403,30 @@
     {
       "commandId": "cmd.tags.outlook.report",
       "keyChord": "Control+Alt+Shift+T",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.author.pipeline.polish",
+      "keyChord": "Control+Alt+Shift+A",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.author.template.apply",
+      "keyChord": "Control+Alt+Shift+N",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.author.pipeline.undo",
+      "keyChord": "Control+Alt+Shift+Z",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -371,6 +451,14 @@
     {
       "commandId": "cmd.speech.history.virtualView",
       "keyChord": "Control+Alt+Shift+H",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.time.speak",
+      "keyChord": "Control+Alt+Shift+Y",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -454,6 +542,534 @@
       "scope": "global",
       "appId": null,
       "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F1",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 1
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F1",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 1
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F1",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 1
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F1",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 1
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F2",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 2
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F2",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 2
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F2",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 2
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F2",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 2
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F3",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 3
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F3",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 3
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F3",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 3
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F3",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 3
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F4",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 4
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F4",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 4
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F4",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 4
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F4",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 4
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F5",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 5
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F5",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 5
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F5",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 5
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F5",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 5
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F6",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 6
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F6",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 6
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F6",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 6
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F6",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 6
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F7",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 7
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F7",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 7
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F7",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 7
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F7",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 7
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F8",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 8
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F8",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 8
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F8",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 8
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F8",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 8
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F9",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 9
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F9",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 9
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F9",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 9
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F9",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 9
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F10",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 10
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F10",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 10
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F10",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 10
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F10",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 10
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F11",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 11
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F11",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 11
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F11",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 11
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F11",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 11
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.selectSlot",
+      "keyChord": "CapsLock+F12",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 12
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.copyToSlot",
+      "keyChord": "CapsLock+Shift+F12",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 12
+      },
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clip.pasteFromSlot",
+      "keyChord": "CapsLock+Control+F12",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 12
+      },
+      "safetyGate": "always-confirm"
+    },
+    {
+      "commandId": "cmd.clip.describeSlot",
+      "keyChord": "CapsLock+Windows+F12",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "args": {
+        "slot": 12
+      },
       "safetyGate": "none"
     }
   ]

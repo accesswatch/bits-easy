@@ -38,6 +38,8 @@ class SelectionClipboardE2E(unittest.TestCase):
                 ctx = self._ctx(app_id, "alpha bravo charlie delta", 6)
                 start = self.runtime.mark_selection_start(ctx)
                 self.assertTrue(start.ok)
+                self.assertIn("guidedFlow", start.payload)
+                self.assertEqual(start.payload["guidedFlow"]["stage"], "start-set")
                 marker_state_start = self.runtime.describe_selection_markers(ctx)
                 self.assertTrue(marker_state_start.ok)
                 self.assertTrue(marker_state_start.payload["startMarkerSet"])
@@ -52,10 +54,12 @@ class SelectionClipboardE2E(unittest.TestCase):
                 self.assertIn("endSnippet", end.payload)
                 self.assertIn("startMeta", end.payload)
                 self.assertIn("endMeta", end.payload)
+                self.assertEqual(end.payload["guidedFlow"]["stage"], "range-captured")
 
                 read = self.runtime.read_selection_context(ctx)
                 self.assertTrue(read.ok)
                 self.assertIn("bravo", read.payload["startSnippet"])
+                self.assertEqual(read.payload["guidedFlow"]["stage"], "status")
 
                 marker_state_ready = self.runtime.describe_selection_markers(ctx)
                 self.assertTrue(marker_state_ready.ok)
@@ -68,9 +72,11 @@ class SelectionClipboardE2E(unittest.TestCase):
                 jump = self.runtime.jump_selection_start(ctx)
                 self.assertTrue(jump.ok)
                 self.assertEqual(ctx.caret, 6)
+                self.assertIn("guidedFlow", jump.payload)
 
                 cancel = self.runtime.cancel_selection(ctx)
                 self.assertTrue(cancel.ok)
+                self.assertEqual(cancel.payload["guidedFlow"]["stage"], "cancelled")
 
     def test_clip_slot_lifecycle(self) -> None:
         ctx = self._ctx("edge", "first second third", 0, clipboard_text="clipboard")
@@ -169,6 +175,24 @@ class SelectionClipboardE2E(unittest.TestCase):
         read = self.runtime.read_selection_context(ctx)
         self.assertTrue(read.ok)
         self.assertGreater(read.payload["confidence"], 0.5)
+
+    def test_unsupported_selection_uses_buffer_range_fallback_before_clipboard(self) -> None:
+        ctx = self._ctx("outlook", "alpha bravo charlie", 6, clipboard_text="clipboard fallback")
+
+        start = self.runtime.mark_selection_start(ctx)
+        self.assertTrue(start.ok)
+
+        ctx.caret = 11
+        end = self.runtime.mark_selection_end(ctx)
+        self.assertTrue(end.ok)
+        self.assertEqual(end.code, RuntimeErrorCode.UNSUPPORTED_SURFACE)
+        self.assertTrue(end.payload["fallbackUsed"])
+        self.assertEqual(end.payload["fallbackSource"], "buffer-range")
+        self.assertEqual(end.payload["guidedFlow"]["stage"], "fallback-captured")
+
+        read = self.runtime.read_selection_context(ctx)
+        self.assertTrue(read.ok)
+        self.assertIn("bravo", read.payload["startSnippet"])
 
 
 if __name__ == "__main__":

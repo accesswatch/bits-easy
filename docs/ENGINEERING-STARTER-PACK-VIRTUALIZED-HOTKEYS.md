@@ -73,13 +73,14 @@ The following table defines v1 direct-hotkey commands.
 | cmd.selection.readContext | Read selection context | Safe | CapsLock+Quote | No |
 | cmd.selection.jumpStart | Jump to selection start | Safe | CapsLock+J | No |
 | cmd.selection.cancel | Cancel selection markers | Safe | CapsLock+X | No |
-| cmd.clip.copyToSlot | Copy to clip slot | Safe | CapsLock+1 | No |
-| cmd.clip.pasteFromSlot | Paste from clip slot | Mutating | CapsLock+2 | Yes before apply |
-| cmd.clip.protectSlot | Protect clip slot | Mutating | None | No |
-| cmd.clip.unprotectSlot | Unprotect clip slot | Mutating | None | No |
-| cmd.clip.deleteSlot | Delete clip slot | Destructive | CapsLock+3 | Yes |
-| cmd.clip.editSlot | Edit clip slot | Mutating | None | Yes before apply |
-| cmd.clip.describeSlot | Describe clip slot | Safe | CapsLock+4 | No |
+| cmd.clip.selectSlot | Select active clip slot | Safe | CapsLock+F1..F12 | No |
+| cmd.clip.copyToSlot | Copy to active clip slot | Safe | CapsLock+Shift+F1..F12 | No |
+| cmd.clip.pasteFromSlot | Paste from active clip slot | Mutating | CapsLock+Control+F1..F12 | Yes before apply |
+| cmd.clip.protectSlot | Protect active clip slot | Mutating | CapsLock+Shift+P | No |
+| cmd.clip.unprotectSlot | Unprotect active clip slot | Mutating | CapsLock+Shift+U | No |
+| cmd.clip.deleteSlot | Delete active clip slot | Destructive | CapsLock+3 | Yes |
+| cmd.clip.editSlot | Edit active clip slot | Mutating | CapsLock+Shift+E | Yes before apply |
+| cmd.clip.describeSlot | Describe active clip slot | Safe | CapsLock+Windows+F1..F12 | No |
 | cmd.merge.setModeAppend | Set merge mode append | Safe | CapsLock+M | No |
 | cmd.merge.setModeReplace | Set merge mode replace | Safe | CapsLock+Shift+M | No |
 | cmd.merge.setDividerLine | Set merge divider line | Safe | CapsLock+L | No |

@@ -148,6 +148,7 @@ class SpellforgeRuntime:
         self._selection_cache: Dict[str, SelectionRange] = {}
         self._source_anchor: Optional[SourceAnchor] = None
         self._slots: Dict[int, ClipSlot] = {i: ClipSlot() for i in range(1, 13)}
+        self._active_slot: int = 1
         self._storage_path: Optional[Path] = Path(storage_path) if storage_path else None
         self._marker_metrics: Dict[str, Any] = {"global": {}, "apps": {}}
 
@@ -176,6 +177,90 @@ class SpellforgeRuntime:
                 next_steps=["Choose a slot in the range 1 to 12."],
             )
         return self._slots[slot], None
+
+    def _resolve_slot_number(self, slot: Optional[int]) -> int:
+        return self._active_slot if slot is None else int(slot)
+
+    def active_slot(self) -> int:
+        return self._active_slot
+
+    def select_active_slot(self, slot: int) -> RuntimeResult:
+        slot_ref, slot_err = self._slot_or_error(slot)
+        if slot_err is not None:
+            return slot_err
+        assert slot_ref is not None
+        self._active_slot = int(slot)
+        return RuntimeResult(
+            ok=True,
+            message=f"Active clip slot set to {slot}.",
+            payload={"slot": int(slot), "activeSlot": self._active_slot},
+        )
+
+    def selection_text_for_actions(self, context: AppContext) -> str:
+        selection = self._selection_cache.get(context.app_id)
+        if selection is not None:
+            return selection.text.strip()
+
+        # If range markers are available but cache is missing, reconstruct from
+        # current buffer so selection actions can still proceed predictably.
+        markers = self._selection_markers.get(context.app_id, {})
+        start_caret = self._marker_caret(markers, "start")
+        end_caret = self._marker_caret(markers, "end")
+        if start_caret is None or end_caret is None:
+            return ""
+
+        lo = min(start_caret, end_caret)
+        hi = max(start_caret, end_caret)
+        if lo < 0 or hi > len(context.buffer) or lo == hi:
+            return ""
+        return context.buffer[lo:hi].strip()
+
+    def _selection_guided_flow_payload(
+        self,
+        context: AppContext,
+        *,
+        stage: str,
+        fallback_used: bool = False,
+        drift_detected: bool = False,
+    ) -> Dict[str, Any]:
+        hints: List[str] = []
+        if stage == "start-set":
+            hints = [
+                "Move caret to target start point.",
+                "Use normal selection keys such as Shift+Arrow to extend selection.",
+                "Run Mark selection end to capture and preview the range.",
+            ]
+        elif stage == "range-captured":
+            hints = [
+                "Run Read selection context to preview snippets.",
+                "Run summarize, extract actions, or rewrite on the captured range.",
+                "Run Jump selection start to quickly return to anchor.",
+            ]
+        elif stage == "fallback-captured":
+            hints = [
+                "Review fallback text in selection context before mutating actions.",
+                "If needed, refresh selection in a supported text field.",
+                "Use quick capture fallback when surface blocks range capture.",
+            ]
+        elif stage == "status":
+            hints = [
+                "Use marker status to verify drift and confidence.",
+                "If markers look stale, cancel and re-capture.",
+            ]
+        elif stage == "cancelled":
+            hints = [
+                "Set selection start to begin a new capture cycle.",
+                "Use quick inbox capture for one-off snippets.",
+            ]
+
+        return {
+            "stage": stage,
+            "appId": context.app_id,
+            "normalSelectionMode": True,
+            "fallbackUsed": fallback_used,
+            "surfaceDriftDetected": drift_detected,
+            "hints": hints,
+        }
 
     @staticmethod
     def _selection_preview_payload(selection: SelectionRange, snippet: int = 18) -> Dict[str, Any]:
@@ -366,7 +451,14 @@ class SpellforgeRuntime:
         return RuntimeResult(
             ok=True,
             message=f"Selection start marker set at {context.caret}.",
-            payload={"caret": context.caret},
+            payload={
+                "caret": context.caret,
+                "guidedFlow": self._selection_guided_flow_payload(context, stage="start-set"),
+            },
+            next_steps=[
+                "Use normal selection keys to extend the selection.",
+                "Run Mark selection end to capture the active range.",
+            ],
         )
 
     def mark_selection_end(self, context: AppContext) -> RuntimeResult:
@@ -404,6 +496,7 @@ class SpellforgeRuntime:
                     "end": selection.end,
                     "startMeta": markers.get("startMeta"),
                     "endMeta": markers.get("endMeta"),
+                    "guidedFlow": self._selection_guided_flow_payload(context, stage="range-captured"),
                 }
             )
             self._record_marker_metric(context.app_id, "markEndCaptured")
@@ -411,8 +504,52 @@ class SpellforgeRuntime:
                 ok=True,
                 message=f"Selection range captured, {len(selection.text)} characters.",
                 payload=payload,
+                next_steps=[
+                    "Run Read selection context to verify snippets.",
+                    "Apply summarize or rewrite on the captured selection.",
+                ],
             )
         except UnsupportedSurfaceError:
+            lo = min(start_caret, context.caret)
+            hi = max(start_caret, context.caret)
+            if lo >= 0 and hi <= len(context.buffer) and hi > lo:
+                fallback_text = context.buffer[lo:hi].strip()
+                if fallback_text:
+                    fallback_selection = SelectionRange(
+                        app_id=context.app_id,
+                        start=lo,
+                        end=hi,
+                        text=fallback_text,
+                        confidence=0.75,
+                    )
+                    self._selection_cache[context.app_id] = fallback_selection
+                    payload = self._selection_preview_payload(fallback_selection)
+                    payload.update(
+                        {
+                            "fallbackUsed": True,
+                            "fallbackSource": "buffer-range",
+                            "start": lo,
+                            "end": hi,
+                            "startMeta": markers.get("startMeta"),
+                            "endMeta": markers.get("endMeta"),
+                            "guidedFlow": self._selection_guided_flow_payload(
+                                context,
+                                stage="fallback-captured",
+                                fallback_used=True,
+                            ),
+                        }
+                    )
+                    self._record_marker_metric(context.app_id, "markEndCaptured")
+                    self._record_marker_metric(context.app_id, "fallbackUsed")
+                    self._record_marker_metric(context.app_id, "bufferFallbackUsed")
+                    return RuntimeResult(
+                        ok=True,
+                        message="Selection surface unsupported. Captured fallback text from current buffer range.",
+                        code=RuntimeErrorCode.UNSUPPORTED_SURFACE,
+                        payload=payload,
+                        next_steps=["Review captured text before applying mutating actions."],
+                    )
+
             fallback_text = context.clipboard_text.strip()
             if fallback_text:
                 fallback_selection = SelectionRange(
@@ -431,6 +568,12 @@ class SpellforgeRuntime:
                         "end": context.caret,
                         "startMeta": markers.get("startMeta"),
                         "endMeta": markers.get("endMeta"),
+                            "fallbackSource": "clipboard",
+                            "guidedFlow": self._selection_guided_flow_payload(
+                                context,
+                                stage="fallback-captured",
+                                fallback_used=True,
+                            ),
                     }
                 )
                 self._record_marker_metric(context.app_id, "markEndCaptured")
@@ -468,10 +611,16 @@ class SpellforgeRuntime:
 
         self._record_marker_metric(context.app_id, "readContext")
         selection = self._selection_cache[context.app_id]
+        payload = self._selection_preview_payload(selection, snippet=snippet)
+        payload["guidedFlow"] = self._selection_guided_flow_payload(context, stage="status")
         return RuntimeResult(
             ok=True,
             message="Selection context ready.",
-            payload=self._selection_preview_payload(selection, snippet=snippet),
+            payload=payload,
+            next_steps=[
+                "Run summarize or extract actions on this selection.",
+                "Run marker status if you need drift diagnostics.",
+            ],
         )
 
     def describe_selection_markers(self, context: AppContext, snippet: int = 18) -> RuntimeResult:
@@ -500,6 +649,11 @@ class SpellforgeRuntime:
                     "currentSurfaceKey": current_surface,
                     "surfaceDriftFromStart": surface_drift_from_start,
                     "telemetry": self._marker_telemetry_payload(context.app_id),
+                    "guidedFlow": self._selection_guided_flow_payload(
+                        context,
+                        stage="status",
+                        drift_detected=surface_drift_from_start,
+                    ),
                 }
             )
             return RuntimeResult(
@@ -586,16 +740,30 @@ class SpellforgeRuntime:
         target = min(max(start_caret, 0), len(context.buffer))
         context.caret = target
         self._record_marker_metric(context.app_id, "jumpStartSuccess")
-        return RuntimeResult(ok=True, message="Jumped to selection start.", payload={"caret": target})
+        return RuntimeResult(
+            ok=True,
+            message="Jumped to selection start.",
+            payload={
+                "caret": target,
+                "guidedFlow": self._selection_guided_flow_payload(context, stage="status"),
+            },
+            next_steps=["Use normal selection keys to extend from this anchor, then mark selection end."],
+        )
 
     def cancel_selection(self, context: AppContext) -> RuntimeResult:
         self._selection_markers.pop(context.app_id, None)
         self._selection_cache.pop(context.app_id, None)
         self._record_marker_metric(context.app_id, "cancelSelection")
-        return RuntimeResult(ok=True, message="Selection markers cleared.")
+        return RuntimeResult(
+            ok=True,
+            message="Selection markers cleared.",
+            payload={"guidedFlow": self._selection_guided_flow_payload(context, stage="cancelled")},
+            next_steps=["Set selection start marker to begin a new range."],
+        )
 
-    def copy_to_slot(self, context: AppContext, slot: int, text: Optional[str] = None) -> RuntimeResult:
-        slot_ref, slot_err = self._slot_or_error(slot)
+    def copy_to_slot(self, context: AppContext, slot: Optional[int] = None, text: Optional[str] = None) -> RuntimeResult:
+        slot_number = self._resolve_slot_number(slot)
+        slot_ref, slot_err = self._slot_or_error(slot_number)
         if slot_err is not None:
             return slot_err
 
@@ -604,7 +772,7 @@ class SpellforgeRuntime:
             return RuntimeResult(
                 ok=False,
                 code=RuntimeErrorCode.PROTECTED_SLOT,
-                message=f"Slot {slot} is protected and cannot be overwritten.",
+                message=f"Slot {slot_number} is protected and cannot be overwritten.",
                 next_steps=["Unprotect the slot or choose a different slot."],
             )
 
@@ -634,12 +802,13 @@ class SpellforgeRuntime:
         self.save_slots()
         return RuntimeResult(
             ok=True,
-            message=f"Copied content to slot {slot}.",
-            payload={"slot": slot, "length": len(content)},
+            message=f"Copied content to slot {slot_number}.",
+            payload={"slot": slot_number, "activeSlot": self._active_slot, "length": len(content)},
         )
 
-    def paste_from_slot(self, slot: int) -> RuntimeResult:
-        slot_ref, slot_err = self._slot_or_error(slot)
+    def paste_from_slot(self, slot: Optional[int] = None) -> RuntimeResult:
+        slot_number = self._resolve_slot_number(slot)
+        slot_ref, slot_err = self._slot_or_error(slot_number)
         if slot_err is not None:
             return slot_err
 
@@ -648,43 +817,47 @@ class SpellforgeRuntime:
             return RuntimeResult(
                 ok=False,
                 code=RuntimeErrorCode.EMPTY_SLOT,
-                message=f"Slot {slot} is empty.",
+                message=f"Slot {slot_number} is empty.",
                 next_steps=["Copy content into the slot first."],
             )
 
         return RuntimeResult(
             ok=True,
-            message=f"Ready to paste from slot {slot}.",
+            message=f"Ready to paste from slot {slot_number}.",
             payload={
-                "slot": slot,
+                "slot": slot_number,
+                "activeSlot": self._active_slot,
                 "content": slot_ref.item.content,
                 "sourceApp": slot_ref.item.source_app,
                 "length": slot_ref.item.length,
             },
         )
 
-    def protect_slot(self, slot: int) -> RuntimeResult:
-        slot_ref, slot_err = self._slot_or_error(slot)
+    def protect_slot(self, slot: Optional[int] = None) -> RuntimeResult:
+        slot_number = self._resolve_slot_number(slot)
+        slot_ref, slot_err = self._slot_or_error(slot_number)
         if slot_err is not None:
             return slot_err
         assert slot_ref is not None
 
         slot_ref.protected = True
         self.save_slots()
-        return RuntimeResult(ok=True, message=f"Slot {slot} is now protected.")
+        return RuntimeResult(ok=True, message=f"Slot {slot_number} is now protected.")
 
-    def unprotect_slot(self, slot: int) -> RuntimeResult:
-        slot_ref, slot_err = self._slot_or_error(slot)
+    def unprotect_slot(self, slot: Optional[int] = None) -> RuntimeResult:
+        slot_number = self._resolve_slot_number(slot)
+        slot_ref, slot_err = self._slot_or_error(slot_number)
         if slot_err is not None:
             return slot_err
         assert slot_ref is not None
 
         slot_ref.protected = False
         self.save_slots()
-        return RuntimeResult(ok=True, message=f"Slot {slot} is now unprotected.")
+        return RuntimeResult(ok=True, message=f"Slot {slot_number} is now unprotected.")
 
-    def delete_slot(self, slot: int) -> RuntimeResult:
-        slot_ref, slot_err = self._slot_or_error(slot)
+    def delete_slot(self, slot: Optional[int] = None) -> RuntimeResult:
+        slot_number = self._resolve_slot_number(slot)
+        slot_ref, slot_err = self._slot_or_error(slot_number)
         if slot_err is not None:
             return slot_err
         assert slot_ref is not None
@@ -693,16 +866,21 @@ class SpellforgeRuntime:
             return RuntimeResult(
                 ok=False,
                 code=RuntimeErrorCode.PROTECTED_SLOT,
-                message=f"Slot {slot} is protected and cannot be deleted.",
+                message=f"Slot {slot_number} is protected and cannot be deleted.",
                 next_steps=["Unprotect the slot first."],
             )
 
         slot_ref.item = None
         self.save_slots()
-        return RuntimeResult(ok=True, message=f"Deleted content from slot {slot}.")
+        return RuntimeResult(
+            ok=True,
+            message=f"Deleted content from slot {slot_number}.",
+            payload={"slot": slot_number, "activeSlot": self._active_slot},
+        )
 
-    def edit_slot(self, slot: int, content: str) -> RuntimeResult:
-        slot_ref, slot_err = self._slot_or_error(slot)
+    def edit_slot(self, slot: Optional[int], content: str) -> RuntimeResult:
+        slot_number = self._resolve_slot_number(slot)
+        slot_ref, slot_err = self._slot_or_error(slot_number)
         if slot_err is not None:
             return slot_err
         assert slot_ref is not None
@@ -711,7 +889,7 @@ class SpellforgeRuntime:
             return RuntimeResult(
                 ok=False,
                 code=RuntimeErrorCode.EMPTY_SLOT,
-                message=f"Slot {slot} is empty and cannot be edited.",
+                message=f"Slot {slot_number} is empty and cannot be edited.",
                 next_steps=["Copy content into the slot first."],
             )
 
@@ -719,17 +897,22 @@ class SpellforgeRuntime:
             return RuntimeResult(
                 ok=False,
                 code=RuntimeErrorCode.PROTECTED_SLOT,
-                message=f"Slot {slot} is protected and cannot be edited.",
+                message=f"Slot {slot_number} is protected and cannot be edited.",
                 next_steps=["Unprotect the slot first."],
             )
 
         slot_ref.item.content = content
         slot_ref.item.length = len(content)
         self.save_slots()
-        return RuntimeResult(ok=True, message=f"Edited slot {slot}.", payload={"length": len(content)})
+        return RuntimeResult(
+            ok=True,
+            message=f"Edited slot {slot_number}.",
+            payload={"slot": slot_number, "activeSlot": self._active_slot, "length": len(content)},
+        )
 
-    def describe_slot(self, slot: int) -> RuntimeResult:
-        slot_ref, slot_err = self._slot_or_error(slot)
+    def describe_slot(self, slot: Optional[int] = None) -> RuntimeResult:
+        slot_number = self._resolve_slot_number(slot)
+        slot_ref, slot_err = self._slot_or_error(slot_number)
         if slot_err is not None:
             return slot_err
         assert slot_ref is not None
@@ -737,15 +920,16 @@ class SpellforgeRuntime:
         if slot_ref.item is None:
             return RuntimeResult(
                 ok=True,
-                message=f"Slot {slot} is empty.",
-                payload={"slot": slot, "empty": True, "protected": slot_ref.protected},
+                message=f"Slot {slot_number} is empty.",
+                payload={"slot": slot_number, "activeSlot": self._active_slot, "empty": True, "protected": slot_ref.protected},
             )
 
         return RuntimeResult(
             ok=True,
-            message=f"Slot {slot} has content.",
+            message=f"Slot {slot_number} has content.",
             payload={
-                "slot": slot,
+                "slot": slot_number,
+                "activeSlot": self._active_slot,
                 "empty": False,
                 "protected": slot_ref.protected,
                 "sourceApp": slot_ref.item.source_app,

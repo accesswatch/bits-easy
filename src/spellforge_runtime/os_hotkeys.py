@@ -4,7 +4,7 @@ import ctypes
 from ctypes import wintypes
 from dataclasses import dataclass
 from threading import Event, Thread
-from typing import Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 
 @dataclass
@@ -28,6 +28,10 @@ def _vk_for_key(key: str) -> Optional[int]:
         return ord(key)
     if len(key) == 1 and "0" <= key <= "9":
         return ord(key)
+    if key.startswith("F") and key[1:].isdigit():
+        num = int(key[1:])
+        if 1 <= num <= 24:
+            return 0x6F + num
     table = {
         "SPACE": 0x20,
         "BACKSPACE": 0x08,
@@ -78,10 +82,10 @@ def parse_key_chord_for_os(chord: str, emulate_capslock_prefix: bool = True) -> 
 
 
 class GlobalHotkeyService:
-    def __init__(self, on_command: Callable[[str], None], emulate_capslock_prefix: bool = True):
+    def __init__(self, on_command: Callable[[str, Optional[Dict[str, Any]]], None], emulate_capslock_prefix: bool = True):
         self._on_command = on_command
         self._emulate_capslock_prefix = emulate_capslock_prefix
-        self._bindings: Dict[int, str] = {}
+        self._bindings: Dict[int, Dict[str, Any]] = {}
         self._running = Event()
         self._thread: Optional[Thread] = None
 
@@ -117,7 +121,11 @@ class GlobalHotkeyService:
 
             ok = user32.RegisterHotKey(None, hotkey_id, spec.modifiers, spec.vk)
             if ok:
-                self._bindings[hotkey_id] = str(binding.get("commandId", ""))
+                raw_args = binding.get("args", {})
+                self._bindings[hotkey_id] = {
+                    "commandId": str(binding.get("commandId", "")),
+                    "args": dict(raw_args) if isinstance(raw_args, dict) else {},
+                }
                 hotkey_id += 1
 
         try:
@@ -128,9 +136,11 @@ class GlobalHotkeyService:
                     continue
 
                 if msg.message == WM_HOTKEY:
-                    command_id = self._bindings.get(int(msg.wParam), "")
+                    spec = self._bindings.get(int(msg.wParam), {})
+                    command_id = str(spec.get("commandId", ""))
                     if command_id:
-                        self._on_command(command_id)
+                        args = spec.get("args", {})
+                        self._on_command(command_id, dict(args) if isinstance(args, dict) else {})
 
                 user32.TranslateMessage(ctypes.byref(msg))
                 user32.DispatchMessageW(ctypes.byref(msg))

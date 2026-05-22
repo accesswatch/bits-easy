@@ -286,9 +286,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         if changed:
             ui.message("Keyboard mappings updated.")
 
-    def _on_os_hotkey_command(self, command_id: str):
+    def _on_os_hotkey_command(self, command_id: str, command_args: dict | None = None):
+        args = dict(command_args) if isinstance(command_args, dict) else {}
+
         def _run():
-            self._dispatch(command_id)
+            self._dispatch(command_id, **args)
 
         try:
             import queueHandler
@@ -367,20 +369,32 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         except Exception:
             provider_count = 0
 
+        backend_labels = {
+            "windows-credential-manager": "Windows Credential Manager",
+            "in-memory": "temporary memory",
+            "unknown": "an unknown store",
+        }
+        backend_label = backend_labels.get(backend, backend.replace("-", " "))
+
         if secure and persistent:
-            storage_phrase = "secure and persistent"
+            storage_phrase = "secure and saved between sessions"
+            reassurance = "Your keys stay protected after restart."
         elif secure:
             storage_phrase = "secure but temporary"
+            reassurance = "Your keys are protected, but may not persist after restart."
         elif persistent:
-            storage_phrase = "persistent but not secure"
+            storage_phrase = "saved between sessions but not secure"
+            reassurance = "Consider using a secure credential backend for provider keys."
         else:
             storage_phrase = "temporary and not secure"
+            reassurance = "Keys are only kept for this run and should be treated as temporary."
 
         provider_label = "provider" if provider_count == 1 else "providers"
         return (
-            f"AI key storage backend: {backend}. "
-            f"Storage mode is {storage_phrase}. "
-            f"{provider_count} {provider_label} currently configured."
+            f"AI key store is {backend_label}. "
+            f"Storage is {storage_phrase}. "
+            f"{provider_count} {provider_label} configured. "
+            f"{reassurance}"
         )
 
     def _dispatch(self, command_id: str, **kwargs):

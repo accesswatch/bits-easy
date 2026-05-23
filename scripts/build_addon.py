@@ -90,6 +90,11 @@ def main() -> int:
         install_tasks = repo_root / "addon" / "installTasks.py"
         if install_tasks.exists():
             shutil.copy2(install_tasks, stage_root / "installTasks.py")
+        # spellforge_settings.py is a helper module imported by globalPlugins/spellforge.py.
+        # It must NOT live under globalPlugins/ or NVDA will try to load it as a plugin and fail.
+        settings_helper = repo_root / "addon" / "spellforge_settings.py"
+        if settings_helper.exists():
+            shutil.copy2(settings_helper, stage_root / "spellforge_settings.py")
         _copy_tree(repo_root / "config" / "hotkeys", stage_root / "config" / "hotkeys")
         _copy_tree(repo_root / "src" / "spellforge_runtime", stage_root / "spellforge_runtime")
 

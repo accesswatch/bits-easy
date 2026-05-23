@@ -58,7 +58,9 @@ class AddonPackageLayoutTests(unittest.TestCase):
             "manifest.ini",
             "installTasks.py",
             "globalPlugins/spellforge.py",
-            "globalPlugins/spellforge_settings.py",
+            # spellforge_settings.py must live at zip root, NOT under globalPlugins/.
+            # NVDA scans globalPlugins/*.py for a GlobalPlugin class and fails on helpers.
+            "spellforge_settings.py",
             "spellforge_runtime/__init__.py",
             "spellforge_runtime/diagnostics.py",
             "config/hotkeys/commands/tier1-commands.v1.json",
@@ -67,6 +69,14 @@ class AddonPackageLayoutTests(unittest.TestCase):
         }
         missing = sorted(required - names)
         self.assertFalse(missing, f"Missing required entries at zip root: {missing}")
+
+    def test_settings_helper_not_in_globalplugins(self):
+        names = set(self._names())
+        self.assertNotIn(
+            "globalPlugins/spellforge_settings.py",
+            names,
+            "spellforge_settings.py must not live under globalPlugins/ — NVDA will fail to import it as a plugin.",
+        )
 
     def test_no_addon_prefix_anywhere(self):
         offenders = [n for n in self._names() if n.startswith("addon/") or n == "addon"]

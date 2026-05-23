@@ -67,14 +67,44 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         self._context.caret = snapshot.caret
 
     def _initialize_runtime(self):
-        repo_root = Path(__file__).resolve().parents[2]
-        src_path = repo_root / "src"
-        if str(src_path) not in sys.path:
-            sys.path.insert(0, str(src_path))
+        # The addon root sits at different depths depending on layout:
+        # - Production (installed .nvda-addon): globalPlugins/spellforge.py — addon root is parents[1].
+        # - Source repo: addon/globalPlugins/spellforge.py — repo root is parents[2], runtime is under src/.
+        # Walk up and add any ancestor (or its src/) that contains the runtime package
+        # or the settings helper, so both imports resolve in either layout.
+        here = Path(__file__).resolve()
+        added: list[str] = []
+        seen: set[str] = set()
+        for ancestor in here.parents[:4]:
+            for candidate in (ancestor, ancestor / "src"):
+                try:
+                    if not candidate.is_dir():
+                        continue
+                    has_runtime = (candidate / "spellforge_runtime").is_dir()
+                    has_settings = (candidate / "spellforge_settings.py").is_file()
+                    if not (has_runtime or has_settings):
+                        continue
+                    p = str(candidate)
+                    if p in seen or p in sys.path:
+                        seen.add(p)
+                        continue
+                    sys.path.insert(0, p)
+                    seen.add(p)
+                    added.append(p)
+                except Exception:
+                    pass
+
+        # repo_root is the directory that holds config/hotkeys/ — addon root in
+        # production, project root in the source repo. Fall back to parents[1].
+        repo_root = next(
+            (a for a in here.parents[:4] if (a / "config" / "hotkeys").is_dir()),
+            here.parents[1],
+        )
         log.info(
-            "Spellforge: _initialize_runtime start — repo_root=%s, src_on_path=%s",
+            "Spellforge: _initialize_runtime start — __file__=%s, repo_root=%s, sys.path additions=%s",
+            here,
             repo_root,
-            src_path.exists(),
+            added,
         )
 
         try:

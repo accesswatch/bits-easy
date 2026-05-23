@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -eu
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT"
+
+echo "[pre-commit] Rebuilding NVDA addon artifact..."
+python scripts/build_addon.py --output-dir dist
+
+echo "[pre-commit] Addon build completed."

@@ -9,12 +9,15 @@ This checklist standardizes release readiness for major feature waves so rollout
 1. Run hotkey schema and config validation.
 2. Run full unit test suite.
 3. Verify deterministic command catalog load and dispatcher startup.
+4. Ensure git hooks are installed (`pwsh -File scripts/install-git-hooks.ps1`).
+5. Confirm pre-commit rebuilds the addon package (`.githooks/pre-commit` runs `python scripts/build_addon.py --output-dir dist`).
 
 ### Current branch status (2026-05-22)
 
 1. Hotkey validation: PASS (`scripts/validate-hotkey-config.ps1`).
 2. Unit tests: PASS (`python -m unittest discover -s tests -p "test_*.py"`).
 3. Cross-app parity smoke suite: PASS (`tests/test_release_parity_matrix.py`).
+4. Pre-commit addon rebuild hook: REQUIRED for release branch commits.
 
 ## 2. Migration and Data Safety
 

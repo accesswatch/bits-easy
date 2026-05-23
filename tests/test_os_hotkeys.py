@@ -8,6 +8,14 @@ from spellforge_runtime import parse_key_chord_for_os
 
 
 class OsHotkeyTests(unittest.TestCase):
+    def test_grave_single_key_supported(self):
+        spec = parse_key_chord_for_os("Grave", emulate_capslock_prefix=True)
+        self.assertTrue(spec.supported)
+
+    def test_grave_prefix_shortcut_supported(self):
+        spec = parse_key_chord_for_os("Grave+F", emulate_capslock_prefix=True)
+        self.assertTrue(spec.supported)
+
     def test_capslock_emulation_parses(self):
         spec = parse_key_chord_for_os("CapsLock+1", emulate_capslock_prefix=True)
         self.assertTrue(spec.supported)

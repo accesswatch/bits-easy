@@ -219,3 +219,4 @@ This section reconciles planning intent with current runtime behavior so roadmap
 ## Summary
 
 This spec closes feature decomposition depth for clipboard and selection domains by enumerating all expected capabilities, user-facing behavior, and closure criteria for parity-quality execution.
+

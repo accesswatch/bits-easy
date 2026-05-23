@@ -46,6 +46,7 @@ from .spellcheck import SpellCheckService
 from .surface_context import classify_surface, fallback_steps_for
 from .file_ops import FileOpsService
 from .ai_assistant import AiAssistantService
+from .glow_client import GlowMcpService
 
 
 @dataclass
@@ -96,6 +97,7 @@ class RuntimeDispatcher:
         self._capture = QuickCaptureInbox(base_dir / "quick-capture.json")
         self._journal = OperationJournal(base_dir / "operation-journal.json")
         self._ai = AiAssistantService(base_dir / "ai-assistant.json")
+        self._glow = GlowMcpService()
         self._google_calendar = GoogleCalendarSync(
             base_dir / "google-calendar-credentials.json",
             base_dir / "google-calendar-token.json",
@@ -419,39 +421,47 @@ class RuntimeDispatcher:
         mnemonic_hints = [
             {
                 "commandId": "cmd.selection.markStart",
-                "hint": "Use Control+Alt+Shift+S to set selection start anchor.",
+                "hint": "Use Grave+Shift+S to set selection start anchor.",
+            },
+            {
+                "commandId": "cmd.integration.itemChooser.open",
+                "hint": "Use Grave+O to open Screen Item Chooser.",
+            },
+            {
+                "commandId": "cmd.integration.itemChooser.openOcr",
+                "hint": "Use Grave+Shift+O to open Item Chooser with OCR preselected.",
             },
             {
                 "commandId": "cmd.selection.markEnd",
-                "hint": "Use Control+Alt+Shift+E to capture selection end and range.",
+                "hint": "Use Grave+Shift+E to capture selection end and range.",
             },
             {
                 "commandId": "cmd.clip.copyToSlot",
-                "hint": "Use Control+Alt+1 to copy selection into the active clip lane.",
+                "hint": "Use Grave+1 to copy selection into the active clip lane.",
             },
             {
                 "commandId": "cmd.clip.pasteFromSlot",
-                "hint": "Use Control+Alt+2 to paste from the active clip lane.",
+                "hint": "Use Grave+2 to paste from the active clip lane.",
             },
             {
                 "commandId": "cmd.notes.quickCapture",
-                "hint": "Use Control+Alt+Q to capture quick notes from current context.",
+                "hint": "Use Grave+Q to capture quick notes from current context.",
             },
             {
                 "commandId": "cmd.journal.undoLast",
-                "hint": "Use Control+Alt+Shift+J to undo the latest reversible action.",
+                "hint": "Use Grave+Shift+J to undo the latest reversible action.",
             },
             {
                 "commandId": "cmd.author.pipeline.polish",
-                "hint": "Use Control+Alt+Shift+A to polish draft text in one pass.",
+                "hint": "Use Grave+Shift+A to polish draft text in one pass.",
             },
             {
                 "commandId": "cmd.author.template.apply",
-                "hint": "Use Control+Alt+Shift+N for release-notes template scaffolding.",
+                "hint": "Use Grave+Shift+N for release-notes template scaffolding.",
             },
             {
                 "commandId": "cmd.author.pipeline.undo",
-                "hint": "Use Control+Alt+Shift+Z to undo the latest author pipeline output.",
+                "hint": "Use Grave+Shift+Z to undo the latest author pipeline output.",
             },
         ]
         return RuntimeResult(
@@ -862,6 +872,54 @@ class RuntimeDispatcher:
             result = self.runtime.mark_selection_start(context)
         elif command_id == "cmd.palette.open":
             result = RuntimeResult(ok=True, message="Command palette opened.")
+        elif command_id == "cmd.integration.glow.health":
+            result = self._glow.health()
+        elif command_id == "cmd.integration.glow.audit":
+            result = self._glow.audit(
+                Path(str(kwargs.get("path", ""))),
+                fmt=str(kwargs.get("format", "")),
+            )
+        elif command_id == "cmd.integration.glow.fix":
+            result = self._glow.fix(
+                Path(str(kwargs.get("path", ""))),
+                fmt=str(kwargs.get("format", "")),
+            )
+        elif command_id == "cmd.integration.glow.convert":
+            result = self._glow.convert(
+                Path(str(kwargs.get("path", ""))),
+                from_format=str(kwargs.get("fromFormat", "")),
+                to_format=str(kwargs.get("toFormat", "markdown")),
+            )
+        elif command_id == "cmd.integration.glow.report":
+            result = self._glow.report(
+                Path(str(kwargs.get("path", ""))),
+                fmt=str(kwargs.get("format", "")),
+                report_type=str(kwargs.get("reportType", "json")),
+            )
+        elif command_id == "cmd.integration.itemChooser.open":
+            result = RuntimeResult(
+                ok=True,
+                message="Opening Screen Item Chooser.",
+                payload={
+                    "integrationAction": {
+                        "provider": "screenItemChooser",
+                        "action": "open",
+                        "ocr": False,
+                    }
+                },
+            )
+        elif command_id == "cmd.integration.itemChooser.openOcr":
+            result = RuntimeResult(
+                ok=True,
+                message="Opening Screen Item Chooser with OCR.",
+                payload={
+                    "integrationAction": {
+                        "provider": "screenItemChooser",
+                        "action": "open",
+                        "ocr": True,
+                    }
+                },
+            )
         elif command_id == "cmd.selection.summarize":
             source = self._selection_action_source(context)
             result = self._adaptive.summarize(source)
@@ -2216,3 +2274,4 @@ class RuntimeDispatcher:
         self._last_action = f"{command_id}: {result.message}"
 
         return DispatchOutcome(plan=plan, result=result)
+

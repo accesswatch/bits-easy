@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import json
+import importlib
 
 import globalPluginHandler
 import scriptHandler
@@ -20,6 +21,21 @@ except Exception:  # pragma: no cover - logHandler is always present inside NVDA
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     scriptCategory = "Spellforge"
+
+    _GLOW_FILE_COMMANDS = {
+        "cmd.integration.glow.audit",
+        "cmd.integration.glow.fix",
+        "cmd.integration.glow.convert",
+        "cmd.integration.glow.report",
+    }
+
+    _GLOW_COMMANDS = {
+        "cmd.integration.glow.health",
+        "cmd.integration.glow.audit",
+        "cmd.integration.glow.fix",
+        "cmd.integration.glow.convert",
+        "cmd.integration.glow.report",
+    }
 
     def __init__(self):
         super().__init__()
@@ -432,6 +448,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             ui.message("Spellforge runtime unavailable")
             return
 
+        if self._prompt_glow_file_if_needed(command_id, kwargs):
+            return
+
         self._refresh_context_from_focus()
 
         if self._settings and self._settings.announce_surface_mode:
@@ -439,6 +458,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
         out = self._dispatcher.dispatch_command(self._context, command_id, **kwargs)
         if out.result.ok:
+            integration_error = self._run_integration_action(out.result.payload)
+            if integration_error:
+                ui.message(integration_error)
+                return
+            self._present_glow_result_if_needed(command_id, out.result.message, out.result.payload)
             if self._palette is not None:
                 self._palette_tick += 1
                 self._palette.record_execution(command_id, int(time.time()) + self._palette_tick)
@@ -450,6 +474,293 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             extra_steps = self._contextual_fallbacks(command_id)
             steps = out.result.next_steps + extra_steps
             ui.message(f"{out.result.message}. {' '.join(steps)}")
+
+    def _present_glow_result_if_needed(self, command_id: str, message: str, payload):
+        if command_id not in self._GLOW_COMMANDS:
+            return
+        if not isinstance(payload, dict):
+            return
+
+        summary = self._glow_summary_message(command_id, message, payload)
+        if summary:
+            ui.message(summary)
+
+        try:
+            import wx
+
+            wx.CallAfter(self._show_glow_result_dialog, command_id, message, dict(payload))
+        except Exception:
+            log.exception("Spellforge: unable to schedule GLOW result dialog")
+
+    @staticmethod
+    def _glow_output_path(payload: dict) -> str:
+        if not isinstance(payload, dict):
+            return ""
+        for key in ("output_file", "fixed_file", "outputFile", "fixedFile"):
+            val = str(payload.get(key, "")).strip()
+            if val:
+                return val
+        return ""
+
+    def _glow_summary_message(self, command_id: str, message: str, payload: dict) -> str:
+        summary_parts = [f"GLOW {command_id.split('.')[-1]} complete"]
+
+        if command_id == "cmd.integration.glow.health":
+            status = str(payload.get("status", "")).strip()
+            if status:
+                summary_parts.append(f"status {status}")
+            return ". ".join(summary_parts) + "."
+
+        total_fixes = payload.get("total_fixes")
+        if isinstance(total_fixes, int):
+            summary_parts.append(f"{total_fixes} fixes")
+
+        out_path = self._glow_output_path(payload)
+        if out_path:
+            try:
+                out_name = Path(out_path).name
+            except Exception:
+                out_name = out_path
+            if out_name:
+                summary_parts.append(f"output {out_name}")
+
+        report_text = payload.get("report")
+        if isinstance(report_text, str) and report_text.strip():
+            summary_parts.append(f"report length {len(report_text)} characters")
+
+        if len(summary_parts) == 1 and message:
+            summary_parts.append(message)
+
+        return ". ".join(summary_parts) + "."
+
+    def _show_glow_result_dialog(self, command_id: str, message: str, payload: dict):
+        try:
+            import wx
+            import gui
+        except Exception:
+            log.exception("Spellforge: GLOW result dialog dependencies unavailable")
+            return
+
+        main_frame = gui.mainFrame
+        main_frame.prePopup()
+        try:
+            output_path = self._glow_output_path(payload)
+            pretty_json = json.dumps(payload, ensure_ascii=False, indent=2)
+            summary_lines = [
+                f"Command: {command_id}",
+                f"Status: {message}",
+            ]
+            if output_path:
+                summary_lines.append(f"Output file: {output_path}")
+            if "report" in payload and isinstance(payload.get("report"), str):
+                summary_lines.append("Report text returned by GLOW.")
+
+            dialog_text = "\n".join(summary_lines) + "\n\nJSON payload:\n" + pretty_json
+
+            dlg = wx.Dialog(
+                main_frame,
+                title="Spellforge GLOW Result",
+                style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+            )
+            try:
+                root = wx.BoxSizer(wx.VERTICAL)
+                text = wx.TextCtrl(
+                    dlg,
+                    value=dialog_text,
+                    style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL,
+                )
+                text.SetMinSize((820, 420))
+                root.Add(text, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
+
+                button_row = wx.BoxSizer(wx.HORIZONTAL)
+                copy_btn = wx.Button(dlg, label="Copy JSON")
+                open_btn = wx.Button(dlg, label="Open output file")
+                save_btn = wx.Button(dlg, label="Save report")
+                close_btn = wx.Button(dlg, id=wx.ID_OK, label="Close")
+
+                if not output_path:
+                    open_btn.Enable(False)
+
+                def on_copy(_evt):
+                    data = wx.TextDataObject(pretty_json)
+                    if wx.TheClipboard.Open():
+                        try:
+                            wx.TheClipboard.SetData(data)
+                        finally:
+                            wx.TheClipboard.Close()
+                        ui.message("GLOW JSON copied")
+                    else:
+                        ui.message("Clipboard unavailable")
+
+                def on_open(_evt):
+                    target = output_path
+                    if not target:
+                        ui.message("No output file to open")
+                        return
+                    try:
+                        os.startfile(target)
+                    except Exception:
+                        log.exception("Spellforge: unable to open GLOW output path")
+                        ui.message("Unable to open output file")
+
+                def on_save(_evt):
+                    default_name = command_id.replace(".", "-")
+                    report_text = payload.get("report")
+                    is_text_report = isinstance(report_text, str)
+                    wildcard = "Text file (*.txt)|*.txt|JSON file (*.json)|*.json" if is_text_report else "JSON file (*.json)|*.json"
+                    save_dlg = wx.FileDialog(
+                        dlg,
+                        "Save GLOW result",
+                        defaultFile=f"{default_name}.{'txt' if is_text_report else 'json'}",
+                        wildcard=wildcard,
+                        style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+                    )
+                    try:
+                        if save_dlg.ShowModal() != wx.ID_OK:
+                            return
+                        target = save_dlg.GetPath()
+                    finally:
+                        save_dlg.Destroy()
+
+                    try:
+                        if is_text_report and target.lower().endswith(".txt"):
+                            Path(target).write_text(str(report_text), encoding="utf-8")
+                        else:
+                            Path(target).write_text(pretty_json, encoding="utf-8")
+                        ui.message("GLOW result saved")
+                    except Exception:
+                        log.exception("Spellforge: unable to save GLOW result")
+                        ui.message("Unable to save GLOW result")
+
+                copy_btn.Bind(wx.EVT_BUTTON, on_copy)
+                open_btn.Bind(wx.EVT_BUTTON, on_open)
+                save_btn.Bind(wx.EVT_BUTTON, on_save)
+
+                for btn in (copy_btn, open_btn, save_btn, close_btn):
+                    button_row.Add(btn, flag=wx.RIGHT, border=8)
+
+                root.Add(button_row, flag=wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
+                dlg.SetSizer(root)
+                dlg.CentreOnScreen()
+                dlg.ShowModal()
+            finally:
+                dlg.Destroy()
+        except Exception:
+            log.exception("Spellforge: GLOW result dialog failed")
+        finally:
+            main_frame.postPopup()
+
+    def _prompt_glow_file_if_needed(self, command_id: str, kwargs: dict) -> bool:
+        if command_id not in self._GLOW_FILE_COMMANDS:
+            return False
+
+        path_arg = str(kwargs.get("path", "")).strip()
+        if path_arg:
+            return False
+
+        try:
+            import wx
+
+            wx.CallAfter(self._show_glow_file_dialog_and_dispatch, command_id, dict(kwargs))
+            return True
+        except Exception:
+            log.exception("Spellforge: unable to open GLOW file picker")
+            ui.message("GLOW command requires a file path.")
+            return True
+
+    def _show_glow_file_dialog_and_dispatch(self, command_id: str, kwargs: dict):
+        try:
+            import wx
+            import gui
+            import queueHandler
+        except Exception:
+            log.exception("Spellforge: GLOW file picker dependencies unavailable")
+            try:
+                ui.message("GLOW file picker is unavailable")
+            except Exception:
+                pass
+            return
+
+        main_frame = gui.mainFrame
+        main_frame.prePopup()
+        try:
+            wildcard = (
+                "Supported files (*.docx;*.md;*.markdown;*.html;*.htm)|"
+                "*.docx;*.md;*.markdown;*.html;*.htm|"
+                "All files (*.*)|*.*"
+            )
+            selected_path = ""
+            dlg = wx.FileDialog(
+                main_frame,
+                "Select file for GLOW",
+                wildcard=wildcard,
+                style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+            )
+            try:
+                if dlg.ShowModal() != wx.ID_OK:
+                    ui.message("GLOW command canceled.")
+                    return
+                selected_path = dlg.GetPath()
+            finally:
+                dlg.Destroy()
+
+            if not selected_path:
+                ui.message("GLOW command canceled.")
+                return
+
+            dispatch_kwargs = dict(kwargs)
+            dispatch_kwargs["path"] = selected_path
+            queueHandler.queueFunction(queueHandler.eventQueue, self._dispatch, command_id, **dispatch_kwargs)
+        except Exception:
+            log.exception("Spellforge: GLOW file picker flow failed")
+            try:
+                ui.message("GLOW file picker failed")
+            except Exception:
+                pass
+        finally:
+            main_frame.postPopup()
+
+    def _run_integration_action(self, payload):
+        if not isinstance(payload, dict):
+            return ""
+
+        integration = payload.get("integrationAction")
+        if not isinstance(integration, dict):
+            return ""
+
+        provider = str(integration.get("provider", "")).strip().lower()
+        action = str(integration.get("action", "")).strip().lower()
+        use_ocr = bool(integration.get("ocr", False))
+        if provider != "screenitemchooser" or action != "open":
+            return ""
+
+        try:
+            module = importlib.import_module("globalPlugins.itemChooser")
+        except Exception:
+            log.exception("Spellforge: Screen Item Chooser module import failed")
+            return (
+                "Screen Item Chooser is not installed. "
+                "Install screenItemChooser-1.0.0.nvda-addon to enable this command."
+            )
+
+        plugin = getattr(module, "_pluginInstance", None)
+        if plugin is None:
+            return "Screen Item Chooser is installed but not active. Restart NVDA and try again."
+
+        script_name = "script_openItemChooserOcr" if use_ocr else "script_openItemChooser"
+        script_handler = getattr(plugin, script_name, None)
+        if script_handler is None:
+            return "Screen Item Chooser integration is unavailable in the installed version."
+
+        try:
+            script_handler(None)
+        except TypeError:
+            script_handler()
+        except Exception:
+            log.exception("Spellforge: Screen Item Chooser invocation failed")
+            return "Screen Item Chooser failed to open."
+
+        return ""
 
     @scriptHandler.script(description="Spellforge command palette")
     def script_openCommandPalette(self, gesture):

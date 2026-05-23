@@ -9,6 +9,7 @@ from spellforge_runtime import (
     AppAdapter,
     AppContext,
     DriftAwareAdapter,
+    RuntimeResult,
     RuntimeDispatcher,
     SpellforgeRuntime,
     load_runtime_config,
@@ -41,7 +42,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="beginner")
         ctx = self._ctx("edge", "alpha bravo", 5)
 
-        out = dispatcher.dispatch_key_chord(ctx, "CapsLock+OpenBracket")
+        out = dispatcher.dispatch_key_chord(ctx, "Grave+OpenBracket")
         self.assertTrue(out.result.ok)
         self.assertEqual(out.plan.command_id, "cmd.selection.markStart")
 
@@ -50,10 +51,126 @@ class DispatcherIntegrationTests(unittest.TestCase):
         ctx = self._ctx("edge", "alpha bravo", 5)
         dispatcher.dispatch_command(ctx, "cmd.selection.markStart")
 
-        out = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Semicolon")
+        out = dispatcher.dispatch_key_chord(ctx, "Grave+Semicolon")
         self.assertTrue(out.result.ok)
         self.assertEqual(out.plan.command_id, "cmd.selection.markerStatus")
         self.assertIn("telemetry", out.result.payload)
+
+    def test_item_chooser_integration_command_routes(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha bravo", 0)
+
+        out = dispatcher.dispatch_command(ctx, "cmd.integration.itemChooser.open")
+        self.assertTrue(out.result.ok)
+        self.assertEqual(out.plan.command_id, "cmd.integration.itemChooser.open")
+        payload = out.result.payload or {}
+        action = payload.get("integrationAction", {})
+        self.assertEqual(action.get("provider"), "screenItemChooser")
+        self.assertEqual(action.get("action"), "open")
+        self.assertFalse(bool(action.get("ocr", True)))
+
+    def test_item_chooser_ocr_hotkey_dispatch(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha", 0)
+
+        out = dispatcher.dispatch_key_chord(ctx, "Grave+Shift+O")
+        self.assertTrue(out.result.ok)
+        self.assertEqual(out.plan.command_id, "cmd.integration.itemChooser.openOcr")
+        action = (out.result.payload or {}).get("integrationAction", {})
+        self.assertTrue(bool(action.get("ocr", False)))
+
+    def test_glow_health_command_routes(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha", 0)
+
+        class _GlowStub:
+            def health(self):
+                return RuntimeResult(ok=True, message="ok", payload={"status": "ok"})
+
+        dispatcher._glow = _GlowStub()
+        out = dispatcher.dispatch_command(ctx, "cmd.integration.glow.health")
+        self.assertTrue(out.result.ok)
+        self.assertEqual((out.result.payload or {}).get("status"), "ok")
+
+    def test_glow_audit_command_routes(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha", 0)
+
+        class _GlowStub:
+            def audit(self, file_path, fmt=""):
+                return RuntimeResult(ok=True, message="audit", payload={"path": str(file_path), "format": fmt or "docx"})
+
+        dispatcher._glow = _GlowStub()
+        out = dispatcher.dispatch_command(
+            ctx,
+            "cmd.integration.glow.audit",
+            path="C:/docs/sample.docx",
+            format="docx",
+        )
+        self.assertTrue(out.result.ok)
+        self.assertEqual((out.result.payload or {}).get("format"), "docx")
+
+    def test_glow_hotkey_bindings_dispatch(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha", 0)
+
+        class _GlowStub:
+            def health(self):
+                return RuntimeResult(ok=True, message="health", payload={"op": "health"})
+
+            def audit(self, file_path, fmt=""):
+                return RuntimeResult(ok=True, message="audit", payload={"op": "audit", "path": str(file_path), "format": fmt})
+
+            def fix(self, file_path, fmt=""):
+                return RuntimeResult(ok=True, message="fix", payload={"op": "fix", "path": str(file_path), "format": fmt})
+
+            def convert(self, file_path, from_format="", to_format="markdown"):
+                return RuntimeResult(
+                    ok=True,
+                    message="convert",
+                    payload={"op": "convert", "path": str(file_path), "from": from_format, "to": to_format},
+                )
+
+            def report(self, file_path, fmt="", report_type="json"):
+                return RuntimeResult(
+                    ok=True,
+                    message="report",
+                    payload={"op": "report", "path": str(file_path), "format": fmt, "reportType": report_type},
+                )
+
+        dispatcher._glow = _GlowStub()
+
+        out_health = dispatcher.dispatch_key_chord(ctx, "Grave+Y")
+        self.assertTrue(out_health.result.ok)
+        self.assertEqual(out_health.plan.command_id, "cmd.integration.glow.health")
+
+        out_audit = dispatcher.dispatch_key_chord(ctx, "Grave+E", path="C:/tmp/a.docx", format="docx")
+        self.assertTrue(out_audit.result.ok)
+        self.assertEqual(out_audit.plan.command_id, "cmd.integration.glow.audit")
+
+        out_fix = dispatcher.dispatch_key_chord(ctx, "Grave+Shift+V", path="C:/tmp/f.docx", format="docx")
+        self.assertTrue(out_fix.result.ok)
+        self.assertEqual(out_fix.plan.command_id, "cmd.integration.glow.fix")
+
+        out_convert = dispatcher.dispatch_key_chord(
+            ctx,
+            "Grave+Shift+K",
+            path="C:/tmp/c.docx",
+            fromFormat="docx",
+            toFormat="markdown",
+        )
+        self.assertTrue(out_convert.result.ok)
+        self.assertEqual(out_convert.plan.command_id, "cmd.integration.glow.convert")
+
+        out_report = dispatcher.dispatch_key_chord(
+            ctx,
+            "Grave+Shift+L",
+            path="C:/tmp/r.docx",
+            format="docx",
+            reportType="json",
+        )
+        self.assertTrue(out_report.result.ok)
+        self.assertEqual(out_report.plan.command_id, "cmd.integration.glow.report")
 
     def test_profile_policy_is_applied_to_clipboard_paste(self) -> None:
         ctx = self._ctx("edge", "alpha bravo charlie", 0)
@@ -138,6 +255,8 @@ class DispatcherIntegrationTests(unittest.TestCase):
         hint_commands = {str(row.get("commandId", "")) for row in hints}
         self.assertIn("cmd.journal.undoLast", hint_commands)
         self.assertIn("cmd.clip.copyToSlot", hint_commands)
+        self.assertIn("cmd.integration.itemChooser.open", hint_commands)
+        self.assertIn("cmd.integration.itemChooser.openOcr", hint_commands)
 
         diag = dispatcher.dispatch_command(ctx, "cmd.profile.hotkeyDiagnostics")
         self.assertTrue(diag.result.ok)
@@ -147,18 +266,18 @@ class DispatcherIntegrationTests(unittest.TestCase):
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
         ctx = self._ctx("edge", "alpha", 0)
 
-        out_single = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Space", press_count=1)
+        out_single = dispatcher.dispatch_key_chord(ctx, "Grave", press_count=1)
         self.assertTrue(out_single.result.ok)
         self.assertEqual(out_single.plan.command_id, "cmd.palette.open")
         self.assertEqual(out_single.result.payload["gesture"]["triggerKind"], "single-press")
 
-        out_double = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Space", press_count=2)
+        out_double = dispatcher.dispatch_key_chord(ctx, "Grave", press_count=2)
         self.assertTrue(out_double.result.ok)
         self.assertEqual(out_double.plan.command_id, "cmd.help.availableHotkeys")
         self.assertEqual(out_double.result.payload["gesture"]["triggerKind"], "double-press")
 
         dispatcher.multi_press_enabled_override = False
-        out_disabled = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Space", press_count=3)
+        out_disabled = dispatcher.dispatch_key_chord(ctx, "Grave", press_count=3)
         self.assertTrue(out_disabled.result.ok)
         self.assertEqual(out_disabled.plan.command_id, "cmd.palette.open")
         self.assertEqual(out_disabled.result.payload["gesture"]["triggerKind"], "single-press")
@@ -204,7 +323,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
         ctx = self._ctx("edge", "alpha bravo", 0, clipboard_text="slot payload")
 
-        selected = dispatcher.dispatch_key_chord(ctx, "Control+Alt+F3")
+        selected = dispatcher.dispatch_key_chord(ctx, "Grave+F3")
         self.assertTrue(selected.result.ok)
         self.assertEqual(selected.plan.command_id, "cmd.clip.selectSlot")
         self.assertEqual((selected.result.payload or {}).get("slot"), 3)
@@ -411,12 +530,12 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertTrue(toggled_off.result.ok)
         self.assertEqual(toggled_off.result.payload["toggledTo"], "untagged")
 
-        toggled_on = dispatcher.dispatch_key_chord(ctx, "Control+Alt+G", press_count=1)
+        toggled_on = dispatcher.dispatch_key_chord(ctx, "Grave+G", press_count=1)
         self.assertTrue(toggled_on.result.ok)
         self.assertEqual(toggled_on.plan.command_id, "cmd.tags.session.toggleCurrent")
         self.assertEqual(toggled_on.result.payload["toggledTo"], "tagged")
 
-        via_hotkey = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Shift+G", press_count=1)
+        via_hotkey = dispatcher.dispatch_key_chord(ctx, "Grave+Shift+G", press_count=1)
         self.assertTrue(via_hotkey.result.ok)
         self.assertEqual(via_hotkey.plan.command_id, "cmd.tags.session.tagFromSelection")
 
@@ -426,7 +545,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
             0,
             {
                 "commandId": "cmd.help.availableHotkeys",
-                "keyChord": "Control+Alt+Space",
+                "keyChord": "Grave",
                 "scope": "app-override",
                 "appId": "edge",
                 "enabled": True,
@@ -436,7 +555,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
         ctx = self._ctx("edge", "alpha", 0)
 
-        out = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Space", press_count=1)
+        out = dispatcher.dispatch_key_chord(ctx, "Grave", press_count=1)
         self.assertTrue(out.result.ok)
         self.assertEqual(out.plan.command_id, "cmd.help.availableHotkeys")
 
@@ -445,7 +564,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
         ctx = self._ctx("edge", "alpha", 0)
 
-        out = dispatcher.dispatch_key_chord(ctx, "CapsLock+Y", press_count=1)
+        out = dispatcher.dispatch_key_chord(ctx, "Grave+Shift+Q", press_count=1)
         self.assertTrue(out.result.ok)
         self.assertEqual(out.plan.command_id, "cmd.palette.open")
         self.assertTrue(out.result.payload["gesture"]["fallbackUsed"])
@@ -455,7 +574,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
             0,
             {
                 "commandId": "cmd.help.availableHotkeys",
-                "keyChord": "CapsLock+Q",
+                "keyChord": "Grave+Q",
                 "scope": "virtualized",
                 "appId": None,
                 "enabled": True,
@@ -472,7 +591,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
             clipboard_text="",
         )
 
-        out = dispatcher.dispatch_key_chord(ctx, "CapsLock+Q", press_count=1)
+        out = dispatcher.dispatch_key_chord(ctx, "Grave+Q", press_count=1)
         self.assertTrue(out.result.ok)
         self.assertEqual(out.plan.command_id, "cmd.help.availableHotkeys")
 
@@ -486,9 +605,9 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertIn("fallbackOrder", diag.result.payload)
         self.assertIn("resolutionTrace", diag.result.payload)
 
-        focused = dispatcher.dispatch_command(ctx, "cmd.profile.hotkeyDiagnostics", keyChord="Control+Alt+Space")
+        focused = dispatcher.dispatch_command(ctx, "cmd.profile.hotkeyDiagnostics", keyChord="Grave")
         self.assertTrue(focused.result.ok)
-        self.assertIn("Control+Alt+Space", focused.result.payload["resolutionTrace"])
+        self.assertIn("Grave", focused.result.payload["resolutionTrace"])
 
     def test_hotkey_chain_routes(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")

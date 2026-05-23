@@ -49,43 +49,43 @@ The following table defines v1 direct-hotkey commands.
 | Command ID | Command Name | Safety Class | Default Hotkey | Requires Confirmation |
 | --- | --- | --- | --- | --- |
 | cmd.palette.open | Open palette | Safe | NVDA+Shift+P | No |
-| cmd.capture.quickInbox | Quick capture to inbox | Safe | CapsLock+Q | No |
-| cmd.selection.summarize | Summarize selection | Adaptive | CapsLock+S | Low confidence only |
-| cmd.selection.extractActions | Extract action items | Adaptive | CapsLock+A | Low confidence only |
-| cmd.selection.rewriteBeginner | Rewrite for beginners | Adaptive mutating | CapsLock+R | Yes before apply |
-| cmd.result.virtualOpen | Open latest virtualized result | Safe | CapsLock+V | No |
-| cmd.result.block.copy | Copy current virtual block | Safe | CapsLock+C | No |
-| cmd.result.block.next | Next virtual block | Safe | CapsLock+RightArrow | No |
-| cmd.result.block.previous | Previous virtual block | Safe | CapsLock+LeftArrow | No |
-| cmd.context.returnSource | Return to source anchor | Safe | CapsLock+Backspace | No |
-| cmd.help.availableHotkeys | What can I press | Safe | CapsLock+Slash | No |
-| cmd.system.emergencyStop | Emergency stop | Safe critical | CapsLock+Escape | No |
-| cmd.result.copyAll | Copy full result | Safe | CapsLock+Shift+C | No |
-| cmd.result.pinInbox | Pin result to inbox | Safe | CapsLock+P | No |
-| cmd.result.readConfidence | Read confidence summary | Safe | CapsLock+K | No |
-| cmd.result.openFallbacks | Open fallback menu | Safe | CapsLock+F | No |
-| cmd.result.toggleSpeechDensity | Toggle speech density | Safe | CapsLock+B | No |
-| cmd.result.toggleBrailleDensity | Toggle braille density | Safe | CapsLock+N | No |
-| cmd.result.search | Search in virtualized result | Safe | CapsLock+Control+F | No |
-| cmd.profile.hotkeyDiagnostics | Open hotkey diagnostics | Safe | CapsLock+D | No |
-| cmd.selection.markStart | Mark selection start | Safe | CapsLock+OpenBracket | No |
-| cmd.selection.markEnd | Mark selection end | Safe | CapsLock+CloseBracket | No |
-| cmd.selection.readContext | Read selection context | Safe | CapsLock+Quote | No |
-| cmd.selection.jumpStart | Jump to selection start | Safe | CapsLock+J | No |
-| cmd.selection.cancel | Cancel selection markers | Safe | CapsLock+X | No |
-| cmd.clip.selectSlot | Select active clip slot | Safe | CapsLock+F1..F12 | No |
-| cmd.clip.copyToSlot | Copy to active clip slot | Safe | CapsLock+Shift+F1..F12 | No |
-| cmd.clip.pasteFromSlot | Paste from active clip slot | Mutating | CapsLock+Control+F1..F12 | Yes before apply |
-| cmd.clip.protectSlot | Protect active clip slot | Mutating | CapsLock+Shift+P | No |
-| cmd.clip.unprotectSlot | Unprotect active clip slot | Mutating | CapsLock+Shift+U | No |
-| cmd.clip.deleteSlot | Delete active clip slot | Destructive | CapsLock+3 | Yes |
-| cmd.clip.editSlot | Edit active clip slot | Mutating | CapsLock+Shift+E | Yes before apply |
-| cmd.clip.describeSlot | Describe active clip slot | Safe | CapsLock+Windows+F1..F12 | No |
-| cmd.merge.setModeAppend | Set merge mode append | Safe | CapsLock+M | No |
-| cmd.merge.setModeReplace | Set merge mode replace | Safe | CapsLock+Shift+M | No |
-| cmd.merge.setDividerLine | Set merge divider line | Safe | CapsLock+L | No |
-| cmd.merge.setDividerSpace | Set merge divider space | Safe | CapsLock+U | No |
-| cmd.merge.setDividerParagraph | Set merge divider paragraph | Safe | CapsLock+I | No |
+| cmd.capture.quickInbox | Quick capture to inbox | Safe | Grave+Q | No |
+| cmd.selection.summarize | Summarize selection | Adaptive | Grave+S | Low confidence only |
+| cmd.selection.extractActions | Extract action items | Adaptive | Grave+A | Low confidence only |
+| cmd.selection.rewriteBeginner | Rewrite for beginners | Adaptive mutating | Grave+R | Yes before apply |
+| cmd.result.virtualOpen | Open latest virtualized result | Safe | Grave+V | No |
+| cmd.result.block.copy | Copy current virtual block | Safe | Grave+C | No |
+| cmd.result.block.next | Next virtual block | Safe | Grave+RightArrow | No |
+| cmd.result.block.previous | Previous virtual block | Safe | Grave+LeftArrow | No |
+| cmd.context.returnSource | Return to source anchor | Safe | Grave+Backspace | No |
+| cmd.help.availableHotkeys | What can I press | Safe | Grave+Slash | No |
+| cmd.system.emergencyStop | Emergency stop | Safe critical | Grave+Escape | No |
+| cmd.result.copyAll | Copy full result | Safe | Grave+Shift+C | No |
+| cmd.result.pinInbox | Pin result to inbox | Safe | Grave+P | No |
+| cmd.result.readConfidence | Read confidence summary | Safe | Grave+K | No |
+| cmd.result.openFallbacks | Open fallback menu | Safe | Grave+F | No |
+| cmd.result.toggleSpeechDensity | Toggle speech density | Safe | Grave+B | No |
+| cmd.result.toggleBrailleDensity | Toggle braille density | Safe | Grave+N | No |
+| cmd.result.search | Search in virtualized result | Safe | Grave+Control+F | No |
+| cmd.profile.hotkeyDiagnostics | Open hotkey diagnostics | Safe | Grave+D | No |
+| cmd.selection.markStart | Mark selection start | Safe | Grave+OpenBracket | No |
+| cmd.selection.markEnd | Mark selection end | Safe | Grave+CloseBracket | No |
+| cmd.selection.readContext | Read selection context | Safe | Grave+Quote | No |
+| cmd.selection.jumpStart | Jump to selection start | Safe | Grave+J | No |
+| cmd.selection.cancel | Cancel selection markers | Safe | Grave+X | No |
+| cmd.clip.selectSlot | Select active clip slot | Safe | Grave+F1..F12 | No |
+| cmd.clip.copyToSlot | Copy to active clip slot | Safe | Grave+Shift+F1..F12 | No |
+| cmd.clip.pasteFromSlot | Paste from active clip slot | Mutating | Grave+Control+F1..F12 | Yes before apply |
+| cmd.clip.protectSlot | Protect active clip slot | Mutating | Grave+Shift+P | No |
+| cmd.clip.unprotectSlot | Unprotect active clip slot | Mutating | Grave+Shift+U | No |
+| cmd.clip.deleteSlot | Delete active clip slot | Destructive | Grave+3 | Yes |
+| cmd.clip.editSlot | Edit active clip slot | Mutating | Grave+Shift+E | Yes before apply |
+| cmd.clip.describeSlot | Describe active clip slot | Safe | Grave+Windows+F1..F12 | No |
+| cmd.merge.setModeAppend | Set merge mode append | Safe | Grave+M | No |
+| cmd.merge.setModeReplace | Set merge mode replace | Safe | Grave+Shift+M | No |
+| cmd.merge.setDividerLine | Set merge divider line | Safe | Grave+L | No |
+| cmd.merge.setDividerSpace | Set merge divider space | Safe | Grave+U | No |
+| cmd.merge.setDividerParagraph | Set merge divider paragraph | Safe | Grave+I | No |
 
 ## JSON Schema: Command Metadata
 
@@ -283,7 +283,7 @@ The following table defines v1 direct-hotkey commands.
     },
     {
       "commandId": "cmd.selection.summarize",
-      "keyChord": "CapsLock+S",
+      "keyChord": "Grave+S",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -291,7 +291,7 @@ The following table defines v1 direct-hotkey commands.
     },
     {
       "commandId": "cmd.result.block.next",
-      "keyChord": "CapsLock+RightArrow",
+      "keyChord": "Grave+RightArrow",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -360,3 +360,4 @@ The following table defines v1 direct-hotkey commands.
 2. JSON schemas validated in CI for configuration files.
 3. CI matrix gates A through F are green for baseline apps.
 4. Documentation references updated in PRD and sprint backlog.
+

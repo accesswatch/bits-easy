@@ -41,7 +41,7 @@ Spellforge keeps your data on your computer. AI provider keys, when you choose t
 
 ### 2.3 First-run check
 
-Press `Control+Alt+Slash`. Spellforge will read a short summary of what you can press right now. If you hear that summary, the add-on is working.
+Press `Grave+Slash`. Spellforge will read a short summary of what you can press right now. If you hear that summary, the add-on is working.
 
 ### 2.4 Optional integrations
 
@@ -51,6 +51,31 @@ Most workflows need nothing extra. Install these only if you intend to use Googl
 2. `google-auth`
 3. `google-auth-oauthlib`
 4. `google-auth-httplib2`
+
+Optional Screen Item Chooser integration:
+
+1. Install `screenItemChooser-1.0.0.nvda-addon`.
+2. Use `Grave+O` to open Item Chooser from Spellforge.
+3. Use `Grave+Shift+O` to open Item Chooser with OCR preselected.
+
+Optional GLOW MCP integration:
+
+1. Run the GLOW MCP server from `s:\code\glow\mcp_server` with `uvicorn mcp_server.main:app --host 127.0.0.1 --port 8000`.
+2. Use Spellforge palette commands:
+3. `cmd.integration.glow.health`
+4. `cmd.integration.glow.audit` with `path` and optional `format`
+5. `cmd.integration.glow.fix` with `path` and optional `format`
+6. `cmd.integration.glow.convert` with `path`, optional `fromFormat`, and `toFormat`
+7. `cmd.integration.glow.report` with `path`, optional `format`, and `reportType`
+8. If `path` is omitted, Spellforge opens a file picker and uses the selected file.
+
+Direct hotkeys:
+
+1. `Grave+Y` - GLOW health check.
+2. `Grave+E` - GLOW audit.
+3. `Grave+Shift+V` - GLOW fix.
+4. `Grave+Shift+K` - GLOW convert.
+5. `Grave+Shift+L` - GLOW report.
 
 ---
 
@@ -70,7 +95,7 @@ You can change profile any time. Your saved clips, notes, and workflows are unaf
 
 ## 4. The Spellforge Key: Your Magical Door
 
-Before anything else, learn one chord: `NVDA Key+Space` (internally shown as `CapsLock+Space` or `Control+Alt+Space` depending on layout). This is the Spellforge key. You can press it from almost any application and it will do the right thing for the way you press it.
+Before anything else, learn one chord: `Grave` (internally shown as `Grave` or `Grave+Space` depending on layout). This is the Spellforge key. You can press it from almost any application and it will do the right thing for the way you press it.
 
 | How you press it | What happens |
 | --- | --- |
@@ -86,7 +111,7 @@ This is the magic Spellforge promises:
 3. The same key lets you ask for anything by name.
 4. The same key shows you the truth when something feels wrong.
 
-If you ever feel lost, press `NVDA Key+Space` twice. Spellforge will tell you what you can press from where you are.
+If you ever feel lost, press `Grave` twice. Spellforge will tell you what you can press from where you are.
 
 ### 4.1 LEASEY-style help layers
 
@@ -101,9 +126,9 @@ Spellforge now follows a layered help rhythm similar to classic screen reader co
 
 These three keys travel alongside the Spellforge key and never change meaning:
 
-1. `Control+Alt+Slash` - read available hotkeys for the current surface.
-2. `Control+Alt+D` - open hotkey diagnostics.
-3. `Control+Alt+Escape` - emergency stop. Spellforge halts whatever it was doing and returns you to a quiet state.
+1. `Grave+Slash` - read available hotkeys for the current surface.
+2. `Grave+D` - open hotkey diagnostics.
+3. `Grave+Escape` - emergency stop. Spellforge halts whatever it was doing and returns you to a quiet state.
 
 You can use these from any application. They never modify your files or change focus permanently.
 
@@ -117,10 +142,10 @@ Spellforge treats selected text as a first-class object. It understands native s
 
 If your application supports normal selection (Outlook, Word, Notepad, Edge, Firefox, Chrome, VS Code, and most editors), select text the usual way. Then choose one:
 
-1. `Control+Alt+S` - summarise the selection.
-2. `Control+Alt+A` - extract action items.
-3. `Control+Alt+R` - rewrite for beginners (with a preview before applying).
-4. `Control+Alt+1` - save the selection to clip slot 1.
+1. `Grave+S` - summarise the selection.
+2. `Grave+A` - extract action items.
+3. `Grave+R` - rewrite for beginners (with a preview before applying).
+4. `Grave+1` - save the selection to clip slot 1.
 
 Spellforge will announce a short, friendly result, and offer a virtualized view if the output is long.
 
@@ -128,12 +153,12 @@ Spellforge will announce a short, friendly result, and offer a virtualized view 
 
 Some surfaces are not selection-friendly. Spellforge gives you a deterministic marker workflow instead:
 
-1. `Control+Alt+[` - mark the start of your range.
-2. `Control+Alt+]` - mark the end of your range.
-3. `Control+Alt+'` - read the start and end snippets with confidence.
-4. `Control+Alt+;` - read marker status and any drift hints.
-5. `Control+Alt+J` - jump back to the start marker.
-6. `Control+Alt+X` - cancel markers cleanly.
+1. `Grave+[` - mark the start of your range.
+2. `Grave+]` - mark the end of your range.
+3. `Grave+'` - read the start and end snippets with confidence.
+4. `Grave+;` - read marker status and any drift hints.
+5. `Grave+J` - jump back to the start marker.
+6. `Grave+X` - cancel markers cleanly.
 
 Once your range is set, every selection command above behaves exactly the same as if you had used native selection.
 
@@ -141,10 +166,10 @@ Once your range is set, every selection command above behaves exactly the same a
 
 This is the high-speed workflow for large text:
 
-1. Press `Control+Alt+[` to set start.
+1. Press `Grave+[` to set start.
 2. Use only arrow keys to move to the end.
-3. Press `Control+Alt+]` to capture the range.
-4. Run normal selection actions (`Control+Alt+S`, `Control+Alt+A`, `Control+Alt+R`).
+3. Press `Grave+]` to capture the range.
+4. Run normal selection actions (`Grave+S`, `Grave+A`, `Grave+R`).
 
 Marker-captured ranges are now treated as first-class selection for those actions.
 
@@ -152,12 +177,12 @@ Marker-captured ranges are now treated as first-class selection for those action
 
 Spellforge tunes its behavior for the application you are in:
 
-1. **Outlook.** Summarise long threads, extract action items, draft a reply from selection, tag a message, batch-copy, batch-move, batch-delete, and report tagged messages. Try `Control+Alt+S` on a thread, then `Control+Alt+Shift+T` to tag it.
+1. **Outlook.** Summarise long threads, extract action items, draft a reply from selection, tag a message, batch-copy, batch-move, batch-delete, and report tagged messages. Try `Grave+S` on a thread, then `Grave+Shift+T` to tag it.
 2. **Word.** Rewrite for beginners with preview and rollback, summarise a section, capture a passage to a clip slot, and extract action items from a meeting note. Mutating commands always preview first.
 3. **Notepad.** Quick capture is instant. Slot operations work even when Notepad has no rich selection. Selection markers cover any awkward range you cannot select natively.
 4. **Edge, Chrome, Firefox.** Page-wide selection, paragraph capture, heading-block fallback, source-tagged merge into the active MergeBoard. If selection is hard, the fallback menu suggests `paragraph`, `heading block`, or `guided capture`.
 5. **VS Code.** Selection survives moving between editor and terminal. Slot copy and paste preserve indentation. Markdown and HTML authoring helpers (see section 11) produce content that pastes cleanly back in.
-6. **Other applications.** If a command cannot run safely in the current surface, Spellforge offers alternatives instead of failing silently. Press `Control+Alt+F` to see them.
+6. **Other applications.** If a command cannot run safely in the current surface, Spellforge offers alternatives instead of failing silently. Press `Grave+F` to see them.
 
 ### 5.4 If a selection drifts
 
@@ -179,17 +204,17 @@ The clipboard inside Spellforge is calmer, deeper, and safer than the system cli
 
 Each slot stores not just text but also which application produced it, when it was captured, its size, and whether it is protected from overwrite.
 
-1. `Control+Alt+1` - copy current selection (or system clipboard) to slot 1.
-2. `Control+Alt+2` - paste from slot 1.
-3. `Control+Alt+3` - delete the current slot.
-4. `Control+Alt+4` - describe the current slot in plain language.
-5. `Control+Alt+6` - open the clip library.
+1. `Grave+1` - copy current selection (or system clipboard) to slot 1.
+2. `Grave+2` - paste from slot 1.
+3. `Grave+3` - delete the current slot.
+4. `Grave+4` - describe the current slot in plain language.
+5. `Grave+6` - open the clip library.
 
 Slots 1 through 10 follow the same pattern. The palette lets you protect, unprotect, edit, search, sort, pin favourites, batch-act, split, merge, compare, export, and import slot packs.
 
 ### 6.2 The Clip Library
 
-The library is where slots become long-term knowledge. Open it with `Control+Alt+6` or from the palette.
+The library is where slots become long-term knowledge. Open it with `Grave+6` or from the palette.
 
 You can:
 
@@ -202,18 +227,18 @@ You can:
 7. Browse a timeline of how a clip evolved.
 
 Every action announces a short summary and is recorded in the operation journal, so you can roll back.
-Use `Control+Alt+Shift+J` for one-step quick undo of the latest reversible action.
+Use `Grave+Shift+J` for one-step quick undo of the latest reversible action.
 
 ### 6.3 MergeBoard: build up output without losing your place
 
 MergeBoard joins captured pieces deterministically. Set the mode once, then capture from wherever you like.
 
-1. `Control+Alt+M` - set merge mode to append.
-2. `Control+Alt+Shift+M` - set merge mode to replace.
-3. `Control+Alt+L` - divider: line.
-4. `Control+Alt+U` - divider: single space.
-5. `Control+Alt+N` - divider: paragraph.
-6. `Control+Alt+I` - toggle `clear-on-paste`.
+1. `Grave+M` - set merge mode to append.
+2. `Grave+Shift+M` - set merge mode to replace.
+3. `Grave+L` - divider: line.
+4. `Grave+U` - divider: single space.
+5. `Grave+N` - divider: paragraph.
+6. `Grave+I` - toggle `clear-on-paste`.
 
 Use a merge profile (meeting notes, research digest, email drafting) from the palette and Spellforge will apply the right divider, optional source tags, and clear policy automatically. Then commit the merge wherever you need the result.
 
@@ -225,7 +250,7 @@ Slot capture in Edge and Chrome carries page provenance. Slot capture in Outlook
 
 ## 7. Quick Capture and Your Inbox
 
-Some thoughts cannot wait. Press `Control+Alt+Q` from anywhere and Spellforge captures a quick note to your inbox without changing your focus or interrupting your flow. The capture remembers source application, timestamp, and any tag you give it.
+Some thoughts cannot wait. Press `Grave+Q` from anywhere and Spellforge captures a quick note to your inbox without changing your focus or interrupting your flow. The capture remembers source application, timestamp, and any tag you give it.
 
 Later, from the palette:
 
@@ -240,21 +265,21 @@ When an AI key is configured, Spellforge can attach an optional augmentation, su
 
 When a command produces something longer than a sentence, Spellforge opens a virtualized reading view. You stay in your application, but a calm structured surface holds the output.
 
-1. `Control+Alt+V` - open the latest virtualized result.
-2. `Control+Alt+RightArrow` - next block.
-3. `Control+Alt+LeftArrow` - previous block.
-4. `Control+Alt+C` - copy current block.
-5. `Control+Alt+Shift+C` - copy the entire result.
-6. `Control+Alt+Control+F` - search inside the result.
-7. `Control+Alt+K` - read the confidence summary.
-8. `Control+Alt+F` - open the fallback menu of alternatives.
-9. `Control+Alt+P` - pin the result to your inbox for later.
-10. `Control+Alt+Backspace` - return to exactly where you came from.
+1. `Grave+V` - open the latest virtualized result.
+2. `Grave+RightArrow` - next block.
+3. `Grave+LeftArrow` - previous block.
+4. `Grave+C` - copy current block.
+5. `Grave+Shift+C` - copy the entire result.
+6. `Grave+Control+F` - search inside the result.
+7. `Grave+K` - read the confidence summary.
+8. `Grave+F` - open the fallback menu of alternatives.
+9. `Grave+P` - pin the result to your inbox for later.
+10. `Grave+Backspace` - return to exactly where you came from.
 
 Toggles for output density live alongside:
 
-1. `Control+Alt+B` - toggle speech density.
-2. `Control+Alt+Z` - toggle braille density.
+1. `Grave+B` - toggle speech density.
+2. `Grave+Z` - toggle braille density.
 
 You never lose your place. You never have to scroll a long output inside an application that was not meant for it.
 
@@ -264,7 +289,7 @@ You never lose your place. You never have to scroll a long output inside an appl
 
 Build a personal shorthand. Type a short trigger and Spellforge expands it. Insert frequently used snippets with one press.
 
-1. `Control+Alt+0` - quick insert a saved piece of text.
+1. `Grave+0` - quick insert a saved piece of text.
 2. From the palette: create, list, rename, set primary, expand, and delete expansions.
 
 Text expansion is local, deterministic, and works in any text field that accepts normal typing.
@@ -275,10 +300,10 @@ Text expansion is local, deterministic, and works in any text field that accepts
 
 Shortcuts are your personal jump points. They can target a file, a folder, a website, or an application. They live in categories and can be grouped into presets.
 
-1. `Control+Alt+7` - open the shortcut launcher.
-2. `Control+Alt+9` - add the application you are currently using as a shortcut.
-3. `Control+Alt+8` - list mapped drive aliases.
-4. `Control+Alt+5` - open the shortcuts dashboard.
+1. `Grave+7` - open the shortcut launcher.
+2. `Grave+9` - add the application you are currently using as a shortcut.
+3. `Grave+8` - list mapped drive aliases.
+4. `Grave+5` - open the shortcuts dashboard.
 
 Presets let you launch a full set of resources for a project, a meeting, or a daily routine, in one step.
 
@@ -308,9 +333,9 @@ Markdown commands help you build structured content that pastes cleanly into any
 8. `cmd.author.export.word` - export to a Word-compatible stub.
 
 Mnemonic defaults:
-1. `Control+Alt+Shift+A` - run markdown polish flow.
-2. `Control+Alt+Shift+N` - apply release-notes template.
-3. `Control+Alt+Shift+Z` - undo latest author pipeline output.
+1. `Grave+Shift+A` - run markdown polish flow.
+2. `Grave+Shift+N` - apply release-notes template.
+3. `Grave+Shift+Z` - undo latest author pipeline output.
 
 ### 11.3 HTML authoring
 
@@ -342,28 +367,28 @@ Here is what Spellforge feels like in the applications you use most.
 
 ### 12.1 Outlook
 
-1. Triage a long thread. Select it, press `Control+Alt+S` for a summary. Press `Control+Alt+A` for action items.
+1. Triage a long thread. Select it, press `Grave+S` for a summary. Press `Grave+A` for action items.
 2. Draft a reply from extracted actions through the palette.
-3. Tag a message with `Control+Alt+Shift+T`. Report tagged messages with `cmd.tags.outlook.report`.
+3. Tag a message with `Grave+Shift+T`. Report tagged messages with `cmd.tags.outlook.report`.
 4. Batch-copy, batch-move, or batch-delete tagged messages from the palette.
 
 ### 12.2 Word
 
-1. Select a rough paragraph. Press `Control+Alt+R` for rewrite-for-beginners. A preview opens with confidence and main changes.
-2. Save a passage with `Control+Alt+1` for later reuse.
+1. Select a rough paragraph. Press `Grave+R` for rewrite-for-beginners. A preview opens with confidence and main changes.
+2. Save a passage with `Grave+1` for later reuse.
 3. Capture a multi-page passage with selection markers if the cursor cannot reach the end natively.
 
 ### 12.3 Notepad
 
-1. Spellforge fits Notepad like a glove. Quick capture works instantly with `Control+Alt+Q`.
+1. Spellforge fits Notepad like a glove. Quick capture works instantly with `Grave+Q`.
 2. Slot save and paste use the deterministic clip path.
 3. Use markers for any range Notepad cannot select cleanly.
 
 ### 12.4 Edge, Chrome, Firefox
 
-1. Read a long article. Select a section, press `Control+Alt+S`. The virtual view opens for calm reading.
-2. Capture multiple snippets into MergeBoard with `Control+Alt+M`, divide them with `Control+Alt+L`, and commit a clean digest into your notes.
-3. When a page is awkward to select, press `Control+Alt+F` to choose `paragraph`, `heading block`, or `guided capture`.
+1. Read a long article. Select a section, press `Grave+S`. The virtual view opens for calm reading.
+2. Capture multiple snippets into MergeBoard with `Grave+M`, divide them with `Grave+L`, and commit a clean digest into your notes.
+3. When a page is awkward to select, press `Grave+F` to choose `paragraph`, `heading block`, or `guided capture`.
 
 ### 12.5 VS Code
 
@@ -374,7 +399,7 @@ Here is what Spellforge feels like in the applications you use most.
 
 ### 12.6 Anywhere else
 
-If Spellforge cannot perform a command in the current application, it tells you and offers alternatives. Press `Control+Alt+F` to see them. Press `Control+Alt+Space` and ask in plain language.
+If Spellforge cannot perform a command in the current application, it tells you and offers alternatives. Press `Grave+F` to see them. Press `Grave+Space` and ask in plain language.
 
 ---
 
@@ -426,25 +451,25 @@ Optional AI workflows from the palette include `cmd.ai.doc.ask`, `cmd.ai.doc.upl
 2. **Previews** before any substantial change to your text.
 3. **Fallback suggestions** instead of silent failure.
 4. **Operation journal** for rollback of supported actions.
-5. **Emergency stop** at `Control+Alt+Escape`.
-6. **Return to source** at `Control+Alt+Backspace` after any virtual view.
+5. **Emergency stop** at `Grave+Escape`.
+6. **Return to source** at `Grave+Backspace` after any virtual view.
 
 ### 14.2 Diagnostics
 
-1. `Control+Alt+D` - hotkey diagnostics with conflict detection.
-2. `Control+Alt+Slash` - available hotkeys for the current surface.
+1. `Grave+D` - hotkey diagnostics with conflict detection.
+2. `Grave+Slash` - available hotkeys for the current surface.
 3. `cmd.profile.integrationHealth` - end-to-end module health.
 4. `cmd.utility.systemReport.open` and `cmd.utility.systemReport.export` - rich system report.
 
 ### 14.3 Where am I?
 
-If context feels off, press `Control+Alt+Backspace` first. If the question remains, open the palette and search `where am I`. Spellforge will announce focus, surface, selection, and active markers in a single calm message.
+If context feels off, press `Grave+Backspace` first. If the question remains, open the palette and search `where am I`. Spellforge will announce focus, surface, selection, and active markers in a single calm message.
 
 ---
 
 ## 15. The Command Palette In Depth
 
-The Spellforge key chord (`NVDA Key+Space`) opens the palette. `NVDA+Shift+P` opens it too. The palette is a searchable, plain-language entry point to every Spellforge command.
+The Spellforge key chord (`Grave`) opens the palette. `NVDA+Shift+P` opens it too. The palette is a searchable, plain-language entry point to every Spellforge command.
 
 1. Type one or two words describing what you want.
 2. Browse the matching results with the arrow keys.
@@ -462,66 +487,66 @@ These are the built-in hotkeys. The NVDA Key is the key you set as NVDA modifier
 
 | Hotkey | What it does |
 | --- | --- |
-| NVDA Key+Space | Open command palette |
-| NVDA Key+Space (double) | Read available hotkeys |
-| NVDA Key+Space (triple) | Hotkey diagnostics |
-| NVDA Key+Space (hold) | Guided hotkey help |
+| Grave | Open command palette |
+| Grave (double) | Read available hotkeys |
+| Grave (triple) | Hotkey diagnostics |
+| Grave (hold) | Guided hotkey help |
 | NVDA Key+Shift+P | Open command palette |
-| Control+Alt+Slash | Read available hotkeys |
-| Control+Alt+D | Hotkey diagnostics |
-| Control+Alt+Escape | Emergency stop |
-| Control+Alt+Backspace | Return to source anchor |
-| Control+Alt+S | Summarise selection |
-| Control+Alt+A | Extract action items |
-| Control+Alt+R | Rewrite selection for beginners |
-| Control+Alt+[ | Mark selection start |
-| Control+Alt+] | Mark selection end |
-| Control+Alt+' | Read selection context |
-| Control+Alt+; | Read selection marker status |
-| Control+Alt+J | Jump to selection start |
-| Control+Alt+X | Cancel selection markers |
-| CapsLock+F1..F12 | Select active clip slot 1..12 |
-| CapsLock+Shift+F1..F12 | Copy to clip slot 1..12 |
-| CapsLock+Control+F1..F12 | Paste from clip slot 1..12 |
-| CapsLock+Windows+F1..F12 | Describe clip slot 1..12 |
-| Control+Alt+3 | Delete active clip slot |
-| Control+Alt+Shift+P | Protect active clip slot |
-| Control+Alt+Shift+U | Unprotect active clip slot |
-| Control+Alt+Shift+E | Edit active clip slot |
-| Control+Alt+5 | Open shortcuts dashboard |
-| Control+Alt+6 | Open clip library |
-| Control+Alt+Shift+6 | Open clip browser |
-| Control+Alt+7 | Open shortcut launcher |
-| Control+Alt+8 | List drive aliases |
-| Control+Alt+9 | Add focused app as shortcut |
-| Control+Alt+0 | Quick insert saved text |
-| Control+Alt+V | Open latest virtualized result |
-| Control+Alt+RightArrow | Next virtual block |
-| Control+Alt+LeftArrow | Previous virtual block |
-| Control+Alt+C | Copy current virtual block |
-| Control+Alt+Shift+C | Copy full result |
-| Control+Alt+Control+F | Search in virtualized result |
-| Control+Alt+K | Read confidence summary |
-| Control+Alt+F | Open fallback menu |
-| Control+Alt+P | Pin result to inbox |
-| Control+Alt+B | Toggle speech density |
-| Control+Alt+Z | Toggle braille density |
-| Control+Alt+Q | Quick capture to inbox |
-| Control+Alt+M | Merge mode: append |
-| Control+Alt+Shift+M | Merge mode: replace |
-| Control+Alt+L | Merge divider: line |
-| Control+Alt+U | Merge divider: space |
-| Control+Alt+N | Merge divider: paragraph |
-| Control+Alt+I | Toggle merge clear-on-paste |
-| Control+Alt+T | Tag current session |
-| Control+Alt+Shift+T | Tag Outlook message |
-| Control+Alt+Shift+Y | Speak current time |
-| Control+Alt+H | Browse speech history |
-| Control+Alt+Shift+H | Open speech history as virtual view |
-| Control+Alt+W | Recall window bookmark |
-| Control+Alt+Shift+W | List window bookmarks |
-| Control+Alt+= | Search symbol by name |
-| Control+Alt+- | Recent symbol |
+| Grave+Slash | Read available hotkeys |
+| Grave+D | Hotkey diagnostics |
+| Grave+Escape | Emergency stop |
+| Grave+Backspace | Return to source anchor |
+| Grave+S | Summarise selection |
+| Grave+A | Extract action items |
+| Grave+R | Rewrite selection for beginners |
+| Grave+[ | Mark selection start |
+| Grave+] | Mark selection end |
+| Grave+' | Read selection context |
+| Grave+; | Read selection marker status |
+| Grave+J | Jump to selection start |
+| Grave+X | Cancel selection markers |
+| Grave+F1..F12 | Select active clip slot 1..12 |
+| Grave+Shift+F1..F12 | Copy to clip slot 1..12 |
+| Grave+Control+F1..F12 | Paste from clip slot 1..12 |
+| Grave+Windows+F1..F12 | Describe clip slot 1..12 |
+| Grave+3 | Delete active clip slot |
+| Grave+Shift+P | Protect active clip slot |
+| Grave+Shift+U | Unprotect active clip slot |
+| Grave+Shift+E | Edit active clip slot |
+| Grave+5 | Open shortcuts dashboard |
+| Grave+6 | Open clip library |
+| Grave+Shift+6 | Open clip browser |
+| Grave+7 | Open shortcut launcher |
+| Grave+8 | List drive aliases |
+| Grave+9 | Add focused app as shortcut |
+| Grave+0 | Quick insert saved text |
+| Grave+V | Open latest virtualized result |
+| Grave+RightArrow | Next virtual block |
+| Grave+LeftArrow | Previous virtual block |
+| Grave+C | Copy current virtual block |
+| Grave+Shift+C | Copy full result |
+| Grave+Control+F | Search in virtualized result |
+| Grave+K | Read confidence summary |
+| Grave+F | Open fallback menu |
+| Grave+P | Pin result to inbox |
+| Grave+B | Toggle speech density |
+| Grave+Z | Toggle braille density |
+| Grave+Q | Quick capture to inbox |
+| Grave+M | Merge mode: append |
+| Grave+Shift+M | Merge mode: replace |
+| Grave+L | Merge divider: line |
+| Grave+U | Merge divider: space |
+| Grave+N | Merge divider: paragraph |
+| Grave+I | Toggle merge clear-on-paste |
+| Grave+T | Tag current session |
+| Grave+Shift+T | Tag Outlook message |
+| Grave+Shift+Y | Speak current time |
+| Grave+H | Browse speech history |
+| Grave+Shift+H | Open speech history as virtual view |
+| Grave+W | Recall window bookmark |
+| Grave+Shift+W | List window bookmarks |
+| Grave+= | Search symbol by name |
+| Grave+- | Recent symbol |
 
 If you would like to change a chord, open `NVDA Settings > Spellforge > Edit keyboard mappings`, or use `Tools > Spellforge keyboard mappings`. Run `Run NVDA gesture scrub` in the editor to detect internal collisions and clashes with known NVDA gestures.
 
@@ -571,7 +596,7 @@ The palette holds every command. Use it as your discovery surface. Here is a gro
 38. **workflow** - pack export, pack import.
 39. **x** - timeline.
 
-You do not need to remember any of these. Press `Control+Alt+Space` and ask in plain language.
+You do not need to remember any of these. Press `Grave+Space` and ask in plain language.
 
 ---
 
@@ -588,15 +613,15 @@ Spellforge stores your clips, settings, palette history, notes, journals, and ot
 
 ## 19. Troubleshooting
 
-**A hotkey did nothing.** Press `Control+Alt+D` for hotkey diagnostics. Open the palette and search the command name to confirm it exists in your current build.
+**A hotkey did nothing.** Press `Grave+D` for hotkey diagnostics. Open the palette and search the command name to confirm it exists in your current build.
 
 **Spellforge is talking too much, or not enough.** Switch profile in `NVDA Settings > Spellforge`.
 
-**A command cannot run in this application.** Press `Control+Alt+F` for alternatives, or open the palette and ask Spellforge in plain language.
+**A command cannot run in this application.** Press `Grave+F` for alternatives, or open the palette and ask Spellforge in plain language.
 
-**Something feels stuck.** Press `Control+Alt+Escape`. Spellforge stops.
+**Something feels stuck.** Press `Grave+Escape`. Spellforge stops.
 
-**You feel lost.** Press `Control+Alt+Backspace` to return to source. If you are still uncertain, press `Control+Alt+Space` twice to hear what you can press right now.
+**You feel lost.** Press `Grave+Backspace` to return to source. If you are still uncertain, press `Grave+Space` twice to hear what you can press right now.
 
 **An AI command says it is unavailable.** Run `cmd.ai.key.status` to check whether a key is configured, then `cmd.ai.key.storeStatus` to confirm secure storage. Deterministic primary results never require AI.
 
@@ -606,10 +631,10 @@ Spellforge stores your clips, settings, palette history, notes, journals, and ot
 
 There is no pressure to learn everything at once. Here is a one-week shape if it helps.
 
-1. **Day 1.** Press `Control+Alt+Space` and read the palette. Press it twice and hear your hotkeys. Try `Control+Alt+Q` to capture a thought.
-2. **Day 2.** Select text in a browser and press `Control+Alt+S`. Read the result in the virtual view with `Control+Alt+V`.
-3. **Day 3.** Save two passages into slots 1 and 2. Paste them somewhere. Open the clip library with `Control+Alt+6`.
-4. **Day 4.** Set up two text expansions. Add the application you use most as a shortcut with `Control+Alt+9`.
+1. **Day 1.** Press `Grave+Space` and read the palette. Press it twice and hear your hotkeys. Try `Grave+Q` to capture a thought.
+2. **Day 2.** Select text in a browser and press `Grave+S`. Read the result in the virtual view with `Grave+V`.
+3. **Day 3.** Save two passages into slots 1 and 2. Paste them somewhere. Open the clip library with `Grave+6`.
+4. **Day 4.** Set up two text expansions. Add the application you use most as a shortcut with `Grave+9`.
 5. **Day 5.** Try the markdown authoring helpers and the accessibility lint on a notes file.
 6. **Day 6.** Add tasks, diary entries, or time alarms from the palette.
 7. **Day 7.** Run `cmd.profile.integrationHealth` and `cmd.profile.portabilityBackup` so your setup is safe.
@@ -617,3 +642,5 @@ There is no pressure to learn everything at once. Here is a one-week shape if it
 Once you can open the palette, capture a thought, save and reuse a clip, and read one long result in the virtual view, Spellforge is already earning its place. Everything else is here when you are ready.
 
 Welcome aboard.
+
+

@@ -63,11 +63,13 @@ def _normalize_chord(chord: str) -> str:
             mods.append("ALT")
         elif p in ("WIN", "WINDOWS"):
             mods.append("WIN")
+        elif p in ("GRAVE", "GRAVEACCENT", "SPELLFORGE") and len(parts) > 1:
+            mods.append("GRAVE")
         else:
             key = p
 
     ordered = []
-    for m in ("CONTROL", "ALT", "SHIFT", "WIN"):
+    for m in ("GRAVE", "CONTROL", "ALT", "SHIFT", "WIN"):
         if m in mods:
             ordered.append(m)
     if key:

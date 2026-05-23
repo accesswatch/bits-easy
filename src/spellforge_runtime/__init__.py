@@ -63,6 +63,7 @@ from .spellcheck import SpellCheckService
 from .diagnostics import get_logger, log_and_default, run_with_default
 from .file_ops import FileOpsService
 from .ai_assistant import AiAssistantService
+from .glow_client import GlowMcpService
 
 __all__ = [
     "AppAdapter",
@@ -158,4 +159,5 @@ __all__ = [
     "run_with_default",
     "FileOpsService",
     "AiAssistantService",
+    "GlowMcpService",
 ]

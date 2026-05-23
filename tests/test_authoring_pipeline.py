@@ -61,13 +61,13 @@ class AuthoringPipelineTests(unittest.TestCase):
             )
             ctx = self._ctx("draft line")
 
-            template = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Shift+N", press_count=1)
+            template = dispatcher.dispatch_key_chord(ctx, "Grave+Shift+N", press_count=1)
             self.assertTrue(template.result.ok)
             self.assertEqual(template.plan.command_id, "cmd.author.template.apply")
             self.assertIn("# Release Notes", template.result.payload["output"])
             self.assertTrue(template.result.payload["guided"])
 
-            polished = dispatcher.dispatch_key_chord(ctx, "Control+Alt+Shift+A", press_count=1)
+            polished = dispatcher.dispatch_key_chord(ctx, "Grave+Shift+A", press_count=1)
             self.assertTrue(polished.result.ok)
             self.assertEqual(polished.plan.command_id, "cmd.author.pipeline.polish")
             self.assertGreater(polished.result.payload["confidence"], 0.8)

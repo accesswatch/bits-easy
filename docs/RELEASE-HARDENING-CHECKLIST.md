@@ -71,3 +71,4 @@ Each release note should include:
 1. Keep build artifacts out of commit by default; include only intentional release artifacts.
 2. Exclude generated local payload files (for example `dist/*.json`) unless explicitly required for release evidence.
 3. Use `git --no-pager status --short` and ensure only intended docs/config/src/tests are staged.
+

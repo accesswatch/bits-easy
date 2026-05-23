@@ -3,7 +3,7 @@
   "bindings": [
     {
       "commandId": "cmd.palette.open",
-      "keyChord": "CapsLock+Space",
+      "keyChord": "Grave",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -11,7 +11,63 @@
     },
     {
       "commandId": "cmd.capture.quickInbox",
-      "keyChord": "Control+Alt+Q",
+      "keyChord": "Grave+Q",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.integration.itemChooser.open",
+      "keyChord": "Grave+O",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.integration.itemChooser.openOcr",
+      "keyChord": "Grave+Shift+O",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.integration.glow.health",
+      "keyChord": "Grave+Y",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.integration.glow.audit",
+      "keyChord": "Grave+E",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.integration.glow.fix",
+      "keyChord": "Grave+Shift+V",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.integration.glow.convert",
+      "keyChord": "Grave+Shift+K",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.integration.glow.report",
+      "keyChord": "Grave+Shift+L",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -19,7 +75,7 @@
     },
     {
       "commandId": "cmd.selection.summarize",
-      "keyChord": "Control+Alt+S",
+      "keyChord": "Grave+S",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -27,7 +83,7 @@
     },
     {
       "commandId": "cmd.selection.extractActions",
-      "keyChord": "Control+Alt+A",
+      "keyChord": "Grave+A",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -35,7 +91,7 @@
     },
     {
       "commandId": "cmd.selection.rewriteBeginner",
-      "keyChord": "Control+Alt+R",
+      "keyChord": "Grave+R",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -43,7 +99,7 @@
     },
     {
       "commandId": "cmd.result.virtualOpen",
-      "keyChord": "Control+Alt+V",
+      "keyChord": "Grave+V",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -51,7 +107,7 @@
     },
     {
       "commandId": "cmd.result.block.copy",
-      "keyChord": "Control+Alt+C",
+      "keyChord": "Grave+C",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -59,7 +115,7 @@
     },
     {
       "commandId": "cmd.result.block.next",
-      "keyChord": "Control+Alt+RightArrow",
+      "keyChord": "Grave+RightArrow",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -67,7 +123,7 @@
     },
     {
       "commandId": "cmd.result.block.previous",
-      "keyChord": "Control+Alt+LeftArrow",
+      "keyChord": "Grave+LeftArrow",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -75,7 +131,7 @@
     },
     {
       "commandId": "cmd.context.returnSource",
-      "keyChord": "Control+Alt+Backspace",
+      "keyChord": "Grave+Backspace",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -83,7 +139,7 @@
     },
     {
       "commandId": "cmd.help.availableHotkeys",
-      "keyChord": "Control+Alt+Slash",
+      "keyChord": "Grave+Slash",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -91,7 +147,7 @@
     },
     {
       "commandId": "cmd.journal.undoLast",
-      "keyChord": "Control+Alt+Shift+J",
+      "keyChord": "Grave+Shift+J",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -99,7 +155,7 @@
     },
     {
       "commandId": "cmd.system.emergencyStop",
-      "keyChord": "Control+Alt+Escape",
+      "keyChord": "Grave+Escape",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -107,7 +163,7 @@
     },
     {
       "commandId": "cmd.result.copyAll",
-      "keyChord": "Control+Alt+Shift+C",
+      "keyChord": "Grave+Shift+C",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -115,7 +171,7 @@
     },
     {
       "commandId": "cmd.result.pinInbox",
-      "keyChord": "Control+Alt+P",
+      "keyChord": "Grave+P",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -123,7 +179,7 @@
     },
     {
       "commandId": "cmd.result.readConfidence",
-      "keyChord": "Control+Alt+K",
+      "keyChord": "Grave+K",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -131,7 +187,7 @@
     },
     {
       "commandId": "cmd.result.openFallbacks",
-      "keyChord": "Control+Alt+F",
+      "keyChord": "Grave+F",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -147,7 +203,7 @@
     },
     {
       "commandId": "cmd.help.availableHotkeys",
-      "keyChord": "CapsLock+Space",
+      "keyChord": "Grave",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -160,7 +216,7 @@
     },
     {
       "commandId": "cmd.profile.hotkeyDiagnostics",
-      "keyChord": "CapsLock+Space",
+      "keyChord": "Grave",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -173,7 +229,7 @@
     },
     {
       "commandId": "cmd.help.availableHotkeys",
-      "keyChord": "CapsLock+Space",
+      "keyChord": "Grave",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -186,7 +242,7 @@
     },
     {
       "commandId": "cmd.result.toggleSpeechDensity",
-      "keyChord": "Control+Alt+B",
+      "keyChord": "Grave+B",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -194,7 +250,7 @@
     },
     {
       "commandId": "cmd.result.toggleBrailleDensity",
-      "keyChord": "Control+Alt+Z",
+      "keyChord": "Grave+Z",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -202,7 +258,7 @@
     },
     {
       "commandId": "cmd.result.search",
-      "keyChord": "Control+Alt+Shift+F",
+      "keyChord": "Grave+Shift+F",
       "scope": "virtualized",
       "appId": null,
       "enabled": true,
@@ -210,7 +266,7 @@
     },
     {
       "commandId": "cmd.profile.hotkeyDiagnostics",
-      "keyChord": "Control+Alt+D",
+      "keyChord": "Grave+D",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -218,7 +274,7 @@
     },
     {
       "commandId": "cmd.selection.markStart",
-      "keyChord": "Control+Alt+OpenBracket",
+      "keyChord": "Grave+OpenBracket",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -226,7 +282,7 @@
     },
     {
       "commandId": "cmd.selection.markEnd",
-      "keyChord": "Control+Alt+CloseBracket",
+      "keyChord": "Grave+CloseBracket",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -234,7 +290,7 @@
     },
     {
       "commandId": "cmd.selection.readContext",
-      "keyChord": "Control+Alt+Quote",
+      "keyChord": "Grave+Quote",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -242,7 +298,7 @@
     },
     {
       "commandId": "cmd.selection.markerStatus",
-      "keyChord": "Control+Alt+Semicolon",
+      "keyChord": "Grave+Semicolon",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -250,7 +306,7 @@
     },
     {
       "commandId": "cmd.selection.jumpStart",
-      "keyChord": "Control+Alt+J",
+      "keyChord": "Grave+J",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -258,7 +314,7 @@
     },
     {
       "commandId": "cmd.selection.cancel",
-      "keyChord": "Control+Alt+X",
+      "keyChord": "Grave+X",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -266,7 +322,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "Control+Alt+1",
+      "keyChord": "Grave+1",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -274,7 +330,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "Control+Alt+2",
+      "keyChord": "Grave+2",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -282,7 +338,7 @@
     },
     {
       "commandId": "cmd.clip.protectSlot",
-      "keyChord": "Control+Alt+Shift+P",
+      "keyChord": "Grave+Shift+P",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -290,7 +346,7 @@
     },
     {
       "commandId": "cmd.clip.unprotectSlot",
-      "keyChord": "Control+Alt+Shift+U",
+      "keyChord": "Grave+Shift+U",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -298,7 +354,7 @@
     },
     {
       "commandId": "cmd.clip.deleteSlot",
-      "keyChord": "Control+Alt+3",
+      "keyChord": "Grave+3",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -306,7 +362,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "Control+Alt+4",
+      "keyChord": "Grave+4",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -314,7 +370,7 @@
     },
     {
       "commandId": "cmd.clip.editSlot",
-      "keyChord": "Control+Alt+Shift+E",
+      "keyChord": "Grave+Shift+E",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -322,7 +378,7 @@
     },
     {
       "commandId": "cmd.text.quickInsert",
-      "keyChord": "Control+Alt+0",
+      "keyChord": "Grave+0",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -330,7 +386,7 @@
     },
     {
       "commandId": "cmd.cuts.dashboard",
-      "keyChord": "Control+Alt+5",
+      "keyChord": "Grave+5",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -338,7 +394,7 @@
     },
     {
       "commandId": "cmd.clip.library.open",
-      "keyChord": "Control+Alt+6",
+      "keyChord": "Grave+6",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -346,7 +402,7 @@
     },
     {
       "commandId": "cmd.clip.browser.open",
-      "keyChord": "Control+Alt+Shift+6",
+      "keyChord": "Grave+Shift+6",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -354,7 +410,7 @@
     },
     {
       "commandId": "cmd.shortcuts.launcher.open",
-      "keyChord": "Control+Alt+7",
+      "keyChord": "Grave+7",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -362,7 +418,7 @@
     },
     {
       "commandId": "cmd.shortcuts.drive.list",
-      "keyChord": "Control+Alt+8",
+      "keyChord": "Grave+8",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -370,7 +426,7 @@
     },
     {
       "commandId": "cmd.shortcuts.launcher.addFocusedApp",
-      "keyChord": "Control+Alt+9",
+      "keyChord": "Grave+9",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -378,7 +434,7 @@
     },
     {
       "commandId": "cmd.tags.session.toggleCurrent",
-      "keyChord": "Control+Alt+G",
+      "keyChord": "Grave+G",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -386,7 +442,7 @@
     },
     {
       "commandId": "cmd.tags.session.tagFromSelection",
-      "keyChord": "Control+Alt+Shift+G",
+      "keyChord": "Grave+Shift+G",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -394,7 +450,7 @@
     },
     {
       "commandId": "cmd.tags.session.report",
-      "keyChord": "Control+Alt+T",
+      "keyChord": "Grave+T",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -402,7 +458,7 @@
     },
     {
       "commandId": "cmd.tags.outlook.report",
-      "keyChord": "Control+Alt+Shift+T",
+      "keyChord": "Grave+Shift+T",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -410,7 +466,7 @@
     },
     {
       "commandId": "cmd.author.pipeline.polish",
-      "keyChord": "Control+Alt+Shift+A",
+      "keyChord": "Grave+Shift+A",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -418,7 +474,7 @@
     },
     {
       "commandId": "cmd.author.template.apply",
-      "keyChord": "Control+Alt+Shift+N",
+      "keyChord": "Grave+Shift+N",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -426,7 +482,7 @@
     },
     {
       "commandId": "cmd.author.pipeline.undo",
-      "keyChord": "Control+Alt+Shift+Z",
+      "keyChord": "Grave+Shift+Z",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -434,7 +490,7 @@
     },
     {
       "commandId": "cmd.shortcuts.dialog.detect",
-      "keyChord": "Control+Alt+Shift+7",
+      "keyChord": "Grave+Shift+7",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -442,7 +498,7 @@
     },
     {
       "commandId": "cmd.speech.history.browse",
-      "keyChord": "Control+Alt+H",
+      "keyChord": "Grave+H",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -450,7 +506,7 @@
     },
     {
       "commandId": "cmd.speech.history.virtualView",
-      "keyChord": "Control+Alt+Shift+H",
+      "keyChord": "Grave+Shift+H",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -458,7 +514,7 @@
     },
     {
       "commandId": "cmd.time.speak",
-      "keyChord": "Control+Alt+Shift+Y",
+      "keyChord": "Grave+Shift+Y",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -466,7 +522,7 @@
     },
     {
       "commandId": "cmd.utility.symbol.search",
-      "keyChord": "Control+Alt+Equals",
+      "keyChord": "Grave+Equals",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -474,7 +530,7 @@
     },
     {
       "commandId": "cmd.utility.symbol.recent",
-      "keyChord": "Control+Alt+Minus",
+      "keyChord": "Grave+Minus",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -482,7 +538,7 @@
     },
     {
       "commandId": "cmd.utility.windowBookmark.recall",
-      "keyChord": "Control+Alt+W",
+      "keyChord": "Grave+W",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -490,7 +546,7 @@
     },
     {
       "commandId": "cmd.utility.windowBookmark.list",
-      "keyChord": "Control+Alt+Shift+W",
+      "keyChord": "Grave+Shift+W",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -498,7 +554,7 @@
     },
     {
       "commandId": "cmd.utility.systemReport.open",
-      "keyChord": "Control+Alt+Shift+R",
+      "keyChord": "Grave+Shift+R",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -506,7 +562,7 @@
     },
     {
       "commandId": "cmd.merge.setModeAppend",
-      "keyChord": "Control+Alt+M",
+      "keyChord": "Grave+M",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -514,7 +570,7 @@
     },
     {
       "commandId": "cmd.merge.setModeReplace",
-      "keyChord": "Control+Alt+Shift+M",
+      "keyChord": "Grave+Shift+M",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -522,7 +578,7 @@
     },
     {
       "commandId": "cmd.merge.setDividerLine",
-      "keyChord": "Control+Alt+L",
+      "keyChord": "Grave+L",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -530,7 +586,7 @@
     },
     {
       "commandId": "cmd.merge.setDividerSpace",
-      "keyChord": "Control+Alt+U",
+      "keyChord": "Grave+U",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -538,7 +594,7 @@
     },
     {
       "commandId": "cmd.merge.setDividerParagraph",
-      "keyChord": "Control+Alt+I",
+      "keyChord": "Grave+I",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -546,7 +602,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F1",
+      "keyChord": "Grave+F1",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -557,7 +613,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F1",
+      "keyChord": "Grave+Shift+F1",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -568,7 +624,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F1",
+      "keyChord": "Grave+Control+F1",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -579,7 +635,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F1",
+      "keyChord": "Grave+Windows+F1",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -590,7 +646,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F2",
+      "keyChord": "Grave+F2",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -601,7 +657,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F2",
+      "keyChord": "Grave+Shift+F2",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -612,7 +668,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F2",
+      "keyChord": "Grave+Control+F2",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -623,7 +679,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F2",
+      "keyChord": "Grave+Windows+F2",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -634,7 +690,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F3",
+      "keyChord": "Grave+F3",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -645,7 +701,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F3",
+      "keyChord": "Grave+Shift+F3",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -656,7 +712,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F3",
+      "keyChord": "Grave+Control+F3",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -667,7 +723,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F3",
+      "keyChord": "Grave+Windows+F3",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -678,7 +734,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F4",
+      "keyChord": "Grave+F4",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -689,7 +745,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F4",
+      "keyChord": "Grave+Shift+F4",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -700,7 +756,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F4",
+      "keyChord": "Grave+Control+F4",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -711,7 +767,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F4",
+      "keyChord": "Grave+Windows+F4",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -722,7 +778,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F5",
+      "keyChord": "Grave+F5",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -733,7 +789,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F5",
+      "keyChord": "Grave+Shift+F5",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -744,7 +800,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F5",
+      "keyChord": "Grave+Control+F5",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -755,7 +811,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F5",
+      "keyChord": "Grave+Windows+F5",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -766,7 +822,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F6",
+      "keyChord": "Grave+F6",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -777,7 +833,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F6",
+      "keyChord": "Grave+Shift+F6",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -788,7 +844,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F6",
+      "keyChord": "Grave+Control+F6",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -799,7 +855,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F6",
+      "keyChord": "Grave+Windows+F6",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -810,7 +866,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F7",
+      "keyChord": "Grave+F7",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -821,7 +877,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F7",
+      "keyChord": "Grave+Shift+F7",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -832,7 +888,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F7",
+      "keyChord": "Grave+Control+F7",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -843,7 +899,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F7",
+      "keyChord": "Grave+Windows+F7",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -854,7 +910,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F8",
+      "keyChord": "Grave+F8",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -865,7 +921,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F8",
+      "keyChord": "Grave+Shift+F8",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -876,7 +932,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F8",
+      "keyChord": "Grave+Control+F8",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -887,7 +943,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F8",
+      "keyChord": "Grave+Windows+F8",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -898,7 +954,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F9",
+      "keyChord": "Grave+F9",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -909,7 +965,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F9",
+      "keyChord": "Grave+Shift+F9",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -920,7 +976,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F9",
+      "keyChord": "Grave+Control+F9",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -931,7 +987,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F9",
+      "keyChord": "Grave+Windows+F9",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -942,7 +998,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F10",
+      "keyChord": "Grave+F10",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -953,7 +1009,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F10",
+      "keyChord": "Grave+Shift+F10",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -964,7 +1020,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F10",
+      "keyChord": "Grave+Control+F10",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -975,7 +1031,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F10",
+      "keyChord": "Grave+Windows+F10",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -986,7 +1042,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F11",
+      "keyChord": "Grave+F11",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -997,7 +1053,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F11",
+      "keyChord": "Grave+Shift+F11",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -1008,7 +1064,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F11",
+      "keyChord": "Grave+Control+F11",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -1019,7 +1075,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F11",
+      "keyChord": "Grave+Windows+F11",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -1030,7 +1086,7 @@
     },
     {
       "commandId": "cmd.clip.selectSlot",
-      "keyChord": "CapsLock+F12",
+      "keyChord": "Grave+F12",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -1041,7 +1097,7 @@
     },
     {
       "commandId": "cmd.clip.copyToSlot",
-      "keyChord": "CapsLock+Shift+F12",
+      "keyChord": "Grave+Shift+F12",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -1052,7 +1108,7 @@
     },
     {
       "commandId": "cmd.clip.pasteFromSlot",
-      "keyChord": "CapsLock+Control+F12",
+      "keyChord": "Grave+Control+F12",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -1063,7 +1119,7 @@
     },
     {
       "commandId": "cmd.clip.describeSlot",
-      "keyChord": "CapsLock+Windows+F12",
+      "keyChord": "Grave+Windows+F12",
       "scope": "global",
       "appId": null,
       "enabled": true,

@@ -12,6 +12,95 @@
     "fallbackCommandIds": []
   },
   {
+    "id": "cmd.integration.itemChooser.open",
+    "name": "Open Screen Item Chooser",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Grave+O",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": [
+      "cmd.palette.open"
+    ]
+  },
+  {
+    "id": "cmd.integration.glow.health",
+    "name": "GLOW server health check",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Grave+Y",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.integration.glow.audit",
+    "name": "GLOW audit document",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Grave+E",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.integration.glow.fix",
+    "name": "GLOW fix document",
+    "safetyClass": "mutating",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Grave+Shift+V",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.integration.glow.convert",
+    "name": "GLOW convert document",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Grave+Shift+K",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.integration.glow.report",
+    "name": "GLOW report document",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Grave+Shift+L",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.integration.itemChooser.openOcr",
+    "name": "Open Screen Item Chooser with OCR",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Grave+Shift+O",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": [
+      "cmd.integration.itemChooser.open",
+      "cmd.palette.open"
+    ]
+  },
+  {
     "id": "cmd.capture.quickInbox",
     "name": "Quick capture to inbox",
     "safetyClass": "safe",
@@ -19,7 +108,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Q",
+    "defaultHotkey": "Grave+Q",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.palette.open"
@@ -81,7 +170,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+J",
+    "defaultHotkey": "Grave+Shift+J",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -105,7 +194,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+S",
+    "defaultHotkey": "Grave+S",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.result.openFallbacks",
@@ -120,7 +209,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+A",
+    "defaultHotkey": "Grave+A",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.result.openFallbacks",
@@ -135,7 +224,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+R",
+    "defaultHotkey": "Grave+R",
     "requiresConfirmation": true,
     "fallbackCommandIds": [
       "cmd.palette.open"
@@ -149,7 +238,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+V",
+    "defaultHotkey": "Grave+V",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.palette.open"
@@ -163,7 +252,7 @@
     "supportsHotkey": true,
     "supportsPalette": false,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+C",
+    "defaultHotkey": "Grave+C",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.result.copyAll"
@@ -177,7 +266,7 @@
     "supportsHotkey": true,
     "supportsPalette": false,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+RightArrow",
+    "defaultHotkey": "Grave+RightArrow",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -189,7 +278,7 @@
     "supportsHotkey": true,
     "supportsPalette": false,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+LeftArrow",
+    "defaultHotkey": "Grave+LeftArrow",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -201,7 +290,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+Backspace",
+    "defaultHotkey": "Grave+Backspace",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.palette.open"
@@ -215,7 +304,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Slash",
+    "defaultHotkey": "Grave+Slash",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -227,7 +316,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+Escape",
+    "defaultHotkey": "Grave+Escape",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -239,7 +328,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+Shift+C",
+    "defaultHotkey": "Grave+Shift+C",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -251,7 +340,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+P",
+    "defaultHotkey": "Grave+P",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -263,7 +352,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+K",
+    "defaultHotkey": "Grave+K",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -275,7 +364,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+F",
+    "defaultHotkey": "Grave+F",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.palette.open"
@@ -289,7 +378,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+B",
+    "defaultHotkey": "Grave+B",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -301,7 +390,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+Z",
+    "defaultHotkey": "Grave+Z",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -313,7 +402,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+Shift+F",
+    "defaultHotkey": "Grave+Shift+F",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -325,7 +414,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+D",
+    "defaultHotkey": "Grave+D",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -337,7 +426,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+OpenBracket",
+    "defaultHotkey": "Grave+OpenBracket",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.palette.open"
@@ -351,7 +440,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+CloseBracket",
+    "defaultHotkey": "Grave+CloseBracket",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.palette.open"
@@ -365,7 +454,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Quote",
+    "defaultHotkey": "Grave+Quote",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -377,7 +466,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Semicolon",
+    "defaultHotkey": "Grave+Semicolon",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -389,7 +478,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+J",
+    "defaultHotkey": "Grave+J",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.context.returnSource"
@@ -403,7 +492,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+X",
+    "defaultHotkey": "Grave+X",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -415,7 +504,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "CapsLock+Shift+F1 to CapsLock+Shift+F12",
+    "defaultHotkey": "Grave+Shift+F1 to Grave+Shift+F12",
     "requiresConfirmation": false,
     "fallbackCommandIds": [
       "cmd.capture.quickInbox",
@@ -430,7 +519,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "CapsLock+F1 to CapsLock+F12",
+    "defaultHotkey": "Grave+F1 to Grave+F12",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -442,7 +531,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "CapsLock+Control+F1 to CapsLock+Control+F12",
+    "defaultHotkey": "Grave+Control+F1 to Grave+Control+F12",
     "requiresConfirmation": true,
     "fallbackCommandIds": [
       "cmd.palette.open"
@@ -456,7 +545,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+P",
+    "defaultHotkey": "Grave+Shift+P",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -468,7 +557,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+U",
+    "defaultHotkey": "Grave+Shift+U",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -480,7 +569,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+3",
+    "defaultHotkey": "Grave+3",
     "requiresConfirmation": true,
     "fallbackCommandIds": []
   },
@@ -492,7 +581,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+E",
+    "defaultHotkey": "Grave+Shift+E",
     "requiresConfirmation": true,
     "fallbackCommandIds": []
   },
@@ -504,7 +593,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "CapsLock+Windows+F1 to CapsLock+Windows+F12",
+    "defaultHotkey": "Grave+Windows+F1 to Grave+Windows+F12",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -516,7 +605,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+M",
+    "defaultHotkey": "Grave+M",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -528,7 +617,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+M",
+    "defaultHotkey": "Grave+Shift+M",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -540,7 +629,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+L",
+    "defaultHotkey": "Grave+L",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -552,7 +641,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+U",
+    "defaultHotkey": "Grave+U",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -564,7 +653,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+I",
+    "defaultHotkey": "Grave+I",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -696,7 +785,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+0",
+    "defaultHotkey": "Grave+0",
     "requiresConfirmation": true,
     "fallbackCommandIds": []
   },
@@ -756,7 +845,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+6",
+    "defaultHotkey": "Grave+Shift+6",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -948,7 +1037,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+7",
+    "defaultHotkey": "Grave+7",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -972,7 +1061,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+9",
+    "defaultHotkey": "Grave+9",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1032,7 +1121,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+8",
+    "defaultHotkey": "Grave+8",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1056,7 +1145,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+G",
+    "defaultHotkey": "Grave+G",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1068,7 +1157,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+G",
+    "defaultHotkey": "Grave+Shift+G",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1092,7 +1181,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+T",
+    "defaultHotkey": "Grave+T",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1236,7 +1325,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+T",
+    "defaultHotkey": "Grave+Shift+T",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1296,7 +1385,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+7",
+    "defaultHotkey": "Grave+Shift+7",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1344,7 +1433,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+H",
+    "defaultHotkey": "Grave+H",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1380,7 +1469,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": true,
-    "defaultHotkey": "Control+Alt+Shift+H",
+    "defaultHotkey": "Grave+Shift+H",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1404,7 +1493,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Equals",
+    "defaultHotkey": "Grave+Equals",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1416,7 +1505,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Minus",
+    "defaultHotkey": "Grave+Minus",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1440,7 +1529,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+W",
+    "defaultHotkey": "Grave+W",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1464,7 +1553,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+W",
+    "defaultHotkey": "Grave+Shift+W",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1476,7 +1565,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+R",
+    "defaultHotkey": "Grave+Shift+R",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1608,7 +1697,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+5",
+    "defaultHotkey": "Grave+5",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1632,7 +1721,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+6",
+    "defaultHotkey": "Grave+6",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1836,7 +1925,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+Y",
+    "defaultHotkey": "Grave+Shift+Y",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -2364,7 +2453,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+A",
+    "defaultHotkey": "Grave+Shift+A",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -2376,7 +2465,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+Z",
+    "defaultHotkey": "Grave+Shift+Z",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -2388,7 +2477,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Control+Alt+Shift+N",
+    "defaultHotkey": "Grave+Shift+N",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },

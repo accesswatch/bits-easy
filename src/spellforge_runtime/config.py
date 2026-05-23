@@ -17,21 +17,7 @@ class RuntimeConfig:
         chord = str(key_chord or "").strip()
         if not chord:
             return []
-
-        candidates: List[str] = [chord]
-        if chord.startswith("CapsLock+"):
-            suffix = chord[len("CapsLock+"):]
-            candidates.append("NVDA+" + suffix)
-            candidates.append("Control+Alt+" + suffix)
-        elif chord.startswith("Control+Alt+"):
-            suffix = chord[len("Control+Alt+"):]
-            candidates.append("CapsLock+" + suffix)
-            candidates.append("NVDA+" + suffix)
-        elif chord.startswith("NVDA+"):
-            suffix = chord[len("NVDA+"):]
-            candidates.append("CapsLock+" + suffix)
-            candidates.append("Control+Alt+" + suffix)
-        return candidates
+        return [chord]
 
     def command(self, command_id: str) -> Optional[Dict[str, Any]]:
         return self.command_catalog.get(command_id)

@@ -145,31 +145,31 @@ The following table defines baseline reserved hotkeys.
 | Command | Default Hotkey | Behavior |
 | --- | --- | --- |
 | Open palette | NVDA+Shift+P | Opens StarKey palette |
-| Quick capture to inbox | CapsLock+Q | Captures current selection or guided fallback |
-| Summarize selection | CapsLock+S | Runs summarize action with confidence output |
-| Extract action items | CapsLock+A | Extracts tasks from current context |
-| Rewrite for beginners | CapsLock+R | Opens preview first for rewrite action |
-| Open virtualized result | CapsLock+V | Opens most recent result in virtualized mode |
-| Copy current virtual block | CapsLock+C | Copies focused block in virtualized mode |
-| Next virtual block | CapsLock+RightArrow | Moves to next structural block |
-| Previous virtual block | CapsLock+LeftArrow | Moves to previous structural block |
-| Return to source | CapsLock+Backspace | Restores source anchor |
-| What can I press | CapsLock+Slash | Announces available hotkeys by context |
-| Emergency stop | CapsLock+Escape | Cancels current automation and returns control |
-| Mark selection start | CapsLock+OpenBracket | Sets selection start marker for range workflows |
-| Mark selection end | CapsLock+CloseBracket | Sets selection end marker and normalizes range |
-| Read selection context | CapsLock+Quote | Announces normalized range context and confidence |
-| Jump to selection start | CapsLock+J | Restores caret to start marker with fallback |
-| Cancel selection markers | CapsLock+X | Exits marker mode with no side effects |
-| Copy to clip slot | CapsLock+1 | Copies selection or clipboard into chosen slot |
-| Paste from clip slot | CapsLock+2 | Pastes selected slot content with safety confirmation |
-| Delete clip slot | CapsLock+3 | Deletes selected clip slot with confirmation |
-| Describe clip slot | CapsLock+4 | Reads slot metadata and content summary |
-| Merge mode append | CapsLock+M | Sets merge behavior to append |
-| Merge mode replace | CapsLock+Shift+M | Sets merge behavior to replace |
-| Merge divider line | CapsLock+L | Sets merge divider to line break separator |
-| Merge divider space | CapsLock+U | Sets merge divider to single space separator |
-| Merge divider paragraph | CapsLock+I | Sets merge divider to paragraph separator |
+| Quick capture to inbox | Grave+Q | Captures current selection or guided fallback |
+| Summarize selection | Grave+S | Runs summarize action with confidence output |
+| Extract action items | Grave+A | Extracts tasks from current context |
+| Rewrite for beginners | Grave+R | Opens preview first for rewrite action |
+| Open virtualized result | Grave+V | Opens most recent result in virtualized mode |
+| Copy current virtual block | Grave+C | Copies focused block in virtualized mode |
+| Next virtual block | Grave+RightArrow | Moves to next structural block |
+| Previous virtual block | Grave+LeftArrow | Moves to previous structural block |
+| Return to source | Grave+Backspace | Restores source anchor |
+| What can I press | Grave+Slash | Announces available hotkeys by context |
+| Emergency stop | Grave+Escape | Cancels current automation and returns control |
+| Mark selection start | Grave+OpenBracket | Sets selection start marker for range workflows |
+| Mark selection end | Grave+CloseBracket | Sets selection end marker and normalizes range |
+| Read selection context | Grave+Quote | Announces normalized range context and confidence |
+| Jump to selection start | Grave+J | Restores caret to start marker with fallback |
+| Cancel selection markers | Grave+X | Exits marker mode with no side effects |
+| Copy to clip slot | Grave+1 | Copies selection or clipboard into chosen slot |
+| Paste from clip slot | Grave+2 | Pastes selected slot content with safety confirmation |
+| Delete clip slot | Grave+3 | Deletes selected clip slot with confirmation |
+| Describe clip slot | Grave+4 | Reads slot metadata and content summary |
+| Merge mode append | Grave+M | Sets merge behavior to append |
+| Merge mode replace | Grave+Shift+M | Sets merge behavior to replace |
+| Merge divider line | Grave+L | Sets merge divider to line break separator |
+| Merge divider space | Grave+U | Sets merge divider to single space separator |
+| Merge divider paragraph | Grave+I | Sets merge divider to paragraph separator |
 
 ### Profile Keymap Variants
 
@@ -264,3 +264,4 @@ The following list defines release gates for this spec.
 1. v1: Tier 1 hotkeys, virtualized core navigation, deterministic source return.
 2. v1.1: profile-aware remap UX and collision diagnostics refinement.
 3. v2: advanced block types, richer export actions, and adaptive key hinting.
+

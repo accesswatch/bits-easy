@@ -18,7 +18,7 @@ These are required for compatibility baseline and release sign-off.
 2. Open NVDA, then Tools > Manage add-ons.
 3. Install the provided Spellforge `.nvda-addon` package.
 4. Restart NVDA.
-5. Press Control+Alt+Slash to confirm hotkeys are active.
+5. Press Grave+Slash to confirm hotkeys are active.
 
 No extra Python packages are required for core add-on behavior.
 

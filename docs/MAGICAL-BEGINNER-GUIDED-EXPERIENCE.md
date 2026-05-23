@@ -41,7 +41,7 @@ You hear a clear confirmation and the action starts right away.
 Use quick capture for thoughts, links, and short reminders.
 
 1. Select text in any app, or copy text to clipboard.
-2. Press CapsLock+Q.
+2. Press Grave+Q.
 3. Hear confirmation that capture was saved.
 
 What success feels like:
@@ -52,7 +52,7 @@ You can stop worrying about losing the idea.
 
 When you forget keys, ask the system directly.
 
-1. Press CapsLock+Slash.
+1. Press Grave+Slash.
 2. Listen to available hotkeys for your current context.
 
 What success feels like:
@@ -70,7 +70,7 @@ You get unstuck in seconds.
 
 ### During work or study
 
-1. Capture ideas quickly with CapsLock+Q.
+1. Capture ideas quickly with Grave+Q.
 2. Use summaries for long text when needed.
 3. Save reusable phrases to text expansion.
 4. Keep related notes linked together.
@@ -189,8 +189,8 @@ Run health checks after major updates.
 
 If something feels off, use this order:
 
-1. Stop and press CapsLock+Escape.
-2. Open hotkeys help with CapsLock+Slash.
+1. Stop and press Grave+Escape.
+2. Open hotkeys help with Grave+Slash.
 3. Open fallback options.
 4. Check operation journal.
 5. Roll back the last reversible action.
@@ -249,13 +249,14 @@ This is normal learning behavior.
 ## Quick Reference
 
 1. Open palette: NVDA+Shift+P
-2. Quick capture: CapsLock+Q
-3. Summarize selection: CapsLock+S
-4. What can I press: CapsLock+Slash
-5. Emergency stop: CapsLock+Escape
+2. Quick capture: Grave+Q
+3. Summarize selection: Grave+S
+4. What can I press: Grave+Slash
+5. Emergency stop: Grave+Escape
 
 ## Final Encouragement
 
 You do not need to master everything at once.
 Small repeatable actions create confidence.
 If you can open the palette, capture one idea, and complete one task, you are already succeeding.
+

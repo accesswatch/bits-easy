@@ -33,6 +33,9 @@ def _vk_for_key(key: str) -> Optional[int]:
         if 1 <= num <= 24:
             return 0x6F + num
     table = {
+        "GRAVE": 0xC0,
+        "GRAVEACCENT": 0xC0,
+        "SPELLFORGE": 0xC0,
         "SPACE": 0x20,
         "BACKSPACE": 0x08,
         "ESCAPE": 0x1B,
@@ -53,6 +56,7 @@ def parse_key_chord_for_os(chord: str, emulate_capslock_prefix: bool = True) -> 
 
     modifiers = 0
     key_part = None
+    total_parts = len(parts)
     for p in parts:
         pl = p.lower()
         if pl in ("control", "ctrl"):
@@ -65,6 +69,13 @@ def parse_key_chord_for_os(chord: str, emulate_capslock_prefix: bool = True) -> 
             modifiers |= MOD_WIN
         elif pl == "capslock":
             if emulate_capslock_prefix:
+                modifiers |= MOD_CONTROL | MOD_ALT
+            else:
+                return HotkeySpec(original=chord, modifiers=0, vk=0, supported=False)
+        elif pl in ("grave", "graveaccent", "spellforge"):
+            if total_parts == 1:
+                key_part = "GRAVE"
+            elif emulate_capslock_prefix:
                 modifiers |= MOD_CONTROL | MOD_ALT
             else:
                 return HotkeySpec(original=chord, modifiers=0, vk=0, supported=False)

@@ -462,51 +462,91 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
         try:
             import wx
-            import gui
         except Exception:
-            log.exception("Spellforge: command palette wx/gui import failed")
+            log.exception("Spellforge: command palette wx import failed")
             ui.message("Command palette UI is unavailable")
             return
-
-        query_dlg = wx.TextEntryDialog(gui.mainFrame, "Search commands", "Spellforge Command Palette", "")
-        query = ""
-        try:
-            if query_dlg.ShowModal() == wx.ID_OK:
-                query = query_dlg.GetValue()
-        finally:
-            query_dlg.Destroy()
 
         ai_key_enabled = False
         key_status = self._dispatcher.dispatch_command(self._context, "cmd.ai.key.status")
         if key_status.result.ok:
             ai_key_enabled = bool((key_status.result.payload or {}).get("hasAnyKey", False))
-
         has_selection_activity = bool((self._context.clipboard_text or "").strip())
-        ranked = self._palette.search(
-            query=query,
-            app_id=self._context.app_id,
-            limit=30,
-            ai_key_enabled=ai_key_enabled,
-            has_selection_activity=has_selection_activity,
-        )
-        if not ranked:
-            ui.message("No commands are registered")
+
+        # wx dialogs must be created and shown on the GUI thread, not NVDA's
+        # core thread. Hop over via wx.CallAfter so the script returns
+        # immediately and the dialog lifecycle runs where wx requires it.
+        wx.CallAfter(self._show_command_palette_ui, ai_key_enabled, has_selection_activity)
+
+    def _show_command_palette_ui(self, ai_key_enabled: bool, has_selection_activity: bool):
+        try:
+            import wx
+            import gui
+        except Exception:
+            log.exception("Spellforge: command palette wx/gui import failed")
+            try:
+                ui.message("Command palette UI is unavailable")
+            except Exception:
+                pass
             return
 
-        choices = [f"{item.name} [{item.command_id}] score={item.score:.2f}" for item in ranked]
-        id_by_index = {idx: item.command_id for idx, item in enumerate(ranked)}
-
-        dlg = wx.SingleChoiceDialog(gui.mainFrame, "Choose Spellforge command", "Spellforge Command Palette", choices)
+        main_frame = gui.mainFrame
+        main_frame.prePopup()
         try:
-            if dlg.ShowModal() != wx.ID_OK:
+            query = ""
+            query_dlg = wx.TextEntryDialog(main_frame, "Search commands", "Spellforge Command Palette", "")
+            try:
+                if query_dlg.ShowModal() == wx.ID_OK:
+                    query = query_dlg.GetValue()
+                else:
+                    return
+            finally:
+                query_dlg.Destroy()
+
+            ranked = self._palette.search(
+                query=query,
+                app_id=self._context.app_id,
+                limit=30,
+                ai_key_enabled=ai_key_enabled,
+                has_selection_activity=has_selection_activity,
+            )
+            if not ranked:
+                ui.message("No commands are registered")
                 return
-            command_id = id_by_index.get(dlg.GetSelection(), "")
+
+            choices = [f"{item.name} [{item.command_id}] score={item.score:.2f}" for item in ranked]
+            id_by_index = {idx: item.command_id for idx, item in enumerate(ranked)}
+
+            command_id = ""
+            dlg = wx.SingleChoiceDialog(main_frame, "Choose Spellforge command", "Spellforge Command Palette", choices)
+            try:
+                if dlg.ShowModal() != wx.ID_OK:
+                    return
+                command_id = id_by_index.get(dlg.GetSelection(), "")
+            finally:
+                dlg.Destroy()
+
             if not command_id:
                 ui.message("No command selected")
                 return
-            self._dispatch(command_id)
+
+            # Marshal the actual dispatch back to NVDA's event queue so
+            # runtime side-effects (clipboard, ui.message) don't run inside
+            # the wx event handler.
+            try:
+                import queueHandler
+                queueHandler.queueFunction(queueHandler.eventQueue, self._dispatch, command_id)
+            except Exception:
+                log.exception("Spellforge: queueHandler unavailable; dispatching inline")
+                self._dispatch(command_id)
+        except Exception:
+            log.exception("Spellforge: command palette UI failed")
+            try:
+                ui.message("Command palette failed")
+            except Exception:
+                pass
         finally:
-            dlg.Destroy()
+            main_frame.postPopup()
 
     @scriptHandler.script(description="Spellforge mark selection start")
     def script_markSelectionStart(self, gesture):

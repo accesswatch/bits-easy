@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://spellforge.local/schemas/command-metadata.schema.json",
+  "$id": "https://bits-easy.local/schemas/command-metadata.schema.json",
   "title": "CommandMetadata",
   "type": "object",
   "required": [

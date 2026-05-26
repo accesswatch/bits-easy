@@ -260,3 +260,4 @@ You do not need to master everything at once.
 Small repeatable actions create confidence.
 If you can open the palette, capture one idea, and complete one task, you are already succeeding.
 
+

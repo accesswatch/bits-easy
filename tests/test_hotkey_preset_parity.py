@@ -4,14 +4,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from spellforge_runtime import AppAdapter, AppContext, RuntimeDispatcher, SpellforgeRuntime, load_runtime_config
+from bits_easy_runtime import AppAdapter, AppContext, RuntimeDispatcher, BitsEasyRuntime, load_runtime_config
 
 
 class HotkeyPresetParityTests(unittest.TestCase):
     def test_export_import_hotkey_preset(self):
         repo_root = Path(__file__).resolve().parents[1]
         config = load_runtime_config(repo_root)
-        runtime = SpellforgeRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
+        runtime = BitsEasyRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
         dispatcher = RuntimeDispatcher(runtime, config, profile_id="balanced")
         ctx = AppContext("edge", "w", "c", "", 0, "")
 
@@ -35,3 +35,4 @@ class HotkeyPresetParityTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

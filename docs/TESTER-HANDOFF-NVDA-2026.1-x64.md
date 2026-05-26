@@ -1,14 +1,14 @@
-# Spellforge Tester Handoff (NVDA 2026.1, 64-bit)
+# BITS-EASY Tester Handoff (NVDA 2026.1, 64-bit)
 
 ## Scope
 
-This checklist is for test handoff of the Spellforge add-on to QA or pilot users.
+This checklist is for test handoff of the BITS-EASY add-on to QA or pilot users.
 
 ## Hard Requirements
 
 1. Windows 10 or Windows 11, 64-bit.
 2. NVDA 2026.1, 64-bit.
-3. Spellforge add-on package file (`.nvda-addon`).
+3. BITS-EASY add-on package file (`.nvda-addon`).
 
 These are required for compatibility baseline and release sign-off.
 
@@ -16,7 +16,7 @@ These are required for compatibility baseline and release sign-off.
 
 1. Install NVDA 2026.1, 64-bit.
 2. Open NVDA, then Tools > Manage add-ons.
-3. Install the provided Spellforge `.nvda-addon` package.
+3. Install the provided BITS-EASY `.nvda-addon` package.
 4. Restart NVDA.
 5. Press Grave+Slash to confirm hotkeys are active.
 
@@ -116,3 +116,4 @@ Capture and attach to release:
 
 1. This project baseline is 64-bit only.
 2. NVDA versions older than 2026.1 are out of scope for this handoff profile.
+

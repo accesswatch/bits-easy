@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.symbols import SymbolAssistant
+from bits_easy_runtime.symbols import SymbolAssistant
 
 
 class SymbolAssistantTests(unittest.TestCase):
@@ -26,3 +26,4 @@ class SymbolAssistantTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

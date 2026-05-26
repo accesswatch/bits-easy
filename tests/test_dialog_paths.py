@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.dialog_paths import DialogPathInserter
+from bits_easy_runtime.dialog_paths import DialogPathInserter
 
 
 class DialogPathTests(unittest.TestCase):
@@ -27,3 +27,4 @@ class DialogPathTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

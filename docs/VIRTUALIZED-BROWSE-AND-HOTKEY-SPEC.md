@@ -265,3 +265,4 @@ The following list defines release gates for this spec.
 2. v1.1: profile-aware remap UX and collision diagnostics refinement.
 3. v2: advanced block types, richer export actions, and adaptive key hinting.
 
+

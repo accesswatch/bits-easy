@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from spellforge_runtime.shortcut_catalog import ShortcutCatalogStore
+from bits_easy_runtime.shortcut_catalog import ShortcutCatalogStore
 
 
 class ShortcutCatalogStoreTests(unittest.TestCase):
@@ -63,3 +63,4 @@ class ShortcutCatalogStoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

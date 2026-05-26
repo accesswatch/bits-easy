@@ -90,13 +90,13 @@ def main() -> int:
         install_tasks = repo_root / "addon" / "installTasks.py"
         if install_tasks.exists():
             shutil.copy2(install_tasks, stage_root / "installTasks.py")
-        # spellforge_settings.py is a helper module imported by globalPlugins/spellforge.py.
+        # bits_easy_settings.py is a helper module imported by globalPlugins/bits_easy.py.
         # It must NOT live under globalPlugins/ or NVDA will try to load it as a plugin and fail.
-        settings_helper = repo_root / "addon" / "spellforge_settings.py"
+        settings_helper = repo_root / "addon" / "bits_easy_settings.py"
         if settings_helper.exists():
-            shutil.copy2(settings_helper, stage_root / "spellforge_settings.py")
+            shutil.copy2(settings_helper, stage_root / "bits_easy_settings.py")
         _copy_tree(repo_root / "config" / "hotkeys", stage_root / "config" / "hotkeys")
-        _copy_tree(repo_root / "src" / "spellforge_runtime", stage_root / "spellforge_runtime")
+        _copy_tree(repo_root / "src" / "bits_easy_runtime", stage_root / "bits_easy_runtime")
 
         info = _render_manifest(repo_root, stage_root)
         artifact = output_dir / f"{info['addon_name']}-{info['addon_version']}.nvda-addon"
@@ -118,3 +118,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

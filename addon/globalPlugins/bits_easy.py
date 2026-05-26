@@ -1,0 +1,1043 @@
+from __future__ import annotations
+
+from pathlib import Path
+import os
+import sys
+import time
+import json
+import importlib
+
+import globalPluginHandler
+import scriptHandler
+import ui
+
+try:
+    from logHandler import log
+except Exception:  # pragma: no cover - logHandler is always present inside NVDA
+    import logging
+
+    log = logging.getLogger("bits_easy.addon")
+
+
+class GlobalPlugin(globalPluginHandler.GlobalPlugin):
+    scriptCategory = "BITS-EASY"
+
+    _GLOW_FILE_COMMANDS = {
+        "cmd.integration.glow.audit",
+        "cmd.integration.glow.fix",
+        "cmd.integration.glow.convert",
+        "cmd.integration.glow.report",
+    }
+
+    _GLOW_COMMANDS = {
+        "cmd.integration.glow.health",
+        "cmd.integration.glow.audit",
+        "cmd.integration.glow.fix",
+        "cmd.integration.glow.convert",
+        "cmd.integration.glow.report",
+    }
+
+    def __init__(self):
+        super().__init__()
+        log.info("BITS-EASY: GlobalPlugin __init__ start")
+        self._runtime = None
+        self._dispatcher = None
+        self._config = None
+        self._settings_store = None
+        self._settings = None
+        self._settings_panel_class = None
+        self._palette = None
+        self._palette_tick = 0
+        self._hotkeys = None
+        self._context = None
+        self._current_snapshot = None
+        self._hotkey_overrides_path = None
+        self._base_keymap_bindings = []
+        self._tools_menu_id = None
+        self._initialize_runtime()
+        log.info("BITS-EASY: GlobalPlugin __init__ complete")
+
+    def _get_focus_snapshot(self):
+        try:
+            import api
+            from bits_easy_runtime import snapshot_from_focus_object
+
+            focus = api.getFocusObject()
+            return snapshot_from_focus_object(focus)
+        except Exception:
+            log.exception("BITS-EASY: _get_focus_snapshot failed")
+            return None
+
+    def _refresh_context_from_focus(self):
+        if self._context is None:
+            return
+
+        snapshot = self._get_focus_snapshot()
+        self._current_snapshot = snapshot
+        if snapshot is None:
+            return
+
+        self._context.app_id = snapshot.app_id
+        self._context.window_id = snapshot.window_id or self._context.window_id
+        self._context.control_id = snapshot.control_id or self._context.control_id
+        self._context.buffer = snapshot.text or ""
+        self._context.caret = snapshot.caret
+
+    def _initialize_runtime(self):
+        # The addon root sits at different depths depending on layout:
+        # - Production (installed .nvda-addon): globalPlugins/bits_easy.py — addon root is parents[1].
+        # - Source repo: addon/globalPlugins/bits_easy.py — repo root is parents[2], runtime is under src/.
+        # Walk up and add any ancestor (or its src/) that contains the runtime package
+        # or the settings helper, so both imports resolve in either layout.
+        here = Path(__file__).resolve()
+        added: list[str] = []
+        seen: set[str] = set()
+        for ancestor in here.parents[:4]:
+            for candidate in (ancestor, ancestor / "src"):
+                try:
+                    if not candidate.is_dir():
+                        continue
+                    has_runtime = (candidate / "bits_easy_runtime").is_dir()
+                    has_settings = (candidate / "bits_easy_settings.py").is_file()
+                    if not (has_runtime or has_settings):
+                        continue
+                    p = str(candidate)
+                    if p in seen or p in sys.path:
+                        seen.add(p)
+                        continue
+                    sys.path.insert(0, p)
+                    seen.add(p)
+                    added.append(p)
+                except Exception:
+                    pass
+
+        # repo_root is the directory that holds config/hotkeys/ — addon root in
+        # production, project root in the source repo. Fall back to parents[1].
+        repo_root = next(
+            (a for a in here.parents[:4] if (a / "config" / "hotkeys").is_dir()),
+            here.parents[1],
+        )
+        log.info(
+            "BITS-EASY: _initialize_runtime start — __file__=%s, repo_root=%s, sys.path additions=%s",
+            here,
+            repo_root,
+            added,
+        )
+
+        try:
+            from bits_easy_runtime import (
+                AppAdapter,
+                AppContext,
+                BrowserLiveAdapter,
+                GlobalHotkeyService,
+                PaletteEngine,
+                OutlookLiveAdapter,
+                RuntimeDispatcher,
+                SettingsStore,
+                BitsEasyRuntime,
+                apply_active_mode,
+                effective_keymap_bindings,
+                WordLiveAdapter,
+                load_runtime_config,
+            )
+            from bits_easy_settings import register_settings_panel
+
+            storage_root = Path(os.getenv("APPDATA", str(repo_root)))
+            storage_dir = storage_root / "BITS-EASY"
+            legacy_storage_dir = storage_root / "BITS-EASY"
+            if not storage_dir.exists() and legacy_storage_dir.exists():
+                storage_dir = legacy_storage_dir
+            storage_dir.mkdir(parents=True, exist_ok=True)
+            log.info("BITS-EASY: storage dir ready at %s", storage_dir)
+            storage_path = storage_dir / "clip-slots.json"
+            settings_path = storage_dir / "settings.json"
+            palette_history_path = storage_dir / "palette-history.json"
+            self._hotkey_overrides_path = storage_dir / "hotkey-overrides.json"
+
+            self._settings_store = SettingsStore(settings_path)
+            self._settings = self._settings_store.load()
+            log.info(
+                "BITS-EASY: settings loaded — profile=%s, global_hotkeys=%s",
+                self._settings.profile_id,
+                self._settings.enable_global_hotkeys,
+            )
+
+            def snapshot_provider():
+                return self._get_focus_snapshot()
+
+            adapters = {
+                "nvda": AppAdapter("nvda", supports_selection=True),
+                "outlook": OutlookLiveAdapter(snapshot_provider=snapshot_provider),
+                "word": WordLiveAdapter(snapshot_provider=snapshot_provider),
+                "edge": BrowserLiveAdapter("edge", snapshot_provider=snapshot_provider),
+                "chrome": BrowserLiveAdapter("chrome", snapshot_provider=snapshot_provider),
+                "firefox": BrowserLiveAdapter("firefox", snapshot_provider=snapshot_provider),
+            }
+            self._runtime = BitsEasyRuntime(adapters=adapters, storage_path=storage_path)
+            log.info("BITS-EASY: runtime constructed with %d adapters", len(adapters))
+            self._config = load_runtime_config(repo_root)
+            log.info(
+                "BITS-EASY: runtime config loaded — %d commands, %d bindings",
+                len(self._config.command_catalog),
+                len(self._config.keymap_bindings),
+            )
+            self._load_hotkey_overrides()
+            self._base_keymap_bindings = [dict(row) for row in self._config.keymap_bindings if isinstance(row, dict)]
+            mode_hotkey_bindings = apply_active_mode(self._settings)
+            self._config.keymap_bindings = effective_keymap_bindings(self._base_keymap_bindings, mode_hotkey_bindings)
+            self._dispatcher = RuntimeDispatcher(
+                runtime=self._runtime,
+                config=self._config,
+                profile_id=self._settings.profile_id,
+            )
+            self._dispatcher.multi_press_enabled_override = self._settings.enable_multi_press_gestures
+            log.info("BITS-EASY: dispatcher constructed for profile=%s", self._settings.profile_id)
+            self._palette = PaletteEngine(config=self._config, history_path=palette_history_path)
+            self._hotkeys = GlobalHotkeyService(
+                on_command=self._on_os_hotkey_command,
+                emulate_capslock_prefix=self._settings.emulate_capslock_prefix_for_os_hotkeys,
+                on_key_chord=self._on_os_hotkey_chord,
+                enable_raw_sequences=self._settings.enable_raw_easy_sequences,
+                raw_sequence_timeout_ms=self._settings.raw_easy_sequence_timeout_ms,
+            )
+            self._restart_hotkeys()
+            log.info("BITS-EASY: OS hotkey service started")
+
+            focus_snapshot = self._get_focus_snapshot()
+            app_id = "nvda"
+            window_id = "nvda-window"
+            control_id = "focus"
+            buffer = ""
+            caret = 0
+            if focus_snapshot is not None:
+                app_id = focus_snapshot.app_id or app_id
+                window_id = focus_snapshot.window_id or window_id
+                control_id = focus_snapshot.control_id or control_id
+                buffer = focus_snapshot.text or ""
+                caret = focus_snapshot.caret
+
+            self._context = AppContext(
+                app_id=app_id,
+                window_id=window_id,
+                control_id=control_id,
+                buffer=buffer,
+                caret=caret,
+                clipboard_text="",
+            )
+
+            self._settings_panel_class = register_settings_panel(
+                settings_store=self._settings_store,
+                get_settings=self._get_settings,
+                set_settings=self._set_settings,
+                open_hotkey_editor=self._open_hotkey_editor,
+                open_control_panel=self._open_control_panel,
+            )
+            log.info(
+                "BITS-EASY: settings panel registered=%s",
+                self._settings_panel_class is not None,
+            )
+            self._register_tools_menu_item()
+            log.info(
+                "BITS-EASY: tools menu registered=%s",
+                self._tools_menu_id is not None,
+            )
+            log.info("BITS-EASY: runtime ready, announcing load")
+            ui.message("BITS-EASY loaded")
+        except Exception as exc:
+            log.exception("BITS-EASY: failed to load runtime")
+            self._runtime = None
+            self._dispatcher = None
+            self._config = None
+            self._settings = None
+            self._settings_store = None
+            self._settings_panel_class = None
+            self._palette = None
+            self._hotkeys = None
+            self._context = None
+            self._tools_menu_id = None
+            ui.message(f"BITS-EASY failed to load: {exc}")
+
+    def _load_hotkey_overrides(self):
+        if self._config is None or self._hotkey_overrides_path is None:
+            return
+        try:
+            if not self._hotkey_overrides_path.exists():
+                log.info("BITS-EASY: no hotkey overrides file present, using shipped keymap")
+                return
+            payload = json.loads(self._hotkey_overrides_path.read_text(encoding="utf-8"))
+            bindings = payload.get("bindings", []) if isinstance(payload, dict) else []
+            if isinstance(bindings, list) and bindings:
+                self._config.keymap_bindings = [dict(row) for row in bindings if isinstance(row, dict)]
+                log.info("BITS-EASY: applied %d hotkey overrides", len(self._config.keymap_bindings))
+        except Exception:
+            log.exception("BITS-EASY: loading hotkey overrides failed")
+
+    def _save_hotkey_overrides(self, bindings: list[dict]):
+        if self._hotkey_overrides_path is None:
+            return
+        try:
+            self._hotkey_overrides_path.parent.mkdir(parents=True, exist_ok=True)
+            payload = {"version": "v1", "bindings": bindings}
+            self._hotkey_overrides_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            log.info("BITS-EASY: saved %d hotkey overrides", len(bindings))
+        except Exception:
+            log.exception("BITS-EASY: saving hotkey overrides failed")
+
+    def _register_tools_menu_item(self):
+        try:
+            import gui
+            import wx
+        except Exception:
+            log.exception("BITS-EASY: tools menu gui/wx import failed")
+            return
+
+        try:
+            menu = gui.mainFrame.sysTrayIcon.toolsMenu
+            item = menu.Append(wx.ID_ANY, "BITS-EASY keyboard mappings...")
+            self._tools_menu_id = int(item.GetId())
+            gui.mainFrame.Bind(wx.EVT_MENU, self._on_tools_menu_open_hotkeys, id=self._tools_menu_id)
+        except Exception:
+            log.exception("BITS-EASY: tools menu append failed")
+            self._tools_menu_id = None
+
+    def _unregister_tools_menu_item(self):
+        if self._tools_menu_id is None:
+            return
+        try:
+            import gui
+            import wx
+
+            gui.mainFrame.Unbind(wx.EVT_MENU, handler=self._on_tools_menu_open_hotkeys, id=self._tools_menu_id)
+            menu = gui.mainFrame.sysTrayIcon.toolsMenu
+            menu.Delete(self._tools_menu_id)
+        except Exception:
+            log.exception("BITS-EASY: tools menu unregister failed")
+        finally:
+            self._tools_menu_id = None
+
+    def _on_tools_menu_open_hotkeys(self, _evt):
+        self._open_hotkey_editor()
+
+    def _open_hotkey_editor(self):
+        if self._config is None:
+            ui.message("BITS-EASY runtime unavailable")
+            return
+        try:
+            import gui
+            from bits_easy_settings import open_hotkey_editor_dialog
+        except Exception:
+            log.exception("BITS-EASY: hotkey editor import failed")
+            ui.message("Hotkey editor is unavailable")
+            return
+
+        def _on_save(bindings: list[dict]):
+            if self._config is None:
+                return
+            self._base_keymap_bindings = [dict(row) for row in bindings if isinstance(row, dict)]
+            self._save_hotkey_overrides(self._base_keymap_bindings)
+            self._apply_active_mode_resolution()
+            self._restart_hotkeys()
+
+        changed = open_hotkey_editor_dialog(
+            parent=gui.mainFrame,
+            keymap_bindings=self._config.keymap_bindings,
+            command_catalog=self._config.command_catalog,
+            on_save=_on_save,
+        )
+        if changed:
+            ui.message("Keyboard mappings updated.")
+
+    def _open_control_panel(self):
+        try:
+            import gui
+            from bits_easy_settings import open_control_panel_dialog
+        except Exception:
+            log.exception("BITS-EASY: control panel import failed")
+            ui.message("Control panel is unavailable")
+            return
+
+        changed = open_control_panel_dialog(
+            parent=gui.mainFrame,
+            settings_store=self._settings_store,
+            get_settings=self._get_settings,
+            set_settings=self._set_settings,
+            open_hotkey_editor=self._open_hotkey_editor,
+            get_hotkey_editor_context=lambda: (
+                [dict(row) for row in (self._base_keymap_bindings or self._config.keymap_bindings) if isinstance(row, dict)],
+                dict(self._config.command_catalog or {}),
+            ),
+        )
+        if changed:
+            self._restart_hotkeys()
+            ui.message("Control panel settings applied.")
+
+    def _on_os_hotkey_command(self, command_id: str, command_args: dict | None = None):
+        args = dict(command_args) if isinstance(command_args, dict) else {}
+
+        def _run():
+            self._dispatch(command_id, **args)
+
+        try:
+            import queueHandler
+
+            queueHandler.queueFunction(queueHandler.eventQueue, _run)
+        except Exception:
+            log.exception("BITS-EASY: queueHandler import failed; running OS hotkey inline")
+            _run()
+
+    def _on_os_hotkey_chord(self, key_chord: str, command_args: dict | None = None):
+        args = dict(command_args) if isinstance(command_args, dict) else {}
+
+        def _run():
+            if self._dispatcher is None or self._context is None:
+                return
+            self._refresh_context_from_focus()
+            out = self._dispatcher.dispatch_key_chord(self._context, key_chord, **args)
+            if out.result.ok:
+                integration_error = self._run_integration_action(out.result.payload)
+                if integration_error:
+                    ui.message(integration_error)
+                    return
+                self._present_glow_result_if_needed(out.plan.command_id, out.result.message, out.result.payload)
+                self._present_hotkey_help_if_needed(out.plan.command_id, out.result.payload)
+                ui.message(out.result.message)
+            else:
+                ui.message(out.result.message)
+
+        try:
+            import queueHandler
+
+            queueHandler.queueFunction(queueHandler.eventQueue, _run)
+        except Exception:
+            log.exception("BITS-EASY: queueHandler import failed; running OS hotkey chord inline")
+            _run()
+
+    def _restart_hotkeys(self):
+        if self._hotkeys is None or self._config is None:
+            return
+
+        self._hotkeys.stop()
+        if self._settings and self._settings.enable_global_hotkeys:
+            self._hotkeys = type(self._hotkeys)(
+                on_command=self._on_os_hotkey_command,
+                emulate_capslock_prefix=self._settings.emulate_capslock_prefix_for_os_hotkeys,
+                on_key_chord=self._on_os_hotkey_chord,
+                enable_raw_sequences=self._settings.enable_raw_easy_sequences,
+                raw_sequence_timeout_ms=self._settings.raw_easy_sequence_timeout_ms,
+            )
+            self._hotkeys.start(self._config.keymap_bindings)
+
+    def terminate(self):
+        log.info("BITS-EASY: terminate start")
+        try:
+            self._unregister_tools_menu_item()
+            if self._hotkeys is not None:
+                self._hotkeys.stop()
+            from bits_easy_settings import unregister_settings_panel
+
+            unregister_settings_panel(self._settings_panel_class)
+        except Exception:
+            log.exception("BITS-EASY: terminate cleanup failed")
+        super().terminate()
+        log.info("BITS-EASY: terminate complete")
+
+    def _get_settings(self):
+        return self._settings
+
+    def _apply_active_mode_resolution(self):
+        if self._settings is None:
+            return
+
+        mode_hotkey_bindings = None
+        try:
+            from bits_easy_runtime import apply_active_mode, effective_keymap_bindings
+
+            mode_hotkey_bindings = apply_active_mode(self._settings)
+            if self._config is not None:
+                base = self._base_keymap_bindings or self._config.keymap_bindings
+                self._config.keymap_bindings = effective_keymap_bindings(base, mode_hotkey_bindings)
+        except Exception:
+            log.exception("BITS-EASY: active mode resolution failed")
+
+        if self._dispatcher is not None:
+            self._dispatcher.profile_id = self._settings.profile_id
+            self._dispatcher.multi_press_enabled_override = self._settings.enable_multi_press_gestures
+
+    def _set_settings(self, settings):
+        self._settings = settings
+        self._apply_active_mode_resolution()
+        self._restart_hotkeys()
+
+    def _surface_mode(self):
+        if self._current_snapshot is None:
+            return "generic"
+        from bits_easy_runtime import classify_surface
+
+        surface = classify_surface(
+            app_id=self._current_snapshot.app_id,
+            role=self._current_snapshot.role,
+            control_id=self._current_snapshot.control_id,
+        )
+        return surface.mode
+
+    def _contextual_fallbacks(self, command_id: str):
+        if not self._settings or not self._settings.enable_contextual_fallbacks:
+            return []
+
+        from bits_easy_runtime import fallback_steps_for
+
+        return fallback_steps_for(self._surface_mode(), command_id)
+
+    def _secure_store_spoken_message(self, payload):
+        if not isinstance(payload, dict):
+            return "AI key store status is available."
+
+        backend = str(payload.get("backend") or "unknown")
+        secure = bool(payload.get("secure", False))
+        persistent = bool(payload.get("persistent", False))
+        provider_count_raw = payload.get("providerCount", 0)
+        try:
+            provider_count = int(provider_count_raw)
+        except Exception:
+            provider_count = 0
+
+        backend_labels = {
+            "windows-credential-manager": "Windows Credential Manager",
+            "in-memory": "temporary memory",
+            "unknown": "an unknown store",
+        }
+        backend_label = backend_labels.get(backend, backend.replace("-", " "))
+
+        if secure and persistent:
+            storage_phrase = "secure and saved between sessions"
+            reassurance = "Your keys stay protected after restart."
+        elif secure:
+            storage_phrase = "secure but temporary"
+            reassurance = "Your keys are protected, but may not persist after restart."
+        elif persistent:
+            storage_phrase = "saved between sessions but not secure"
+            reassurance = "Consider using a secure credential backend for provider keys."
+        else:
+            storage_phrase = "temporary and not secure"
+            reassurance = "Keys are only kept for this run and should be treated as temporary."
+
+        provider_label = "provider" if provider_count == 1 else "providers"
+        return (
+            f"AI key store is {backend_label}. "
+            f"Storage is {storage_phrase}. "
+            f"{provider_count} {provider_label} configured. "
+            f"{reassurance}"
+        )
+
+    def _dispatch(self, command_id: str, **kwargs):
+        if self._dispatcher is None or self._context is None:
+            ui.message("BITS-EASY runtime unavailable")
+            return
+
+        if self._prompt_glow_file_if_needed(command_id, kwargs):
+            return
+
+        self._refresh_context_from_focus()
+
+        if self._settings and self._settings.announce_surface_mode:
+            ui.message(f"Surface: {self._surface_mode()}")
+
+        out = self._dispatcher.dispatch_command(self._context, command_id, **kwargs)
+        if out.result.ok:
+            integration_error = self._run_integration_action(out.result.payload)
+            if integration_error:
+                ui.message(integration_error)
+                return
+            self._present_glow_result_if_needed(command_id, out.result.message, out.result.payload)
+            self._present_hotkey_help_if_needed(command_id, out.result.payload)
+            if self._palette is not None:
+                self._palette_tick += 1
+                self._palette.record_execution(command_id, int(time.time()) + self._palette_tick)
+            if command_id == "cmd.ai.key.storeStatus":
+                ui.message(self._secure_store_spoken_message(out.result.payload))
+            else:
+                ui.message(out.result.message)
+        else:
+            extra_steps = self._contextual_fallbacks(command_id)
+            steps = out.result.next_steps + extra_steps
+            ui.message(f"{out.result.message}. {' '.join(steps)}")
+
+    def _present_hotkey_help_if_needed(self, command_id: str, payload):
+        if command_id != "cmd.help.availableHotkeys":
+            return
+        if not isinstance(payload, dict):
+            return
+
+        virtual = payload.get("virtualView")
+        if not isinstance(virtual, dict):
+            return
+
+        title = str(virtual.get("title", "BITS-EASY Hotkey Help")).strip() or "BITS-EASY Hotkey Help"
+        lines = virtual.get("lines", [])
+        if not isinstance(lines, list):
+            return
+        text = "\n".join(str(x) for x in lines)
+        if not text.strip():
+            return
+
+        try:
+            import wx
+
+            wx.CallAfter(self._show_hotkey_help_dialog, title, text)
+        except Exception:
+            log.exception("BITS-EASY: unable to schedule hotkey help dialog")
+
+    def _show_hotkey_help_dialog(self, title: str, text: str):
+        try:
+            import wx
+            import gui
+        except Exception:
+            log.exception("BITS-EASY: hotkey help dialog dependencies unavailable")
+            return
+
+        main_frame = gui.mainFrame
+        main_frame.prePopup()
+        try:
+            dlg = wx.Dialog(
+                main_frame,
+                title=title,
+                style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+            )
+            try:
+                root = wx.BoxSizer(wx.VERTICAL)
+                box = wx.TextCtrl(
+                    dlg,
+                    value=text,
+                    style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL,
+                )
+                box.SetMinSize((860, 460))
+                root.Add(box, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
+
+                close_btn = wx.Button(dlg, id=wx.ID_OK, label="Close")
+                row = wx.BoxSizer(wx.HORIZONTAL)
+                row.Add(close_btn, flag=wx.RIGHT, border=8)
+                root.Add(row, flag=wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
+                dlg.SetSizer(root)
+                dlg.CentreOnScreen()
+                dlg.ShowModal()
+            finally:
+                dlg.Destroy()
+        except Exception:
+            log.exception("BITS-EASY: hotkey help dialog failed")
+        finally:
+            main_frame.postPopup()
+
+    def _present_glow_result_if_needed(self, command_id: str, message: str, payload):
+        if command_id not in self._GLOW_COMMANDS:
+            return
+        if not isinstance(payload, dict):
+            return
+
+        summary = self._glow_summary_message(command_id, message, payload)
+        if summary:
+            ui.message(summary)
+
+        try:
+            import wx
+
+            wx.CallAfter(self._show_glow_result_dialog, command_id, message, dict(payload))
+        except Exception:
+            log.exception("BITS-EASY: unable to schedule GLOW result dialog")
+
+    @staticmethod
+    def _glow_output_path(payload: dict) -> str:
+        if not isinstance(payload, dict):
+            return ""
+        for key in ("output_file", "fixed_file", "outputFile", "fixedFile"):
+            val = str(payload.get(key, "")).strip()
+            if val:
+                return val
+        return ""
+
+    def _glow_summary_message(self, command_id: str, message: str, payload: dict) -> str:
+        summary_parts = [f"GLOW {command_id.split('.')[-1]} complete"]
+
+        if command_id == "cmd.integration.glow.health":
+            status = str(payload.get("status", "")).strip()
+            if status:
+                summary_parts.append(f"status {status}")
+            return ". ".join(summary_parts) + "."
+
+        total_fixes = payload.get("total_fixes")
+        if isinstance(total_fixes, int):
+            summary_parts.append(f"{total_fixes} fixes")
+
+        out_path = self._glow_output_path(payload)
+        if out_path:
+            try:
+                out_name = Path(out_path).name
+            except Exception:
+                out_name = out_path
+            if out_name:
+                summary_parts.append(f"output {out_name}")
+
+        report_text = payload.get("report")
+        if isinstance(report_text, str) and report_text.strip():
+            summary_parts.append(f"report length {len(report_text)} characters")
+
+        if len(summary_parts) == 1 and message:
+            summary_parts.append(message)
+
+        return ". ".join(summary_parts) + "."
+
+    def _show_glow_result_dialog(self, command_id: str, message: str, payload: dict):
+        try:
+            import wx
+            import gui
+        except Exception:
+            log.exception("BITS-EASY: GLOW result dialog dependencies unavailable")
+            return
+
+        main_frame = gui.mainFrame
+        main_frame.prePopup()
+        try:
+            output_path = self._glow_output_path(payload)
+            pretty_json = json.dumps(payload, ensure_ascii=False, indent=2)
+            summary_lines = [
+                f"Command: {command_id}",
+                f"Status: {message}",
+            ]
+            if output_path:
+                summary_lines.append(f"Output file: {output_path}")
+            if "report" in payload and isinstance(payload.get("report"), str):
+                summary_lines.append("Report text returned by GLOW.")
+
+            dialog_text = "\n".join(summary_lines) + "\n\nJSON payload:\n" + pretty_json
+
+            dlg = wx.Dialog(
+                main_frame,
+                title="BITS-EASY GLOW Result",
+                style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+            )
+            try:
+                root = wx.BoxSizer(wx.VERTICAL)
+                text = wx.TextCtrl(
+                    dlg,
+                    value=dialog_text,
+                    style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL,
+                )
+                text.SetMinSize((820, 420))
+                root.Add(text, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
+
+                button_row = wx.BoxSizer(wx.HORIZONTAL)
+                copy_btn = wx.Button(dlg, label="Copy JSON")
+                open_btn = wx.Button(dlg, label="Open output file")
+                save_btn = wx.Button(dlg, label="Save report")
+                close_btn = wx.Button(dlg, id=wx.ID_OK, label="Close")
+
+                if not output_path:
+                    open_btn.Enable(False)
+
+                def on_copy(_evt):
+                    data = wx.TextDataObject(pretty_json)
+                    if wx.TheClipboard.Open():
+                        try:
+                            wx.TheClipboard.SetData(data)
+                        finally:
+                            wx.TheClipboard.Close()
+                        ui.message("GLOW JSON copied")
+                    else:
+                        ui.message("Clipboard unavailable")
+
+                def on_open(_evt):
+                    target = output_path
+                    if not target:
+                        ui.message("No output file to open")
+                        return
+                    try:
+                        os.startfile(target)
+                    except Exception:
+                        log.exception("BITS-EASY: unable to open GLOW output path")
+                        ui.message("Unable to open output file")
+
+                def on_save(_evt):
+                    default_name = command_id.replace(".", "-")
+                    report_text = payload.get("report")
+                    is_text_report = isinstance(report_text, str)
+                    wildcard = "Text file (*.txt)|*.txt|JSON file (*.json)|*.json" if is_text_report else "JSON file (*.json)|*.json"
+                    save_dlg = wx.FileDialog(
+                        dlg,
+                        "Save GLOW result",
+                        defaultFile=f"{default_name}.{'txt' if is_text_report else 'json'}",
+                        wildcard=wildcard,
+                        style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+                    )
+                    try:
+                        if save_dlg.ShowModal() != wx.ID_OK:
+                            return
+                        target = save_dlg.GetPath()
+                    finally:
+                        save_dlg.Destroy()
+
+                    try:
+                        if is_text_report and target.lower().endswith(".txt"):
+                            Path(target).write_text(str(report_text), encoding="utf-8")
+                        else:
+                            Path(target).write_text(pretty_json, encoding="utf-8")
+                        ui.message("GLOW result saved")
+                    except Exception:
+                        log.exception("BITS-EASY: unable to save GLOW result")
+                        ui.message("Unable to save GLOW result")
+
+                copy_btn.Bind(wx.EVT_BUTTON, on_copy)
+                open_btn.Bind(wx.EVT_BUTTON, on_open)
+                save_btn.Bind(wx.EVT_BUTTON, on_save)
+
+                for btn in (copy_btn, open_btn, save_btn, close_btn):
+                    button_row.Add(btn, flag=wx.RIGHT, border=8)
+
+                root.Add(button_row, flag=wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
+                dlg.SetSizer(root)
+                dlg.CentreOnScreen()
+                dlg.ShowModal()
+            finally:
+                dlg.Destroy()
+        except Exception:
+            log.exception("BITS-EASY: GLOW result dialog failed")
+        finally:
+            main_frame.postPopup()
+
+    def _prompt_glow_file_if_needed(self, command_id: str, kwargs: dict) -> bool:
+        if command_id not in self._GLOW_FILE_COMMANDS:
+            return False
+
+        path_arg = str(kwargs.get("path", "")).strip()
+        if path_arg:
+            return False
+
+        try:
+            import wx
+
+            wx.CallAfter(self._show_glow_file_dialog_and_dispatch, command_id, dict(kwargs))
+            return True
+        except Exception:
+            log.exception("BITS-EASY: unable to open GLOW file picker")
+            ui.message("GLOW command requires a file path.")
+            return True
+
+    def _show_glow_file_dialog_and_dispatch(self, command_id: str, kwargs: dict):
+        try:
+            import wx
+            import gui
+            import queueHandler
+        except Exception:
+            log.exception("BITS-EASY: GLOW file picker dependencies unavailable")
+            try:
+                ui.message("GLOW file picker is unavailable")
+            except Exception:
+                pass
+            return
+
+        main_frame = gui.mainFrame
+        main_frame.prePopup()
+        try:
+            wildcard = (
+                "Supported files (*.docx;*.md;*.markdown;*.html;*.htm)|"
+                "*.docx;*.md;*.markdown;*.html;*.htm|"
+                "All files (*.*)|*.*"
+            )
+            selected_path = ""
+            dlg = wx.FileDialog(
+                main_frame,
+                "Select file for GLOW",
+                wildcard=wildcard,
+                style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
+            )
+            try:
+                if dlg.ShowModal() != wx.ID_OK:
+                    ui.message("GLOW command canceled.")
+                    return
+                selected_path = dlg.GetPath()
+            finally:
+                dlg.Destroy()
+
+            if not selected_path:
+                ui.message("GLOW command canceled.")
+                return
+
+            dispatch_kwargs = dict(kwargs)
+            dispatch_kwargs["path"] = selected_path
+            queueHandler.queueFunction(queueHandler.eventQueue, self._dispatch, command_id, **dispatch_kwargs)
+        except Exception:
+            log.exception("BITS-EASY: GLOW file picker flow failed")
+            try:
+                ui.message("GLOW file picker failed")
+            except Exception:
+                pass
+        finally:
+            main_frame.postPopup()
+
+    def _run_integration_action(self, payload):
+        if not isinstance(payload, dict):
+            return ""
+
+        integration = payload.get("integrationAction")
+        if not isinstance(integration, dict):
+            return ""
+
+        provider = str(integration.get("provider", "")).strip().lower()
+        action = str(integration.get("action", "")).strip().lower()
+        use_ocr = bool(integration.get("ocr", False))
+        if provider != "screenitemchooser" or action != "open":
+            return ""
+
+        try:
+            module = importlib.import_module("globalPlugins.itemChooser")
+        except Exception:
+            log.exception("BITS-EASY: Screen Item Chooser module import failed")
+            return (
+                "Screen Item Chooser is not installed. "
+                "Install screenItemChooser-1.0.0.nvda-addon to enable this command."
+            )
+
+        plugin = getattr(module, "_pluginInstance", None)
+        if plugin is None:
+            return "Screen Item Chooser is installed but not active. Restart NVDA and try again."
+
+        script_name = "script_openItemChooserOcr" if use_ocr else "script_openItemChooser"
+        script_handler = getattr(plugin, script_name, None)
+        if script_handler is None:
+            return "Screen Item Chooser integration is unavailable in the installed version."
+
+        try:
+            script_handler(None)
+        except TypeError:
+            script_handler()
+        except Exception:
+            log.exception("BITS-EASY: Screen Item Chooser invocation failed")
+            return "Screen Item Chooser failed to open."
+
+        return ""
+
+    @scriptHandler.script(description="BITS-EASY command palette")
+    def script_openCommandPalette(self, gesture):
+        if self._dispatcher is None or self._context is None or self._config is None or self._palette is None:
+            ui.message("BITS-EASY runtime unavailable")
+            return
+        if self._settings and not self._settings.enable_command_palette:
+            ui.message("BITS-EASY command palette is disabled in settings")
+            return
+
+        try:
+            import wx
+        except Exception:
+            log.exception("BITS-EASY: command palette wx import failed")
+            ui.message("Command palette UI is unavailable")
+            return
+
+        ai_key_enabled = False
+        key_status = self._dispatcher.dispatch_command(self._context, "cmd.ai.key.status")
+        if key_status.result.ok:
+            ai_key_enabled = bool((key_status.result.payload or {}).get("hasAnyKey", False))
+        has_selection_activity = bool((self._context.clipboard_text or "").strip())
+
+        # wx dialogs must be created and shown on the GUI thread, not NVDA's
+        # core thread. Hop over via wx.CallAfter so the script returns
+        # immediately and the dialog lifecycle runs where wx requires it.
+        wx.CallAfter(self._show_command_palette_ui, ai_key_enabled, has_selection_activity)
+
+    def _show_command_palette_ui(self, ai_key_enabled: bool, has_selection_activity: bool):
+        try:
+            import wx
+            import gui
+        except Exception:
+            log.exception("BITS-EASY: command palette wx/gui import failed")
+            try:
+                ui.message("Command palette UI is unavailable")
+            except Exception:
+                pass
+            return
+
+        main_frame = gui.mainFrame
+        main_frame.prePopup()
+        try:
+            query = ""
+            query_dlg = wx.TextEntryDialog(main_frame, "Search commands", "BITS-EASY Command Palette", "")
+            try:
+                if query_dlg.ShowModal() == wx.ID_OK:
+                    query = query_dlg.GetValue()
+                else:
+                    return
+            finally:
+                query_dlg.Destroy()
+
+            ranked = self._palette.search(
+                query=query,
+                app_id=self._context.app_id,
+                limit=30,
+                ai_key_enabled=ai_key_enabled,
+                has_selection_activity=has_selection_activity,
+            )
+            if not ranked:
+                ui.message("No commands are registered")
+                return
+
+            choices = [f"{item.name} [{item.command_id}] score={item.score:.2f}" for item in ranked]
+            id_by_index = {idx: item.command_id for idx, item in enumerate(ranked)}
+
+            command_id = ""
+            dlg = wx.SingleChoiceDialog(main_frame, "Choose BITS-EASY command", "BITS-EASY Command Palette", choices)
+            try:
+                if dlg.ShowModal() != wx.ID_OK:
+                    return
+                command_id = id_by_index.get(dlg.GetSelection(), "")
+            finally:
+                dlg.Destroy()
+
+            if not command_id:
+                ui.message("No command selected")
+                return
+
+            # Marshal the actual dispatch back to NVDA's event queue so
+            # runtime side-effects (clipboard, ui.message) don't run inside
+            # the wx event handler.
+            try:
+                import queueHandler
+                queueHandler.queueFunction(queueHandler.eventQueue, self._dispatch, command_id)
+            except Exception:
+                log.exception("BITS-EASY: queueHandler unavailable; dispatching inline")
+                self._dispatch(command_id)
+        except Exception:
+            log.exception("BITS-EASY: command palette UI failed")
+            try:
+                ui.message("Command palette failed")
+            except Exception:
+                pass
+        finally:
+            main_frame.postPopup()
+
+    @scriptHandler.script(description="BITS-EASY mark selection start")
+    def script_markSelectionStart(self, gesture):
+        self._dispatch("cmd.selection.markStart")
+
+    @scriptHandler.script(description="BITS-EASY mark selection end")
+    def script_markSelectionEnd(self, gesture):
+        self._dispatch("cmd.selection.markEnd")
+
+    @scriptHandler.script(description="BITS-EASY read selection context")
+    def script_readSelectionContext(self, gesture):
+        self._dispatch("cmd.selection.readContext")
+
+    @scriptHandler.script(description="BITS-EASY copy to clip slot 1")
+    def script_copyToSlotOne(self, gesture):
+        self._dispatch("cmd.clip.copyToSlot", slot=1)
+
+    @scriptHandler.script(description="BITS-EASY paste from clip slot 1")
+    def script_pasteFromSlotOne(self, gesture):
+        self._dispatch("cmd.clip.pasteFromSlot", slot=1)
+
+    __gestures = {
+        "kb:control+alt+[": "markSelectionStart",
+        "kb:control+alt+]": "markSelectionEnd",
+        "kb:control+alt+'": "readSelectionContext",
+        "kb:control+alt+1": "copyToSlotOne",
+        "kb:control+alt+2": "pasteFromSlotOne",
+        "kb:control+alt+space": "openCommandPalette",
+        "kb:NVDA+shift+p": "openCommandPalette",
+    }
+

@@ -4,8 +4,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.progress_cues import ProgressCueEngine
-from spellforge_runtime.speech_history import SpeechHistory
+from bits_easy_runtime.progress_cues import ProgressCueEngine
+from bits_easy_runtime.speech_history import SpeechHistory
 
 
 class ProgressAndSpeechHistoryTests(unittest.TestCase):
@@ -41,3 +41,4 @@ class ProgressAndSpeechHistoryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

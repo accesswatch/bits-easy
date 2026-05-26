@@ -92,7 +92,7 @@ The following table defines v1 direct-hotkey commands.
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://spellforge.local/schemas/command-metadata.schema.json",
+  "$id": "https://bits-easy.local/schemas/command-metadata.schema.json",
   "title": "CommandMetadata",
   "type": "object",
   "required": [
@@ -155,7 +155,7 @@ The following table defines v1 direct-hotkey commands.
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://spellforge.local/schemas/global-keymap.schema.json",
+  "$id": "https://bits-easy.local/schemas/global-keymap.schema.json",
   "title": "GlobalKeymap",
   "type": "object",
   "required": ["version", "bindings"],
@@ -207,7 +207,7 @@ The following table defines v1 direct-hotkey commands.
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://spellforge.local/schemas/profile-overrides.schema.json",
+  "$id": "https://bits-easy.local/schemas/profile-overrides.schema.json",
   "title": "ProfileOverrides",
   "type": "object",
   "required": ["profileId", "speechMode", "brailleMode", "confirmPolicy", "hotkeyHints"],
@@ -360,4 +360,5 @@ The following table defines v1 direct-hotkey commands.
 2. JSON schemas validated in CI for configuration files.
 3. CI matrix gates A through F are green for baseline apps.
 4. Documentation references updated in PRD and sprint backlog.
+
 

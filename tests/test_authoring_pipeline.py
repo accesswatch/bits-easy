@@ -5,14 +5,14 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import AppAdapter, AppContext, RuntimeDispatcher, SpellforgeRuntime, load_runtime_config
+from bits_easy_runtime import AppAdapter, AppContext, RuntimeDispatcher, BitsEasyRuntime, load_runtime_config
 
 
 class AuthoringPipelineTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo_root = Path(__file__).resolve().parents[1]
         self.config = load_runtime_config(self.repo_root)
-        self.runtime = SpellforgeRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
+        self.runtime = BitsEasyRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
 
     def _ctx(self, buffer: str, clipboard_text: str = "") -> AppContext:
         return AppContext(
@@ -205,3 +205,4 @@ class AuthoringPipelineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

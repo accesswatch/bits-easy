@@ -63,7 +63,7 @@ def _normalize_chord(chord: str) -> str:
             mods.append("ALT")
         elif p in ("WIN", "WINDOWS"):
             mods.append("WIN")
-        elif p in ("GRAVE", "GRAVEACCENT", "SPELLFORGE") and len(parts) > 1:
+        elif p in ("GRAVE", "GRAVEACCENT", "SPELLFORGE", "BITSEASY", "BITS-EASY") and len(parts) > 1:
             mods.append("GRAVE")
         else:
             key = p
@@ -152,12 +152,12 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
     try:
         import wx
     except Exception:
-        log.exception("Spellforge: hotkey editor wx import failed")
+        log.exception("BITS-EASY: hotkey editor wx import failed")
         return False
 
     class HotkeyEditorDialog(wx.Dialog):
         def __init__(self):
-            super().__init__(parent, title="Spellforge Keyboard Mappings", size=(900, 520))
+            super().__init__(parent, title="BITS-EASY Keyboard Mappings", size=(900, 520))
             self._rows = [dict(row) for row in keymap_bindings]
             self._current_index = -1
 
@@ -300,7 +300,7 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
 
             new_chord = self.keyChordInput.GetValue().strip()
             if len(new_chord) < 3:
-                wx.MessageBox("Key chord must be at least 3 characters.", "Spellforge", wx.OK | wx.ICON_WARNING)
+                wx.MessageBox("Key chord must be at least 3 characters.", "BITS-EASY", wx.OK | wx.ICON_WARNING)
                 return
 
             row = self._rows[self._current_index]
@@ -314,7 +314,7 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
                 if scope == "app-override":
                     app_id = self.appIdInput.GetValue().strip()
                     if not app_id:
-                        wx.MessageBox("appId is required for app-override scope.", "Spellforge", wx.OK | wx.ICON_WARNING)
+                        wx.MessageBox("appId is required for app-override scope.", "BITS-EASY", wx.OK | wx.ICON_WARNING)
                         return
                     row["appId"] = app_id
                 else:
@@ -362,7 +362,7 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
                 lines.append(f"- ... {len(nvda_hits) - 20} more")
 
             msg = "\n".join(lines)
-            wx.MessageBox(msg, "Spellforge Hotkey Scrub", wx.OK | wx.ICON_INFORMATION)
+            wx.MessageBox(msg, "BITS-EASY Hotkey Scrub", wx.OK | wx.ICON_INFORMATION)
 
     dialog = HotkeyEditorDialog()
     try:
@@ -376,7 +376,7 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
             wx.MessageBox(
                 "One or more enabled bindings collide exactly (same key, trigger, scope, and app). "
                 "Please resolve collisions before saving.",
-                "Spellforge",
+                "BITS-EASY",
                 wx.OK | wx.ICON_WARNING,
             )
             return False
@@ -398,11 +398,11 @@ def register_settings_panel(
         import wx
         from gui.settingsDialogs import NVDASettingsDialog, SettingsPanel
     except Exception:
-        log.exception("Spellforge: settings panel gui import failed")
+        log.exception("BITS-EASY: settings panel gui import failed")
         return None
 
     class SpellforgeSettingsPanel(SettingsPanel):
-        title = "Spellforge"
+        title = "BITS-EASY"
 
         def makeSettings(self, sizer):
             settings = get_settings()
@@ -457,7 +457,7 @@ def register_settings_panel(
             settings_store.save(settings)
 
     NVDASettingsDialog.categoryClasses.append(SpellforgeSettingsPanel)
-    log.info("Spellforge: settings panel registered")
+    log.info("BITS-EASY: settings panel registered")
     return SpellforgeSettingsPanel
 
 
@@ -467,9 +467,9 @@ def unregister_settings_panel(panel_class):
     try:
         from gui.settingsDialogs import NVDASettingsDialog
     except Exception:
-        log.exception("Spellforge: settings panel gui import failed during unregister")
+        log.exception("BITS-EASY: settings panel gui import failed during unregister")
         return
 
     if panel_class in NVDASettingsDialog.categoryClasses:
         NVDASettingsDialog.categoryClasses.remove(panel_class)
-        log.info("Spellforge: settings panel unregistered")
+        log.info("BITS-EASY: settings panel unregistered")

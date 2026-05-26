@@ -7,7 +7,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import AppAdapter, AppContext, SpellforgeRuntime
+from bits_easy_runtime import AppAdapter, AppContext, BitsEasyRuntime
 
 
 class PersistenceAndCliTests(unittest.TestCase):
@@ -15,7 +15,7 @@ class PersistenceAndCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = Path(tmpdir) / "slots.json"
 
-            runtime_a = SpellforgeRuntime(
+            runtime_a = BitsEasyRuntime(
                 adapters={"edge": AppAdapter("edge", supports_selection=True)},
                 storage_path=storage,
             )
@@ -29,7 +29,7 @@ class PersistenceAndCliTests(unittest.TestCase):
             )
             runtime_a.copy_to_slot(ctx, slot=1, text="persisted text")
 
-            runtime_b = SpellforgeRuntime(
+            runtime_b = BitsEasyRuntime(
                 adapters={"edge": AppAdapter("edge", supports_selection=True)},
                 storage_path=storage,
             )
@@ -94,3 +94,4 @@ class PersistenceAndCliTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

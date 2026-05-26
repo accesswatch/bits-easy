@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from spellforge_runtime.health import IntegrationHealthTracker
-from spellforge_runtime.portability import export_portability_bundle, import_portability_bundle
+from bits_easy_runtime.health import IntegrationHealthTracker
+from bits_easy_runtime.portability import export_portability_bundle, import_portability_bundle
 
 
 class PortabilityHealthTests(unittest.TestCase):
@@ -73,3 +73,4 @@ class PortabilityHealthTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -105,3 +105,4 @@ Release documentation:
 1. https://download.nvaccess.org/releases/2026.1.1/documentation/en/userGuide.html
 2. https://download.nvaccess.org/releases/2026.1.1/documentation/en/keyCommands.html
 3. https://download.nvaccess.org/releases/2026.1.1/documentation/en/changes.html
+

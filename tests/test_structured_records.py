@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.structured_records import StructuredRecordService
+from bits_easy_runtime.structured_records import StructuredRecordService
 
 
 class StructuredRecordServiceTests(unittest.TestCase):
@@ -107,3 +107,4 @@ class StructuredRecordServiceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

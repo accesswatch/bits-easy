@@ -1,7 +1,7 @@
 # Product Requirements Document
 
 ## Product Name
-Spellforge Accessibility Suite for NVDA
+BITS-EASY Accessibility Suite for NVDA
 
 ## Date
 May 21, 2026
@@ -42,7 +42,7 @@ Build the most delightful productivity layer for blind users on Windows by combi
 6. No feature can degrade baseline NVDA navigation behavior.
 
 ## 6. Naming Architecture
-Suite name: Spellforge Accessibility Suite
+Suite name: BITS-EASY Accessibility Suite
 
 Core modules:
 - SnapSpan: Selection engine.
@@ -62,9 +62,9 @@ Core modules:
 - Skywave: Radio tools.
 - StoryStream: Podcast workflows.
 - FeedWeave: RSS workflows.
-- Spellforge Markdown: Markdown assistant.
-- Spellforge HTML: HTML assistant.
-- Spellforge Assist: AI transformations and remediation.
+- BITS-EASY Markdown: Markdown assistant.
+- BITS-EASY HTML: HTML assistant.
+- BITS-EASY Assist: AI transformations and remediation.
 
 ## 7. Ranked Integration Points (Highest to Lowest Priority)
 This table ranks integration points by expected user impact and implementation confidence.
@@ -76,7 +76,7 @@ This table ranks integration points by expected user impact and implementation c
 | 3 | Global Magical Command Palette | StarKey Everywhere | Very High | High | Must work from any app at any time |
 | 4 | Position Anchors and Return | Waymarks, Trailback | High | High | Reduces disorientation |
 | 5 | Writing and Communication | RelayDesk | High | Medium High | Email and messaging focus |
-| 6 | Markdown and HTML Authoring | Spellforge Markdown, Spellforge HTML | High | High | Major differentiation |
+| 6 | Markdown and HTML Authoring | BITS-EASY Markdown, BITS-EASY HTML | High | High | Major differentiation |
 | 7 | Database Builder and Structured Records | DataForge | Medium High | Medium High | New strategic capability |
 | 8 | File and Path Power Workflows | PathPilot | Medium High | High | Daily operations accelerator |
 | 9 | Search and Retrieval Layer | Beacon Search | Medium High | Medium High | Adapter complexity |
@@ -103,14 +103,14 @@ This matrix maps Baseline module-level capabilities to planned NVDA equivalents 
 | BaselineVirtualNotes | ThoughtDock Side Panel Mode | Full Planned | High | P1 |
 | External notes interoperability | Notebook Bridge for Joplin | Partial Planned | Medium High | P2 |
 | BaselineConnect | Contact Orbit inside RelayDesk | Partial Planned | Medium High | P1 |
-| BaselineWord Utilities | Spellforge Compose tools | Partial Planned | High | P1 |
+| BaselineWord Utilities | BITS-EASY Compose tools | Partial Planned | High | P1 |
 | BaselineSearch | Beacon Search | Partial Planned | Medium High | P1 |
 | Email enhancements (Outlook and Thunderbird) | RelayDesk adapters | Partial Planned | Medium | P1 |
 | Internet enhancements | Trailback and Beacon Search browser adapters | Partial Planned | Medium | P1 |
 | BaselineClock | Time Lantern | Full Planned | High | P2 |
 | BaselineDiary | Day Compass | Full Planned | High | P2 |
-| Markdown assistant | Spellforge Markdown | Full Planned and Expanded | High | P1 |
-| HTML assistant | Spellforge HTML | Full Planned and Expanded | High | P1 |
+| Markdown assistant | BITS-EASY Markdown | Full Planned and Expanded | High | P1 |
+| HTML assistant | BITS-EASY HTML | Full Planned and Expanded | High | P1 |
 | Progress indicator sounds | Adaptive telemetry earcons | Partial Planned | Medium High | P2 |
 | Emoji helper | Character and symbol insert assistant | Partial Planned | High | P3 |
 | Sports and Games | ScorePulse | Partial Planned | Medium High | P2 |
@@ -151,13 +151,13 @@ The following upcoming Baseline 11.5 capabilities are now added to this PRD road
 | Audio notes with attachment model | ThoughtDock voice note subsystem | Full Planned | High | P1 |
 | Redesigned Shortcut Catalog with categories and presets | PocketClips and PathPilot shortcut catalog | Full Planned | High | P0-P1 |
 | Baseline Database Manager | DataForge database builder | Full Planned | Medium High | P1 |
-| Talk to ChatGPT voice loop | Spellforge Assist voice chat mode | Partial Planned | Medium High | P2 |
-| Transcription tool with diarization options | Spellforge Assist transcribe mode | Full Planned | High | P2 |
-| Markdown converter to Word and HTML | Spellforge Markdown export bridge | Full Planned | High | P1 |
+| Talk to ChatGPT voice loop | BITS-EASY Assist voice chat mode | Partial Planned | Medium High | P2 |
+| Transcription tool with diarization options | BITS-EASY Assist transcribe mode | Full Planned | High | P2 |
+| Markdown converter to Word and HTML | BITS-EASY Markdown export bridge | Full Planned | High | P1 |
 | Baseline File Manager | PathPilot file operations shell | Partial Planned | High | P1 |
 | Start Menu and Main Menu curation | LaunchPad and QuickLane launch curation | Full Planned | High | P1 |
 | BaselineDiary plus tasks and ICS sync | Day Compass and Task Orbit with ICS bridge | Partial Planned | High | P2 |
-| Baseline Spell Check clipboard workflow | Spellforge Spell clipboard pass | Full Planned | High | P2 |
+| Baseline Spell Check clipboard workflow | BITS-EASY Spell clipboard pass | Full Planned | High | P2 |
 | BaselineSocial Mastodon and Bluesky client | Social Orbit multi-account timeline client | Partial Planned | Medium | P2 |
 | Social sound packs and braille flash messaging | Social Orbit feedback channels | Partial Planned | Medium | P2 |
 | Interoperability with mainstream note apps | Notebook Bridge with Joplin | Partial Planned | Medium High | P2 |
@@ -318,7 +318,7 @@ Acceptance criteria:
 1. Anchor retrieval success above 90 percent in supported contexts.
 2. Transparent reporting when content drift prevents exact return.
 
-### 9.3 P1: Spellforge Markdown and Spellforge HTML
+### 9.3 P1: BITS-EASY Markdown and BITS-EASY HTML
 Feature groups:
 - Structural insertion commands.
 - Smart list and table builders.
@@ -484,7 +484,7 @@ This table lists known risks and mitigations.
 - Accessibility test framework and telemetry.
 
 ### Phase 2 (13 to 24 weeks)
-- Spellforge Markdown and Spellforge HTML.
+- BITS-EASY Markdown and BITS-EASY HTML.
 - RelayDesk adapters for Outlook and Thunderbird.
 - Beacon Search initial adapters.
 - ThoughtDock and SignalNotes.
@@ -497,7 +497,7 @@ This table lists known risks and mitigations.
 - Task Orbit with due-date to diary bridge.
 - ScorePulse initial providers.
 - Social Orbit initial client and adapter expansions.
-- Spellforge Assist voice chat and transcription enhancements.
+- BITS-EASY Assist voice chat and transcription enhancements.
 - Notebook Bridge linked workspace mode with conflict-safe refresh.
 
 ### Phase 4 (41 weeks onward)
@@ -637,7 +637,7 @@ Legend:
 | X and Twitter support | Social Orbit X adapter | Partial Planned | Read model that prioritizes user-defined content fields |
 | WhatsApp Classic | Social Orbit WhatsApp desktop adapter | Partial Planned | Conversation accelerators and reliable message action overlays |
 | WhatsApp Web | Social Orbit WhatsApp web adapter | Partial Planned | Resilient web adapter with fallback path and quick action hints |
-| Markdown | Spellforge Markdown | Full Planned | Intent-to-structure transformations with accessibility checks |
+| Markdown | BITS-EASY Markdown | Full Planned | Intent-to-structure transformations with accessibility checks |
 | Emoji | Symbol Palette | Full Planned | Contextual symbol assistant with category and usage hints |
 | BaselineClock | Time Lantern | Full Planned | Braille synchronized precision clock and monitor presets |
 | BaselineTags | TagFlow | Full Planned | Cross-folder and cross-mailbox tag sessions with safe batch actions |
@@ -647,11 +647,11 @@ Legend:
 | VLC Media Player and Winamp integration | Media Adapter Layer | Partial Planned | Capability-aware player abstraction with fallback commands |
 | Spotify support | Music Orbit | Partial Planned | Fast transport and queue controls through stable command surface |
 | The Old Reader | FeedWeave old reader adapter | Partial Planned | Digest summaries with importance scoring |
-| The HTML Assistant | Spellforge HTML | Full Planned | Semantic HTML generation and validation by intent |
+| The HTML Assistant | BITS-EASY HTML | Full Planned | Semantic HTML generation and validation by intent |
 | Baseline Custom Help | Help Weave | Full Planned | Smart local playbook with searchable procedures and linkbacks |
 | Baseline Custom Web Text | Web Notes Weave | Full Planned | Domain or page memory overlays with quick compare |
 | WordWeb integration | Lexicon Bridge | Full Planned | Inline definitions and replacement suggestions in authoring flow |
-| TinySpell integration | Spellforge Spell | Full Planned | Unified spelling layer with app-independent interaction model |
+| TinySpell integration | BITS-EASY Spell | Full Planned | Unified spelling layer with app-independent interaction model |
 | Outlook Calendar integration | Calendar Bridge | Partial Planned | Day-view optimized appointment navigation with compact summaries |
 | Baseline Games | Game Hub | Pending Detail | Separate optional module with progression and accessibility coaching |
 | Studio Recorder support | Audio Edit Bridge | Partial Planned | Editing assist overlays with precision verbal checkpoints |
@@ -663,9 +663,9 @@ Legend:
 | Additional Utilities | Utility Mesh | Partial Planned | Consolidated utility command center with profile-based defaults |
 | Backup and Restore Manager | RestoreShield | Full Planned | Snapshot, rollback, and selective restore with guided safety steps |
 | BrailleEas | BrailleFlow | Full Planned | Braille command grammar with personal abbreviation intelligence |
-| ChatGPT Setup | Spellforge Assist setup | Full Planned | Guided AI setup with privacy and billing clarity |
-| Getting to Know ChatGPT | Spellforge Assist conversation | Full Planned | Context controls with explicit conversation state visibility |
-| ChatGPT Tools | Spellforge Assist tools | Full Planned | Rewriter, summarizer, faq, action extraction, and conversion library |
+| ChatGPT Setup | BITS-EASY Assist setup | Full Planned | Guided AI setup with privacy and billing clarity |
+| Getting to Know ChatGPT | BITS-EASY Assist conversation | Full Planned | Context controls with explicit conversation state visibility |
+| ChatGPT Tools | BITS-EASY Assist tools | Full Planned | Rewriter, summarizer, faq, action extraction, and conversion library |
 | Baseline 11.5 Media Centre | Media Nexus | Partial Planned | Unified radio, podcast, audio, playlist, and sound control shell |
 | Baseline 11.5 Notes redesign | ThoughtDock Advanced and Simple | Full Planned | Dual-mode notes with restore points and relationship graph |
 | Baseline 11.5 Cuts redesign | PathPilot advanced cuts | Full Planned | Category, filter, and preset engine with strong import support |
@@ -866,7 +866,7 @@ This section defines the implementation structure to keep delivery predictable.
 ### 22.1 Repository Structure
 1. src/core: command bus, event model, state engine, telemetry.
 2. src/access: speech output, braille output, earcon output, verbosity policies.
-3. src/modules: snapspan, pocketclips, mergeboard, waymarks, trailback, spellforge, relaydesk, dataforge, pathpilot, socialorbit, media.
+3. src/modules: snapspan, pocketclips, mergeboard, waymarks, trailback, bits_easy, relaydesk, dataforge, pathpilot, socialorbit, media.
 4. src/adapters: outlook, thunderbird, browser, whatsapp desktop, whatsapp web, x, mastodon, bluesky, players.
 5. src/ai: prompt manager, tool orchestrator, provider brokers, confidence engine.
 6. src/storage: local sqlite plus json snapshots for portable sync.
@@ -1025,7 +1025,7 @@ Story packs:
 4. SP-E03-D Accessibility lint and corrective previews.
 
 Dependencies:
-1. Spellforge parser layer.
+1. BITS-EASY parser layer.
 2. Accessibility rule engine.
 
 Definition of done:
@@ -1352,4 +1352,5 @@ Decomposition is complete for all mapped Baseline families and reviewed update f
 5. Closure ledger.
 
 This PRD is now complete at strategic and decomposition levels and ready for implementation planning and sprint execution.
+
 

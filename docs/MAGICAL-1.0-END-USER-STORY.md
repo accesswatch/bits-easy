@@ -235,3 +235,4 @@ Magical 1.0 is not a single feature.
 It is a consistent experience across many apps where command discovery is fast, execution is reliable, feedback is clear, and recovery is always available.
 
 That is what makes the product feel magical to end users.
+

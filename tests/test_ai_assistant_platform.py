@@ -5,16 +5,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import AppAdapter, AppContext, RuntimeDispatcher, SpellforgeRuntime, load_runtime_config
-from spellforge_runtime.ai_assistant import AiAssistantService
-from spellforge_runtime.secret_store import InMemorySecretStore
+from bits_easy_runtime import AppAdapter, AppContext, RuntimeDispatcher, BitsEasyRuntime, load_runtime_config
+from bits_easy_runtime.ai_assistant import AiAssistantService
+from bits_easy_runtime.secret_store import InMemorySecretStore
 
 
 class AiAssistantPlatformTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo_root = Path(__file__).resolve().parents[1]
         self.config = load_runtime_config(self.repo_root)
-        self.runtime = SpellforgeRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
+        self.runtime = BitsEasyRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
 
     def _ctx(self, app: str = "edge", buffer: str = "alpha") -> AppContext:
         return AppContext(
@@ -139,7 +139,7 @@ class AiAssistantPlatformTests(unittest.TestCase):
             status = service.key_status("openai")
             self.assertTrue(status.ok)
             self.assertTrue(status.payload["hasKey"])
-            self.assertEqual(secret_store.get_secret("spellforge.ai.provider-key", "openai"), "legacy-secret")
+            self.assertEqual(secret_store.get_secret("bits_easy.ai.provider-key", "openai"), "legacy-secret")
 
             migrated = storage.read_text(encoding="utf-8")
             self.assertNotIn("legacy-secret", migrated)
@@ -149,3 +149,4 @@ class AiAssistantPlatformTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

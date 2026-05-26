@@ -2,13 +2,13 @@ import unittest
 import tempfile
 from pathlib import Path
 
-from spellforge_runtime.engine import AppAdapter, AppContext, SpellforgeRuntime
-from spellforge_runtime.pocketclips import PocketClipsStudio
+from bits_easy_runtime.engine import AppAdapter, AppContext, BitsEasyRuntime
+from bits_easy_runtime.pocketclips import PocketClipsStudio
 
 
 class PocketClipsStudioTests(unittest.TestCase):
     def setUp(self):
-        self.runtime = SpellforgeRuntime(
+        self.runtime = BitsEasyRuntime(
             adapters={
                 "word": AppAdapter("word", supports_selection=True),
                 "outlook": AppAdapter("outlook", supports_selection=False),
@@ -82,3 +82,4 @@ class PocketClipsStudioTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

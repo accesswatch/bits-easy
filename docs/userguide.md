@@ -1,18 +1,18 @@
-# Spellforge User Guide
+# BITS-EASY User Guide
 
-Welcome. Spellforge is a calm, keyboard-first companion for NVDA. It listens for one friendly key chord, helps you do useful things with selected text and your clipboard, and gently keeps your work safe and reversible across every application you use.
+Welcome. BITS-EASY is a calm, keyboard-first companion for NVDA. It listens for one friendly key chord, helps you do useful things with selected text and your clipboard, and gently keeps your work safe and reversible across every application you use.
 
-This guide is written to be read in order the first time. After that, jump to any section you need. Nothing here assumes prior experience with Spellforge.
+This guide is written to be read in order the first time. After that, jump to any section you need. Nothing here assumes prior experience with BITS-EASY.
 
-If you only have ten minutes, read sections 1 - 4. If you have an afternoon, read everything. You will not need to memorise commands - Spellforge will tell you what is available whenever you ask.
+If you only have ten minutes, read sections 1 - 4. If you have an afternoon, read everything. You will not need to memorise commands - BITS-EASY will tell you what is available whenever you ask.
 
 ---
 
-## 1. What Spellforge Is
+## 1. What BITS-EASY Is
 
-Spellforge sits quietly alongside NVDA. It does not change how NVDA reads the screen and it does not take over the keyboard. It adds:
+BITS-EASY sits quietly alongside NVDA. It does not change how NVDA reads the screen and it does not take over the keyboard. It adds:
 
-1. One Spellforge key chord that is always ready to help.
+1. One BITS-EASY key chord that is always ready to help.
 2. A small set of trustworthy hotkeys for daily work.
 3. A searchable command palette for everything else.
 4. Selection and clipboard tools that work across applications.
@@ -20,28 +20,28 @@ Spellforge sits quietly alongside NVDA. It does not change how NVDA reads the sc
 6. Optional AI augmentation that never replaces your deterministic results.
 7. Safe recovery, previews, and an emergency stop you can rely on.
 
-Spellforge keeps your data on your computer. AI provider keys, when you choose to add them, live in secure storage that you can verify at any time.
+BITS-EASY keeps your data on your computer. AI provider keys, when you choose to add them, live in secure storage that you can verify at any time.
 
 ---
 
-## 2. Installing Spellforge
+## 2. Installing BITS-EASY
 
 ### 2.1 Requirements
 
 1. Windows 10 or Windows 11, 64-bit.
 2. NVDA 2026.1, 64-bit.
-3. The Spellforge `.nvda-addon` package.
+3. The BITS-EASY `.nvda-addon` package.
 
 ### 2.2 Install steps
 
 1. In NVDA, open `Tools` and choose `Manage add-ons`.
-2. Press `Install` and select the Spellforge `.nvda-addon` file.
+2. Press `Install` and select the BITS-EASY `.nvda-addon` file.
 3. Restart NVDA when prompted.
-4. When NVDA returns, Spellforge announces `Spellforge loaded`.
+4. When NVDA returns, BITS-EASY announces `BITS-EASY loaded`.
 
 ### 2.3 First-run check
 
-Press `Grave+Slash`. Spellforge will read a short summary of what you can press right now. If you hear that summary, the add-on is working.
+Press `Grave+Slash`. BITS-EASY will read a short summary of what you can press right now. If you hear that summary, the add-on is working.
 
 ### 2.4 Optional integrations
 
@@ -55,19 +55,19 @@ Most workflows need nothing extra. Install these only if you intend to use Googl
 Optional Screen Item Chooser integration:
 
 1. Install `screenItemChooser-1.0.0.nvda-addon`.
-2. Use `Grave+O` to open Item Chooser from Spellforge.
+2. Use `Grave+O` to open Item Chooser from BITS-EASY.
 3. Use `Grave+Shift+O` to open Item Chooser with OCR preselected.
 
 Optional GLOW MCP integration:
 
 1. Run the GLOW MCP server from `s:\code\glow\mcp_server` with `uvicorn mcp_server.main:app --host 127.0.0.1 --port 8000`.
-2. Use Spellforge palette commands:
+2. Use BITS-EASY palette commands:
 3. `cmd.integration.glow.health`
 4. `cmd.integration.glow.audit` with `path` and optional `format`
 5. `cmd.integration.glow.fix` with `path` and optional `format`
 6. `cmd.integration.glow.convert` with `path`, optional `fromFormat`, and `toFormat`
 7. `cmd.integration.glow.report` with `path`, optional `format`, and `reportType`
-8. If `path` is omitted, Spellforge opens a file picker and uses the selected file.
+8. If `path` is omitted, BITS-EASY opens a file picker and uses the selected file.
 
 Direct hotkeys:
 
@@ -81,41 +81,57 @@ Direct hotkeys:
 
 ## 3. Choose Your Profile
 
-Spellforge has three profiles. They change how much it talks, how often it confirms, and how quickly it acts. Your commands and hotkeys stay the same in every profile.
+BITS-EASY has three profiles. They change how much it talks, how often it confirms, and how quickly it acts. Your commands and hotkeys stay the same in every profile.
 
 1. **Beginner.** Friendly explanations, more previews, explicit confirmations. The kindest starting point.
 2. **Balanced.** Concise feedback, confirmations only when something matters. The most common everyday choice.
 3. **Expert.** Minimal speech, fastest action, fewest prompts. Choose this when commands feel second nature.
 
-Open `NVDA Settings` and find the `Spellforge` panel to switch profiles, toggle multi-press gestures, choose whether OS-level global hotkeys are active, and open the keyboard mappings editor.
+Open `NVDA Settings` and find the `BITS-EASY` panel to switch profiles, toggle multi-press gestures, choose whether OS-level global hotkeys are active, and open the keyboard mappings editor.
 
 You can change profile any time. Your saved clips, notes, and workflows are unaffected.
 
+### 3.1 Mode-specific keymaps
+
+In the BITS-EASY Control Panel, each custom mode can now keep its own keymap override.
+
+1. Open `Open BITS-EASY Control Panel` from NVDA settings.
+2. Select a mode in `Custom Modes`.
+3. Press `Edit Mode Keymap`.
+4. Save your key assignments.
+5. Press `Activate` for that mode.
+
+Behavior notes:
+
+1. Mode key assignments are stored inside that mode record as `custom_modes.<mode>.hotkeyBindings`.
+2. When a mode is active and has mode key assignments, those bindings override the global keymap.
+3. If a mode has no mode key assignments, BITS-EASY uses the global keymap.
+
 ---
 
-## 4. The Spellforge Key: Your Magical Door
+## 4. The BITS-EASY Key: Your Magical Door
 
-Before anything else, learn one chord: `Grave` (internally shown as `Grave` or `Grave+Space` depending on layout). This is the Spellforge key. You can press it from almost any application and it will do the right thing for the way you press it.
+Before anything else, learn one chord: `Grave` (internally shown as `Grave` or `Grave+Space` depending on layout). This is the BITS-EASY key. You can press it from almost any application and it will do the right thing for the way you press it.
 
 | How you press it | What happens |
 | --- | --- |
-| Single press | Opens the command palette so you can search every Spellforge command in plain language. |
+| Single press | Opens the command palette so you can search every BITS-EASY command in plain language. |
 | Double press | Reads `What can I press` - a concise list of hotkeys available right now. |
 | Triple press | Opens hotkey diagnostics so you can see what is registered and whether anything is conflicting. |
 | Press and hold | Reads `What can I press` in a calmer, more guided form. |
 
-This is the magic Spellforge promises:
+This is the magic BITS-EASY promises:
 
 1. You never have to remember everything.
 2. One key tells you what you can do.
 3. The same key lets you ask for anything by name.
 4. The same key shows you the truth when something feels wrong.
 
-If you ever feel lost, press `Grave` twice. Spellforge will tell you what you can press from where you are.
+If you ever feel lost, press `Grave` twice. BITS-EASY will tell you what you can press from where you are.
 
 ### 4.1 LEASEY-style help layers
 
-Spellforge now follows a layered help rhythm similar to classic screen reader companion manuals:
+BITS-EASY now follows a layered help rhythm similar to classic screen reader companion manuals:
 
 1. **Layer 1 (Do).** Single press opens the palette and runs commands fast.
 2. **Layer 2 (Discover).** Double press reads what is available in this surface.
@@ -124,11 +140,11 @@ Spellforge now follows a layered help rhythm similar to classic screen reader co
 
 ### 4.2 Companion helpers
 
-These three keys travel alongside the Spellforge key and never change meaning:
+These three keys travel alongside the BITS-EASY key and never change meaning:
 
 1. `Grave+Slash` - read available hotkeys for the current surface.
 2. `Grave+D` - open hotkey diagnostics.
-3. `Grave+Escape` - emergency stop. Spellforge halts whatever it was doing and returns you to a quiet state.
+3. `Grave+Escape` - emergency stop. BITS-EASY halts whatever it was doing and returns you to a quiet state.
 
 You can use these from any application. They never modify your files or change focus permanently.
 
@@ -136,7 +152,7 @@ You can use these from any application. They never modify your files or change f
 
 ## 5. Selection Magic Across Applications
 
-Spellforge treats selected text as a first-class object. It understands native selections, marker-based selections you set yourself, and cross-app drift when a selection moves between programs.
+BITS-EASY treats selected text as a first-class object. It understands native selections, marker-based selections you set yourself, and cross-app drift when a selection moves between programs.
 
 ### 5.1 The simple path
 
@@ -147,11 +163,11 @@ If your application supports normal selection (Outlook, Word, Notepad, Edge, Fir
 3. `Grave+R` - rewrite for beginners (with a preview before applying).
 4. `Grave+1` - save the selection to clip slot 1.
 
-Spellforge will announce a short, friendly result, and offer a virtualized view if the output is long.
+BITS-EASY will announce a short, friendly result, and offer a virtualized view if the output is long.
 
 ### 5.2 When the application is unfriendly
 
-Some surfaces are not selection-friendly. Spellforge gives you a deterministic marker workflow instead:
+Some surfaces are not selection-friendly. BITS-EASY gives you a deterministic marker workflow instead:
 
 1. `Grave+[` - mark the start of your range.
 2. `Grave+]` - mark the end of your range.
@@ -175,18 +191,18 @@ Marker-captured ranges are now treated as first-class selection for those action
 
 ### 5.3 What every app feels like
 
-Spellforge tunes its behavior for the application you are in:
+BITS-EASY tunes its behavior for the application you are in:
 
 1. **Outlook.** Summarise long threads, extract action items, draft a reply from selection, tag a message, batch-copy, batch-move, batch-delete, and report tagged messages. Try `Grave+S` on a thread, then `Grave+Shift+T` to tag it.
 2. **Word.** Rewrite for beginners with preview and rollback, summarise a section, capture a passage to a clip slot, and extract action items from a meeting note. Mutating commands always preview first.
 3. **Notepad.** Quick capture is instant. Slot operations work even when Notepad has no rich selection. Selection markers cover any awkward range you cannot select natively.
 4. **Edge, Chrome, Firefox.** Page-wide selection, paragraph capture, heading-block fallback, source-tagged merge into the active MergeBoard. If selection is hard, the fallback menu suggests `paragraph`, `heading block`, or `guided capture`.
 5. **VS Code.** Selection survives moving between editor and terminal. Slot copy and paste preserve indentation. Markdown and HTML authoring helpers (see section 11) produce content that pastes cleanly back in.
-6. **Other applications.** If a command cannot run safely in the current surface, Spellforge offers alternatives instead of failing silently. Press `Grave+F` to see them.
+6. **Other applications.** If a command cannot run safely in the current surface, BITS-EASY offers alternatives instead of failing silently. Press `Grave+F` to see them.
 
 ### 5.4 If a selection drifts
 
-When focus moves and your selection markers no longer match the document, Spellforge does not pretend. It announces the drift, suggests the nearest valid restore point, and lets you choose:
+When focus moves and your selection markers no longer match the document, BITS-EASY does not pretend. It announces the drift, suggests the nearest valid restore point, and lets you choose:
 
 1. Keep the existing range and continue.
 2. Re-mark the range at the nearest valid anchor.
@@ -198,7 +214,7 @@ You will never be left guessing where your selection went.
 
 ## 6. Clipboard Magic: PocketClips and MergeBoard
 
-The clipboard inside Spellforge is calmer, deeper, and safer than the system clipboard. Two surfaces work together: PocketClips (ten numbered slots plus a library) and MergeBoard (deterministic joining of captured pieces).
+The clipboard inside BITS-EASY is calmer, deeper, and safer than the system clipboard. Two surfaces work together: PocketClips (ten numbered slots plus a library) and MergeBoard (deterministic joining of captured pieces).
 
 ### 6.1 Ten slots that remember source and time
 
@@ -240,7 +256,7 @@ MergeBoard joins captured pieces deterministically. Set the mode once, then capt
 5. `Grave+N` - divider: paragraph.
 6. `Grave+I` - toggle `clear-on-paste`.
 
-Use a merge profile (meeting notes, research digest, email drafting) from the palette and Spellforge will apply the right divider, optional source tags, and clear policy automatically. Then commit the merge wherever you need the result.
+Use a merge profile (meeting notes, research digest, email drafting) from the palette and BITS-EASY will apply the right divider, optional source tags, and clear policy automatically. Then commit the merge wherever you need the result.
 
 ### 6.4 Across applications
 
@@ -250,20 +266,20 @@ Slot capture in Edge and Chrome carries page provenance. Slot capture in Outlook
 
 ## 7. Quick Capture and Your Inbox
 
-Some thoughts cannot wait. Press `Grave+Q` from anywhere and Spellforge captures a quick note to your inbox without changing your focus or interrupting your flow. The capture remembers source application, timestamp, and any tag you give it.
+Some thoughts cannot wait. Press `Grave+Q` from anywhere and BITS-EASY captures a quick note to your inbox without changing your focus or interrupting your flow. The capture remembers source application, timestamp, and any tag you give it.
 
 Later, from the palette:
 
 1. `cmd.capture.quickInbox.list` - browse what you captured.
 2. `cmd.capture.quickInbox.route` - turn an inbox item into a task, a note, a draft, or a slot.
 
-When an AI key is configured, Spellforge can attach an optional augmentation, such as a short summary suggestion, without changing the base capture. The original text is always preserved.
+When an AI key is configured, BITS-EASY can attach an optional augmentation, such as a short summary suggestion, without changing the base capture. The original text is always preserved.
 
 ---
 
 ## 8. Reading Long Results: The Virtualized Surface
 
-When a command produces something longer than a sentence, Spellforge opens a virtualized reading view. You stay in your application, but a calm structured surface holds the output.
+When a command produces something longer than a sentence, BITS-EASY opens a virtualized reading view. You stay in your application, but a calm structured surface holds the output.
 
 1. `Grave+V` - open the latest virtualized result.
 2. `Grave+RightArrow` - next block.
@@ -287,7 +303,7 @@ You never lose your place. You never have to scroll a long output inside an appl
 
 ## 9. Text Expansion and Quick Insert
 
-Build a personal shorthand. Type a short trigger and Spellforge expands it. Insert frequently used snippets with one press.
+Build a personal shorthand. Type a short trigger and BITS-EASY expands it. Insert frequently used snippets with one press.
 
 1. `Grave+0` - quick insert a saved piece of text.
 2. From the palette: create, list, rename, set primary, expand, and delete expansions.
@@ -311,7 +327,7 @@ Presets let you launch a full set of resources for a project, a meeting, or a da
 
 ## 11. Notes, Authoring, and Retrieval
 
-Spellforge is a small, friendly authoring environment.
+BITS-EASY is a small, friendly authoring environment.
 
 ### 11.1 Notes
 
@@ -325,7 +341,7 @@ Markdown commands help you build structured content that pastes cleanly into any
 
 1. `cmd.author.markdown.insert` - insert structured markdown for headings, lists, tables, callouts, or code blocks.
 2. `cmd.author.a11y.lint` - check the markdown you have for accessibility issues such as missing alt text, ambiguous link text, skipped heading levels, and emoji that should be removed.
-3. `cmd.author.a11y.fixPreview` - preview the accessibility fixes Spellforge suggests before applying any of them.
+3. `cmd.author.a11y.fixPreview` - preview the accessibility fixes BITS-EASY suggests before applying any of them.
 4. `cmd.author.pipeline.polish` - run one-command draft-to-polished flow with transform, structure check, and style pass.
 5. `cmd.author.template.apply` - apply the guided `release-notes` template scaffold with placeholder sections.
 6. `cmd.author.pipeline.undo` - restore the source text from the latest authoring undo token.
@@ -350,7 +366,7 @@ These helpers produce output suitable for documentation sites, email templates, 
 
 ### 11.4 Retrieval
 
-Spellforge can read structured information back to you on demand: parse a body of text, query it, summarise, revisit, anchor your place, return to the anchor, and report what you have visited.
+BITS-EASY can read structured information back to you on demand: parse a body of text, query it, summarise, revisit, anchor your place, return to the anchor, and report what you have visited.
 
 1. `cmd.retrieve.parse`, `cmd.retrieve.query`, `cmd.retrieve.summarize`.
 2. `cmd.retrieve.anchor.set`, `cmd.retrieve.revisit`, `cmd.retrieve.trail.open`, `cmd.retrieve.trail.return`, `cmd.retrieve.visited.report`.
@@ -363,7 +379,7 @@ Define typed fields, manage entries, search, sort, and export to text, CSV, or J
 
 ## 12. Working Across Your Day
 
-Here is what Spellforge feels like in the applications you use most.
+Here is what BITS-EASY feels like in the applications you use most.
 
 ### 12.1 Outlook
 
@@ -380,7 +396,7 @@ Here is what Spellforge feels like in the applications you use most.
 
 ### 12.3 Notepad
 
-1. Spellforge fits Notepad like a glove. Quick capture works instantly with `Grave+Q`.
+1. BITS-EASY fits Notepad like a glove. Quick capture works instantly with `Grave+Q`.
 2. Slot save and paste use the deterministic clip path.
 3. Use markers for any range Notepad cannot select cleanly.
 
@@ -399,13 +415,13 @@ Here is what Spellforge feels like in the applications you use most.
 
 ### 12.6 Anywhere else
 
-If Spellforge cannot perform a command in the current application, it tells you and offers alternatives. Press `Grave+F` to see them. Press `Grave+Space` and ask in plain language.
+If BITS-EASY cannot perform a command in the current application, it tells you and offers alternatives. Press `Grave+F` to see them. Press `Grave+Space` and ask in plain language.
 
 ---
 
 ## 13. AI Augmentation, Without Surprises
 
-Spellforge ships strong deterministic results for every selection command. AI is optional, additive, and always under your control.
+BITS-EASY ships strong deterministic results for every selection command. AI is optional, additive, and always under your control.
 
 ### 13.1 Setting up an AI key
 
@@ -416,13 +432,13 @@ From the palette:
 3. `cmd.ai.key.storeStatus` - report the active key storage backend.
 4. `cmd.ai.key.delete` - remove a key.
 
-On Windows, Spellforge prefers Windows Credential Manager and never stores provider keys in plain JSON. If secure storage is unavailable, Spellforge falls back safely and tells you what the backend is.
+On Windows, BITS-EASY prefers Windows Credential Manager and never stores provider keys in plain JSON. If secure storage is unavailable, BITS-EASY falls back safely and tells you what the backend is.
 
-When `cmd.ai.key.storeStatus` runs from the NVDA layer, Spellforge now speaks a short plain-language summary: backend name, whether storage is secure, whether keys persist after restart, and how many providers are configured.
+When `cmd.ai.key.storeStatus` runs from the NVDA layer, BITS-EASY now speaks a short plain-language summary: backend name, whether storage is secure, whether keys persist after restart, and how many providers are configured.
 
 ### 13.2 What AI augments
 
-When a key is configured and Spellforge has a real selection or capture, AI may add an optional augmentation to:
+When a key is configured and BITS-EASY has a real selection or capture, AI may add an optional augmentation to:
 
 1. Selection summarise, action extraction, and rewrite-for-beginners.
 2. Quick capture (an optional summary suggestion).
@@ -463,19 +479,19 @@ Optional AI workflows from the palette include `cmd.ai.doc.ask`, `cmd.ai.doc.upl
 
 ### 14.3 Where am I?
 
-If context feels off, press `Grave+Backspace` first. If the question remains, open the palette and search `where am I`. Spellforge will announce focus, surface, selection, and active markers in a single calm message.
+If context feels off, press `Grave+Backspace` first. If the question remains, open the palette and search `where am I`. BITS-EASY will announce focus, surface, selection, and active markers in a single calm message.
 
 ---
 
 ## 15. The Command Palette In Depth
 
-The Spellforge key chord (`Grave`) opens the palette. `NVDA+Shift+P` opens it too. The palette is a searchable, plain-language entry point to every Spellforge command.
+The BITS-EASY key chord (`Grave`) opens the palette. `NVDA+Shift+P` opens it too. The palette is a searchable, plain-language entry point to every BITS-EASY command.
 
 1. Type one or two words describing what you want.
 2. Browse the matching results with the arrow keys.
 3. Press Enter to run.
 
-The palette is context-aware. AI setup and status commands are always visible. Selection-driven AI commands appear only when Spellforge has selection context and a key is configured. Commands that cannot run in the current surface are dimmed and offer their nearest fallback.
+The palette is context-aware. AI setup and status commands are always visible. Selection-driven AI commands appear only when BITS-EASY has selection context and a key is configured. Commands that cannot run in the current surface are dimmed and offer their nearest fallback.
 
 You never need to memorise commands. The palette is the answer when you cannot remember the hotkey.
 
@@ -548,7 +564,7 @@ These are the built-in hotkeys. The NVDA Key is the key you set as NVDA modifier
 | Grave+= | Search symbol by name |
 | Grave+- | Recent symbol |
 
-If you would like to change a chord, open `NVDA Settings > Spellforge > Edit keyboard mappings`, or use `Tools > Spellforge keyboard mappings`. Run `Run NVDA gesture scrub` in the editor to detect internal collisions and clashes with known NVDA gestures.
+If you would like to change a chord, open `NVDA Settings > BITS-EASY > Edit keyboard mappings`, or use `Tools > BITS-EASY keyboard mappings`. Run `Run NVDA gesture scrub` in the editor to detect internal collisions and clashes with known NVDA gestures.
 
 ---
 
@@ -602,7 +618,7 @@ You do not need to remember any of these. Press `Grave+Space` and ask in plain l
 
 ## 18. Your Data and Portability
 
-Spellforge stores your clips, settings, palette history, notes, journals, and other personal data under your Windows user profile, typically `AppData\Spellforge`. Everything stays on your computer.
+BITS-EASY stores your clips, settings, palette history, notes, journals, and other personal data under your Windows user profile, typically `AppData\BITS-EASY`. Everything stays on your computer.
 
 1. AI provider keys live in secure storage (Windows Credential Manager when available) and not in plain JSON.
 2. Use `cmd.ai.key.storeStatus` to confirm the active backend.
@@ -615,11 +631,11 @@ Spellforge stores your clips, settings, palette history, notes, journals, and ot
 
 **A hotkey did nothing.** Press `Grave+D` for hotkey diagnostics. Open the palette and search the command name to confirm it exists in your current build.
 
-**Spellforge is talking too much, or not enough.** Switch profile in `NVDA Settings > Spellforge`.
+**BITS-EASY is talking too much, or not enough.** Switch profile in `NVDA Settings > BITS-EASY`.
 
-**A command cannot run in this application.** Press `Grave+F` for alternatives, or open the palette and ask Spellforge in plain language.
+**A command cannot run in this application.** Press `Grave+F` for alternatives, or open the palette and ask BITS-EASY in plain language.
 
-**Something feels stuck.** Press `Grave+Escape`. Spellforge stops.
+**Something feels stuck.** Press `Grave+Escape`. BITS-EASY stops.
 
 **You feel lost.** Press `Grave+Backspace` to return to source. If you are still uncertain, press `Grave+Space` twice to hear what you can press right now.
 
@@ -639,8 +655,9 @@ There is no pressure to learn everything at once. Here is a one-week shape if it
 6. **Day 6.** Add tasks, diary entries, or time alarms from the palette.
 7. **Day 7.** Run `cmd.profile.integrationHealth` and `cmd.profile.portabilityBackup` so your setup is safe.
 
-Once you can open the palette, capture a thought, save and reuse a clip, and read one long result in the virtual view, Spellforge is already earning its place. Everything else is here when you are ready.
+Once you can open the palette, capture a thought, save and reuse a clip, and read one long result in the virtual view, BITS-EASY is already earning its place. Everything else is here when you are ready.
 
 Welcome aboard.
+
 
 

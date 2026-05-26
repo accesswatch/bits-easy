@@ -1,20 +1,194 @@
-<h1 id="spellforge-user-guide">Spellforge User Guide</h1>
-<p>Welcome. Spellforge is a calm, keyboard-first companion for NVDA. It
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>userguide</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<h1 id="bits-easy-user-guide">BITS-EASY User Guide</h1>
+<p>Welcome. BITS-EASY is a calm, keyboard-first companion for NVDA. It
 listens for one friendly key chord, helps you do useful things with
 selected text and your clipboard, and gently keeps your work safe and
 reversible across every application you use.</p>
 <p>This guide is written to be read in order the first time. After that,
 jump to any section you need. Nothing here assumes prior experience with
-Spellforge.</p>
+BITS-EASY.</p>
 <p>If you only have ten minutes, read sections 1 - 4. If you have an
 afternoon, read everything. You will not need to memorise commands -
-Spellforge will tell you what is available whenever you ask.</p>
+BITS-EASY will tell you what is available whenever you ask.</p>
 <hr />
-<h2 id="what-spellforge-is">1. What Spellforge Is</h2>
-<p>Spellforge sits quietly alongside NVDA. It does not change how NVDA
+<h2 id="what-bits-easy-is">1. What BITS-EASY Is</h2>
+<p>BITS-EASY sits quietly alongside NVDA. It does not change how NVDA
 reads the screen and it does not take over the keyboard. It adds:</p>
 <ol type="1">
-<li>One Spellforge key chord that is always ready to help.</li>
+<li>One BITS-EASY key chord that is always ready to help.</li>
 <li>A small set of trustworthy hotkeys for daily work.</li>
 <li>A searchable command palette for everything else.</li>
 <li>Selection and clipboard tools that work across applications.</li>
@@ -23,31 +197,31 @@ reads the screen and it does not take over the keyboard. It adds:</p>
 results.</li>
 <li>Safe recovery, previews, and an emergency stop you can rely on.</li>
 </ol>
-<p>Spellforge keeps your data on your computer. AI provider keys, when
+<p>BITS-EASY keeps your data on your computer. AI provider keys, when
 you choose to add them, live in secure storage that you can verify at
 any time.</p>
 <hr />
-<h2 id="installing-spellforge">2. Installing Spellforge</h2>
+<h2 id="installing-bits-easy">2. Installing BITS-EASY</h2>
 <h3 id="requirements">2.1 Requirements</h3>
 <ol type="1">
 <li>Windows 10 or Windows 11, 64-bit.</li>
 <li>NVDA 2026.1, 64-bit.</li>
-<li>The Spellforge <code>.nvda-addon</code> package.</li>
+<li>The BITS-EASY <code>.nvda-addon</code> package.</li>
 </ol>
 <h3 id="install-steps">2.2 Install steps</h3>
 <ol type="1">
 <li>In NVDA, open <code>Tools</code> and choose
 <code>Manage add-ons</code>.</li>
-<li>Press <code>Install</code> and select the Spellforge
+<li>Press <code>Install</code> and select the BITS-EASY
 <code>.nvda-addon</code> file.</li>
 <li>Restart NVDA when prompted.</li>
-<li>When NVDA returns, Spellforge announces
-<code>Spellforge loaded</code>.</li>
+<li>When NVDA returns, BITS-EASY announces
+<code>BITS-EASY loaded</code>.</li>
 </ol>
 <h3 id="first-run-check">2.3 First-run check</h3>
-<p>Press <code>Grave+Slash</code>. Spellforge will read a short
-summary of what you can press right now. If you hear that summary, the
-add-on is working.</p>
+<p>Press <code>Grave+Slash</code>. BITS-EASY will read a short summary
+of what you can press right now. If you hear that summary, the add-on is
+working.</p>
 <h3 id="optional-integrations">2.4 Optional integrations</h3>
 <p>Most workflows need nothing extra. Install these only if you intend
 to use Google Calendar or Google Contacts:</p>
@@ -60,19 +234,27 @@ to use Google Calendar or Google Contacts:</p>
 <p>Optional Screen Item Chooser integration:</p>
 <ol type="1">
 <li>Install <code>screenItemChooser-1.0.0.nvda-addon</code>.</li>
-<li>Use <code>Grave+O</code> to open Item Chooser from Spellforge.</li>
-<li>Use <code>Grave+Shift+O</code> to open Item Chooser with OCR preselected.</li>
+<li>Use <code>Grave+O</code> to open Item Chooser from BITS-EASY.</li>
+<li>Use <code>Grave+Shift+O</code> to open Item Chooser with OCR
+preselected.</li>
 </ol>
 <p>Optional GLOW MCP integration:</p>
 <ol type="1">
-<li>Run the GLOW MCP server from <code>s:\code\glow\mcp_server</code> with <code>uvicorn mcp_server.main:app --host 127.0.0.1 --port 8000</code>.</li>
-<li>Use Spellforge palette commands:</li>
+<li>Run the GLOW MCP server from <code>s:\code\glow\mcp_server</code>
+with
+<code>uvicorn mcp_server.main:app --host 127.0.0.1 --port 8000</code>.</li>
+<li>Use BITS-EASY palette commands:</li>
 <li><code>cmd.integration.glow.health</code></li>
-<li><code>cmd.integration.glow.audit</code> with <code>path</code> and optional <code>format</code></li>
-<li><code>cmd.integration.glow.fix</code> with <code>path</code> and optional <code>format</code></li>
-<li><code>cmd.integration.glow.convert</code> with <code>path</code>, optional <code>fromFormat</code>, and <code>toFormat</code></li>
-<li><code>cmd.integration.glow.report</code> with <code>path</code>, optional <code>format</code>, and <code>reportType</code></li>
-<li>If <code>path</code> is omitted, Spellforge opens a file picker and uses the selected file.</li>
+<li><code>cmd.integration.glow.audit</code> with <code>path</code> and
+optional <code>format</code></li>
+<li><code>cmd.integration.glow.fix</code> with <code>path</code> and
+optional <code>format</code></li>
+<li><code>cmd.integration.glow.convert</code> with <code>path</code>,
+optional <code>fromFormat</code>, and <code>toFormat</code></li>
+<li><code>cmd.integration.glow.report</code> with <code>path</code>,
+optional <code>format</code>, and <code>reportType</code></li>
+<li>If <code>path</code> is omitted, BITS-EASY opens a file picker and
+uses the selected file.</li>
 </ol>
 <p>Direct hotkeys:</p>
 <ol type="1">
@@ -84,7 +266,7 @@ to use Google Calendar or Google Contacts:</p>
 </ol>
 <hr />
 <h2 id="choose-your-profile">3. Choose Your Profile</h2>
-<p>Spellforge has three profiles. They change how much it talks, how
+<p>BITS-EASY has three profiles. They change how much it talks, how
 often it confirms, and how quickly it acts. Your commands and hotkeys
 stay the same in every profile.</p>
 <ol type="1">
@@ -95,19 +277,19 @@ something matters. The most common everyday choice.</li>
 <li><strong>Expert.</strong> Minimal speech, fastest action, fewest
 prompts. Choose this when commands feel second nature.</li>
 </ol>
-<p>Open <code>NVDA Settings</code> and find the <code>Spellforge</code>
+<p>Open <code>NVDA Settings</code> and find the <code>BITS-EASY</code>
 panel to switch profiles, toggle multi-press gestures, choose whether
 OS-level global hotkeys are active, and open the keyboard mappings
 editor.</p>
 <p>You can change profile any time. Your saved clips, notes, and
 workflows are unaffected.</p>
 <hr />
-<h2 id="the-spellforge-key-your-magical-door">4. The Spellforge Key:
-Your Magical Door</h2>
-<p>Before anything else, learn one chord:
-<code>Grave+Space</code>. This is the Spellforge key. You can
-press it from almost any application and it will do the right thing for
-the way you press it.</p>
+<h2 id="the-bits-easy-key-your-magical-door">4. The BITS-EASY Key: Your
+Magical Door</h2>
+<p>Before anything else, learn one chord: <code>Grave</code> (internally
+shown as <code>Grave</code> or <code>Grave+Space</code> depending on
+layout). This is the BITS-EASY key. You can press it from almost any
+application and it will do the right thing for the way you press it.</p>
 <table>
 <colgroup>
 <col style="width: 50%" />
@@ -122,7 +304,7 @@ the way you press it.</p>
 <tbody>
 <tr>
 <td>Single press</td>
-<td>Opens the command palette so you can search every Spellforge command
+<td>Opens the command palette so you can search every BITS-EASY command
 in plain language.</td>
 </tr>
 <tr>
@@ -142,31 +324,44 @@ form.</td>
 </tr>
 </tbody>
 </table>
-<p>This is the magic Spellforge promises:</p>
+<p>This is the magic BITS-EASY promises:</p>
 <ol type="1">
 <li>You never have to remember everything.</li>
 <li>One key tells you what you can do.</li>
 <li>The same key lets you ask for anything by name.</li>
 <li>The same key shows you the truth when something feels wrong.</li>
 </ol>
-<p>If you ever feel lost, press <code>Grave+Space</code> twice.
-Spellforge will tell you what you can press from where you are.</p>
-<h3 id="companion-helpers">4.1 Companion helpers</h3>
-<p>These three keys travel alongside the Spellforge key and never change
+<p>If you ever feel lost, press <code>Grave</code> twice. BITS-EASY will
+tell you what you can press from where you are.</p>
+<h3 id="leasey-style-help-layers">4.1 LEASEY-style help layers</h3>
+<p>BITS-EASY now follows a layered help rhythm similar to classic screen
+reader companion manuals:</p>
+<ol type="1">
+<li><strong>Layer 1 (Do).</strong> Single press opens the palette and
+runs commands fast.</li>
+<li><strong>Layer 2 (Discover).</strong> Double press reads what is
+available in this surface.</li>
+<li><strong>Layer 3 (Diagnose).</strong> Triple press explains
+collisions and fallback routing.</li>
+<li><strong>Layer 4 (Guide).</strong> Press-and-hold gives calm spoken
+help for newer users.</li>
+</ol>
+<h3 id="companion-helpers">4.2 Companion helpers</h3>
+<p>These three keys travel alongside the BITS-EASY key and never change
 meaning:</p>
 <ol type="1">
-<li><code>Grave+Slash</code> - read available hotkeys for the
-current surface.</li>
+<li><code>Grave+Slash</code> - read available hotkeys for the current
+surface.</li>
 <li><code>Grave+D</code> - open hotkey diagnostics.</li>
-<li><code>Grave+Escape</code> - emergency stop. Spellforge halts
-whatever it was doing and returns you to a quiet state.</li>
+<li><code>Grave+Escape</code> - emergency stop. BITS-EASY halts whatever
+it was doing and returns you to a quiet state.</li>
 </ol>
 <p>You can use these from any application. They never modify your files
 or change focus permanently.</p>
 <hr />
 <h2 id="selection-magic-across-applications">5. Selection Magic Across
 Applications</h2>
-<p>Spellforge treats selected text as a first-class object. It
+<p>BITS-EASY treats selected text as a first-class object. It
 understands native selections, marker-based selections you set yourself,
 and cross-app drift when a selection moves between programs.</p>
 <h3 id="the-simple-path">5.1 The simple path</h3>
@@ -176,36 +371,47 @@ the usual way. Then choose one:</p>
 <ol type="1">
 <li><code>Grave+S</code> - summarise the selection.</li>
 <li><code>Grave+A</code> - extract action items.</li>
-<li><code>Grave+R</code> - rewrite for beginners (with a preview
-before applying).</li>
+<li><code>Grave+R</code> - rewrite for beginners (with a preview before
+applying).</li>
 <li><code>Grave+1</code> - save the selection to clip slot 1.</li>
 </ol>
-<p>Spellforge will announce a short, friendly result, and offer a
+<p>BITS-EASY will announce a short, friendly result, and offer a
 virtualized view if the output is long.</p>
 <h3 id="when-the-application-is-unfriendly">5.2 When the application is
 unfriendly</h3>
-<p>Some surfaces are not selection-friendly. Spellforge gives you a
+<p>Some surfaces are not selection-friendly. BITS-EASY gives you a
 deterministic marker workflow instead:</p>
 <ol type="1">
 <li><code>Grave+[</code> - mark the start of your range.</li>
 <li><code>Grave+]</code> - mark the end of your range.</li>
 <li><code>Grave+'</code> - read the start and end snippets with
 confidence.</li>
-<li><code>Grave+;</code> - read marker status and any drift
-hints.</li>
+<li><code>Grave+;</code> - read marker status and any drift hints.</li>
 <li><code>Grave+J</code> - jump back to the start marker.</li>
 <li><code>Grave+X</code> - cancel markers cleanly.</li>
 </ol>
 <p>Once your range is set, every selection command above behaves exactly
 the same as if you had used native selection.</p>
+<h3 id="start-arrow-end-flow-fast-selection">5.4 Start-arrow-end flow
+(fast selection)</h3>
+<p>This is the high-speed workflow for large text:</p>
+<ol type="1">
+<li>Press <code>Grave+[</code> to set start.</li>
+<li>Use only arrow keys to move to the end.</li>
+<li>Press <code>Grave+]</code> to capture the range.</li>
+<li>Run normal selection actions (<code>Grave+S</code>,
+<code>Grave+A</code>, <code>Grave+R</code>).</li>
+</ol>
+<p>Marker-captured ranges are now treated as first-class selection for
+those actions.</p>
 <h3 id="what-every-app-feels-like">5.3 What every app feels like</h3>
-<p>Spellforge tunes its behavior for the application you are in:</p>
+<p>BITS-EASY tunes its behavior for the application you are in:</p>
 <ol type="1">
 <li><strong>Outlook.</strong> Summarise long threads, extract action
 items, draft a reply from selection, tag a message, batch-copy,
 batch-move, batch-delete, and report tagged messages. Try
-<code>Grave+S</code> on a thread, then
-<code>Grave+Shift+T</code> to tag it.</li>
+<code>Grave+S</code> on a thread, then <code>Grave+Shift+T</code> to tag
+it.</li>
 <li><strong>Word.</strong> Rewrite for beginners with preview and
 rollback, summarise a section, capture a passage to a clip slot, and
 extract action items from a meeting note. Mutating commands always
@@ -223,12 +429,12 @@ and terminal. Slot copy and paste preserve indentation. Markdown and
 HTML authoring helpers (see section 11) produce content that pastes
 cleanly back in.</li>
 <li><strong>Other applications.</strong> If a command cannot run safely
-in the current surface, Spellforge offers alternatives instead of
-failing silently. Press <code>Grave+F</code> to see them.</li>
+in the current surface, BITS-EASY offers alternatives instead of failing
+silently. Press <code>Grave+F</code> to see them.</li>
 </ol>
 <h3 id="if-a-selection-drifts">5.4 If a selection drifts</h3>
 <p>When focus moves and your selection markers no longer match the
-document, Spellforge does not pretend. It announces the drift, suggests
+document, BITS-EASY does not pretend. It announces the drift, suggests
 the nearest valid restore point, and lets you choose:</p>
 <ol type="1">
 <li>Keep the existing range and continue.</li>
@@ -239,7 +445,7 @@ the nearest valid restore point, and lets you choose:</p>
 <hr />
 <h2 id="clipboard-magic-pocketclips-and-mergeboard">6. Clipboard Magic:
 PocketClips and MergeBoard</h2>
-<p>The clipboard inside Spellforge is calmer, deeper, and safer than the
+<p>The clipboard inside BITS-EASY is calmer, deeper, and safer than the
 system clipboard. Two surfaces work together: PocketClips (ten numbered
 slots plus a library) and MergeBoard (deterministic joining of captured
 pieces).</p>
@@ -249,8 +455,8 @@ remember source and time</h3>
 it, when it was captured, its size, and whether it is protected from
 overwrite.</p>
 <ol type="1">
-<li><code>Grave+1</code> - copy current selection (or system
-clipboard) to slot 1.</li>
+<li><code>Grave+1</code> - copy current selection (or system clipboard)
+to slot 1.</li>
 <li><code>Grave+2</code> - paste from slot 1.</li>
 <li><code>Grave+3</code> - delete the current slot.</li>
 <li><code>Grave+4</code> - describe the current slot in plain
@@ -277,7 +483,8 @@ reject).</li>
 <li>Browse a timeline of how a clip evolved.</li>
 </ol>
 <p>Every action announces a short summary and is recorded in the
-operation journal, so you can roll back.</p>
+operation journal, so you can roll back. Use <code>Grave+Shift+J</code>
+for one-step quick undo of the latest reversible action.</p>
 <h3 id="mergeboard-build-up-output-without-losing-your-place">6.3
 MergeBoard: build up output without losing your place</h3>
 <p>MergeBoard joins captured pieces deterministically. Set the mode
@@ -288,11 +495,10 @@ once, then capture from wherever you like.</p>
 <li><code>Grave+L</code> - divider: line.</li>
 <li><code>Grave+U</code> - divider: single space.</li>
 <li><code>Grave+N</code> - divider: paragraph.</li>
-<li><code>Grave+I</code> - toggle
-<code>clear-on-paste</code>.</li>
+<li><code>Grave+I</code> - toggle <code>clear-on-paste</code>.</li>
 </ol>
 <p>Use a merge profile (meeting notes, research digest, email drafting)
-from the palette and Spellforge will apply the right divider, optional
+from the palette and BITS-EASY will apply the right divider, optional
 source tags, and clear policy automatically. Then commit the merge
 wherever you need the result.</p>
 <h3 id="across-applications">6.4 Across applications</h3>
@@ -307,10 +513,10 @@ surface refuses a paste, the fallback menu offers
 <hr />
 <h2 id="quick-capture-and-your-inbox">7. Quick Capture and Your
 Inbox</h2>
-<p>Some thoughts cannot wait. Press <code>Grave+Q</code> from
-anywhere and Spellforge captures a quick note to your inbox without
-changing your focus or interrupting your flow. The capture remembers
-source application, timestamp, and any tag you give it.</p>
+<p>Some thoughts cannot wait. Press <code>Grave+Q</code> from anywhere
+and BITS-EASY captures a quick note to your inbox without changing your
+focus or interrupting your flow. The capture remembers source
+application, timestamp, and any tag you give it.</p>
 <p>Later, from the palette:</p>
 <ol type="1">
 <li><code>cmd.capture.quickInbox.list</code> - browse what you
@@ -318,30 +524,27 @@ captured.</li>
 <li><code>cmd.capture.quickInbox.route</code> - turn an inbox item into
 a task, a note, a draft, or a slot.</li>
 </ol>
-<p>When an AI key is configured, Spellforge can attach an optional
+<p>When an AI key is configured, BITS-EASY can attach an optional
 augmentation, such as a short summary suggestion, without changing the
 base capture. The original text is always preserved.</p>
 <hr />
 <h2 id="reading-long-results-the-virtualized-surface">8. Reading Long
 Results: The Virtualized Surface</h2>
-<p>When a command produces something longer than a sentence, Spellforge
+<p>When a command produces something longer than a sentence, BITS-EASY
 opens a virtualized reading view. You stay in your application, but a
 calm structured surface holds the output.</p>
 <ol type="1">
-<li><code>Grave+V</code> - open the latest virtualized
-result.</li>
+<li><code>Grave+V</code> - open the latest virtualized result.</li>
 <li><code>Grave+RightArrow</code> - next block.</li>
 <li><code>Grave+LeftArrow</code> - previous block.</li>
 <li><code>Grave+C</code> - copy current block.</li>
 <li><code>Grave+Shift+C</code> - copy the entire result.</li>
 <li><code>Grave+Control+F</code> - search inside the result.</li>
 <li><code>Grave+K</code> - read the confidence summary.</li>
-<li><code>Grave+F</code> - open the fallback menu of
-alternatives.</li>
-<li><code>Grave+P</code> - pin the result to your inbox for
-later.</li>
-<li><code>Grave+Backspace</code> - return to exactly where you
-came from.</li>
+<li><code>Grave+F</code> - open the fallback menu of alternatives.</li>
+<li><code>Grave+P</code> - pin the result to your inbox for later.</li>
+<li><code>Grave+Backspace</code> - return to exactly where you came
+from.</li>
 </ol>
 <p>Toggles for output density live alongside:</p>
 <ol type="1">
@@ -353,11 +556,10 @@ inside an application that was not meant for it.</p>
 <hr />
 <h2 id="text-expansion-and-quick-insert">9. Text Expansion and Quick
 Insert</h2>
-<p>Build a personal shorthand. Type a short trigger and Spellforge
+<p>Build a personal shorthand. Type a short trigger and BITS-EASY
 expands it. Insert frequently used snippets with one press.</p>
 <ol type="1">
-<li><code>Grave+0</code> - quick insert a saved piece of
-text.</li>
+<li><code>Grave+0</code> - quick insert a saved piece of text.</li>
 <li>From the palette: create, list, rename, set primary, expand, and
 delete expansions.</li>
 </ol>
@@ -370,8 +572,8 @@ folder, a website, or an application. They live in categories and can be
 grouped into presets.</p>
 <ol type="1">
 <li><code>Grave+7</code> - open the shortcut launcher.</li>
-<li><code>Grave+9</code> - add the application you are currently
-using as a shortcut.</li>
+<li><code>Grave+9</code> - add the application you are currently using
+as a shortcut.</li>
 <li><code>Grave+8</code> - list mapped drive aliases.</li>
 <li><code>Grave+5</code> - open the shortcuts dashboard.</li>
 </ol>
@@ -380,7 +582,7 @@ meeting, or a daily routine, in one step.</p>
 <hr />
 <h2 id="notes-authoring-and-retrieval">11. Notes, Authoring, and
 Retrieval</h2>
-<p>Spellforge is a small, friendly authoring environment.</p>
+<p>BITS-EASY is a small, friendly authoring environment.</p>
 <h3 id="notes">11.1 Notes</h3>
 <p>Quick capture into the notes workspace, organise into categories, set
 custom fields, relate notes to each other, attach files, snapshot for
@@ -400,12 +602,24 @@ for headings, lists, tables, callouts, or code blocks.</li>
 accessibility issues such as missing alt text, ambiguous link text,
 skipped heading levels, and emoji that should be removed.</li>
 <li><code>cmd.author.a11y.fixPreview</code> - preview the accessibility
-fixes Spellforge suggests before applying any of them.</li>
+fixes BITS-EASY suggests before applying any of them.</li>
+<li><code>cmd.author.pipeline.polish</code> - run one-command
+draft-to-polished flow with transform, structure check, and style
+pass.</li>
+<li><code>cmd.author.template.apply</code> - apply the guided
+<code>release-notes</code> template scaffold with placeholder
+sections.</li>
+<li><code>cmd.author.pipeline.undo</code> - restore the source text from
+the latest authoring undo token.</li>
 <li><code>cmd.author.export.html</code> - export markdown to clean
 semantic HTML.</li>
 <li><code>cmd.author.export.word</code> - export to a Word-compatible
 stub.</li>
 </ol>
+<p>Mnemonic defaults: 1. <code>Grave+Shift+A</code> - run markdown
+polish flow. 2. <code>Grave+Shift+N</code> - apply release-notes
+template. 3. <code>Grave+Shift+Z</code> - undo latest author pipeline
+output.</p>
 <h3 id="html-authoring">11.3 HTML authoring</h3>
 <p>When you need accessible HTML directly:</p>
 <ol type="1">
@@ -415,12 +629,16 @@ structure from a title and a list of items.</li>
 <li><code>cmd.author.html.validate</code> - validate HTML for common
 accessibility and structure issues, with concise per-issue
 guidance.</li>
+<li><code>cmd.author.html.fixPreview</code> - generate a non-destructive
+accessibility fix preview with before and after change details.</li>
+<li><code>cmd.author.html.fixApply</code> - apply the HTML fix preview
+output and create an undo token for rollback.</li>
 </ol>
 <p>These helpers produce output suitable for documentation sites, email
 templates, intranet articles, and any place where semantic structure
 matters.</p>
 <h3 id="retrieval">11.4 Retrieval</h3>
-<p>Spellforge can read structured information back to you on demand:
+<p>BITS-EASY can read structured information back to you on demand:
 parse a body of text, query it, summarise, revisit, anchor your place,
 return to the anchor, and report what you have visited.</p>
 <ol type="1">
@@ -439,12 +657,12 @@ text, CSV, or JSON. Sync with Joplin or with the Jamal bridge using plan
 setup travels with you.</p>
 <hr />
 <h2 id="working-across-your-day">12. Working Across Your Day</h2>
-<p>Here is what Spellforge feels like in the applications you use
+<p>Here is what BITS-EASY feels like in the applications you use
 most.</p>
 <h3 id="outlook">12.1 Outlook</h3>
 <ol type="1">
-<li>Triage a long thread. Select it, press <code>Grave+S</code>
-for a summary. Press <code>Grave+A</code> for action items.</li>
+<li>Triage a long thread. Select it, press <code>Grave+S</code> for a
+summary. Press <code>Grave+A</code> for action items.</li>
 <li>Draft a reply from extracted actions through the palette.</li>
 <li>Tag a message with <code>Grave+Shift+T</code>. Report tagged
 messages with <code>cmd.tags.outlook.report</code>.</li>
@@ -462,21 +680,20 @@ cannot reach the end natively.</li>
 </ol>
 <h3 id="notepad">12.3 Notepad</h3>
 <ol type="1">
-<li>Spellforge fits Notepad like a glove. Quick capture works instantly
+<li>BITS-EASY fits Notepad like a glove. Quick capture works instantly
 with <code>Grave+Q</code>.</li>
 <li>Slot save and paste use the deterministic clip path.</li>
 <li>Use markers for any range Notepad cannot select cleanly.</li>
 </ol>
 <h3 id="edge-chrome-firefox">12.4 Edge, Chrome, Firefox</h3>
 <ol type="1">
-<li>Read a long article. Select a section, press
-<code>Grave+S</code>. The virtual view opens for calm
-reading.</li>
-<li>Capture multiple snippets into MergeBoard with
-<code>Grave+M</code>, divide them with <code>Grave+L</code>,
-and commit a clean digest into your notes.</li>
-<li>When a page is awkward to select, press <code>Grave+F</code>
-to choose <code>paragraph</code>, <code>heading block</code>, or
+<li>Read a long article. Select a section, press <code>Grave+S</code>.
+The virtual view opens for calm reading.</li>
+<li>Capture multiple snippets into MergeBoard with <code>Grave+M</code>,
+divide them with <code>Grave+L</code>, and commit a clean digest into
+your notes.</li>
+<li>When a page is awkward to select, press <code>Grave+F</code> to
+choose <code>paragraph</code>, <code>heading block</code>, or
 <code>guided capture</code>.</li>
 </ol>
 <h3 id="vs-code">12.5 VS Code</h3>
@@ -491,14 +708,13 @@ output.</li>
 terminal.</li>
 </ol>
 <h3 id="anywhere-else">12.6 Anywhere else</h3>
-<p>If Spellforge cannot perform a command in the current application, it
-tells you and offers alternatives. Press <code>Grave+F</code> to
-see them. Press <code>Grave+Space</code> and ask in plain
-language.</p>
+<p>If BITS-EASY cannot perform a command in the current application, it
+tells you and offers alternatives. Press <code>Grave+F</code> to see
+them. Press <code>Grave+Space</code> and ask in plain language.</p>
 <hr />
 <h2 id="ai-augmentation-without-surprises">13. AI Augmentation, Without
 Surprises</h2>
-<p>Spellforge ships strong deterministic results for every selection
+<p>BITS-EASY ships strong deterministic results for every selection
 command. AI is optional, additive, and always under your control.</p>
 <h3 id="setting-up-an-ai-key">13.1 Setting up an AI key</h3>
 <p>From the palette:</p>
@@ -511,11 +727,15 @@ configured.</li>
 backend.</li>
 <li><code>cmd.ai.key.delete</code> - remove a key.</li>
 </ol>
-<p>On Windows, Spellforge prefers Windows Credential Manager and never
+<p>On Windows, BITS-EASY prefers Windows Credential Manager and never
 stores provider keys in plain JSON. If secure storage is unavailable,
-Spellforge falls back safely and tells you what the backend is.</p>
+BITS-EASY falls back safely and tells you what the backend is.</p>
+<p>When <code>cmd.ai.key.storeStatus</code> runs from the NVDA layer,
+BITS-EASY now speaks a short plain-language summary: backend name,
+whether storage is secure, whether keys persist after restart, and how
+many providers are configured.</p>
 <h3 id="what-ai-augments">13.2 What AI augments</h3>
-<p>When a key is configured and Spellforge has a real selection or
+<p>When a key is configured and BITS-EASY has a real selection or
 capture, AI may add an optional augmentation to:</p>
 <ol type="1">
 <li>Selection summarise, action extraction, and
@@ -556,10 +776,9 @@ text.</li>
 failure.</li>
 <li><strong>Operation journal</strong> for rollback of supported
 actions.</li>
-<li><strong>Emergency stop</strong> at
-<code>Grave+Escape</code>.</li>
-<li><strong>Return to source</strong> at
-<code>Grave+Backspace</code> after any virtual view.</li>
+<li><strong>Emergency stop</strong> at <code>Grave+Escape</code>.</li>
+<li><strong>Return to source</strong> at <code>Grave+Backspace</code>
+after any virtual view.</li>
 </ol>
 <h3 id="diagnostics">14.2 Diagnostics</h3>
 <ol type="1">
@@ -573,23 +792,23 @@ health.</li>
 <code>cmd.utility.systemReport.export</code> - rich system report.</li>
 </ol>
 <h3 id="where-am-i">14.3 Where am I?</h3>
-<p>If context feels off, press <code>Grave+Backspace</code> first.
-If the question remains, open the palette and search
-<code>where am I</code>. Spellforge will announce focus, surface,
+<p>If context feels off, press <code>Grave+Backspace</code> first. If
+the question remains, open the palette and search
+<code>where am I</code>. BITS-EASY will announce focus, surface,
 selection, and active markers in a single calm message.</p>
 <hr />
 <h2 id="the-command-palette-in-depth">15. The Command Palette In
 Depth</h2>
-<p>The Spellforge key chord (<code>Grave+Space</code>) opens the
-palette. <code>NVDA+Shift+P</code> opens it too. The palette is a
-searchable, plain-language entry point to every Spellforge command.</p>
+<p>The BITS-EASY key chord (<code>Grave</code>) opens the palette.
+<code>NVDA+Shift+P</code> opens it too. The palette is a searchable,
+plain-language entry point to every BITS-EASY command.</p>
 <ol type="1">
 <li>Type one or two words describing what you want.</li>
 <li>Browse the matching results with the arrow keys.</li>
 <li>Press Enter to run.</li>
 </ol>
 <p>The palette is context-aware. AI setup and status commands are always
-visible. Selection-driven AI commands appear only when Spellforge has
+visible. Selection-driven AI commands appear only when BITS-EASY has
 selection context and a key is configured. Commands that cannot run in
 the current surface are dimmed and offer their nearest fallback.</p>
 <p>You never need to memorise commands. The palette is the answer when
@@ -608,19 +827,19 @@ NVDA modifier - typically <code>Insert</code> or
 </thead>
 <tbody>
 <tr>
-<td>Grave+Space</td>
+<td>Grave</td>
 <td>Open command palette</td>
 </tr>
 <tr>
-<td>Grave+Space (double)</td>
+<td>Grave (double)</td>
 <td>Read available hotkeys</td>
 </tr>
 <tr>
-<td>Grave+Space (triple)</td>
+<td>Grave (triple)</td>
 <td>Hotkey diagnostics</td>
 </tr>
 <tr>
-<td>Grave+Space (hold)</td>
+<td>Grave (hold)</td>
 <td>Guided hotkey help</td>
 </tr>
 <tr>
@@ -680,20 +899,36 @@ NVDA modifier - typically <code>Insert</code> or
 <td>Cancel selection markers</td>
 </tr>
 <tr>
-<td>Grave+1</td>
-<td>Copy to clip slot 1</td>
+<td>Grave+F1..F12</td>
+<td>Select active clip slot 1..12</td>
 </tr>
 <tr>
-<td>Grave+2</td>
-<td>Paste from clip slot 1</td>
+<td>Grave+Shift+F1..F12</td>
+<td>Copy to clip slot 1..12</td>
+</tr>
+<tr>
+<td>Grave+Control+F1..F12</td>
+<td>Paste from clip slot 1..12</td>
+</tr>
+<tr>
+<td>Grave+Windows+F1..F12</td>
+<td>Describe clip slot 1..12</td>
 </tr>
 <tr>
 <td>Grave+3</td>
-<td>Delete clip slot</td>
+<td>Delete active clip slot</td>
 </tr>
 <tr>
-<td>Grave+4</td>
-<td>Describe clip slot</td>
+<td>Grave+Shift+P</td>
+<td>Protect active clip slot</td>
+</tr>
+<tr>
+<td>Grave+Shift+U</td>
+<td>Unprotect active clip slot</td>
+</tr>
+<tr>
+<td>Grave+Shift+E</td>
+<td>Edit active clip slot</td>
 </tr>
 <tr>
 <td>Grave+5</td>
@@ -702,6 +937,10 @@ NVDA modifier - typically <code>Insert</code> or
 <tr>
 <td>Grave+6</td>
 <td>Open clip library</td>
+</tr>
+<tr>
+<td>Grave+Shift+6</td>
+<td>Open clip browser</td>
 </tr>
 <tr>
 <td>Grave+7</td>
@@ -800,6 +1039,10 @@ NVDA modifier - typically <code>Insert</code> or
 <td>Tag Outlook message</td>
 </tr>
 <tr>
+<td>Grave+Shift+Y</td>
+<td>Speak current time</td>
+</tr>
+<tr>
 <td>Grave+H</td>
 <td>Browse speech history</td>
 </tr>
@@ -826,8 +1069,8 @@ NVDA modifier - typically <code>Insert</code> or
 </tbody>
 </table>
 <p>If you would like to change a chord, open
-<code>NVDA Settings &gt; Spellforge &gt; Edit keyboard mappings</code>,
-or use <code>Tools &gt; Spellforge keyboard mappings</code>. Run
+<code>NVDA Settings &gt; BITS-EASY &gt; Edit keyboard mappings</code>,
+or use <code>Tools &gt; BITS-EASY keyboard mappings</code>. Run
 <code>Run NVDA gesture scrub</code> in the editor to detect internal
 collisions and clashes with known NVDA gestures.</p>
 <hr />
@@ -836,9 +1079,10 @@ collisions and clashes with known NVDA gestures.</p>
 Here is a grouped overview so you know what exists before you search for
 it.</p>
 <ol type="1">
-<li><strong>author</strong> - markdown insert, HTML semantic, HTML
-validate, accessibility lint, accessibility fix preview, export HTML,
-export Word.</li>
+<li><strong>author</strong> - markdown insert, markdown polish pipeline,
+markdown undo, template apply, HTML semantic, HTML validate, HTML fix
+preview and apply, accessibility lint, accessibility fix preview, export
+HTML, export Word.</li>
 <li><strong>backup</strong> - migrate, run selected, create settings
 backup, restore settings, add source, set target.</li>
 <li><strong>capture</strong> - quick capture to inbox, list captures,
@@ -873,7 +1117,8 @@ path, zip create, batch tag.</li>
 plan, rollback, return.</li>
 <li><strong>joplin</strong> - import, export, refresh, refresh rollback,
 set mapping.</li>
-<li><strong>journal</strong> - list, rollback, trends.</li>
+<li><strong>journal</strong> - list, rollback, undo last reversible
+action, trends.</li>
 <li><strong>mail</strong> - extract sender, attachments action.</li>
 <li><strong>merge</strong> - mode append/replace, divider
 line/space/paragraph, custom separator, toggle clear on paste, apply
@@ -930,9 +1175,9 @@ assign/list/recall/rename.</li>
 <code>Grave+Space</code> and ask in plain language.</p>
 <hr />
 <h2 id="your-data-and-portability">18. Your Data and Portability</h2>
-<p>Spellforge stores your clips, settings, palette history, notes,
+<p>BITS-EASY stores your clips, settings, palette history, notes,
 journals, and other personal data under your Windows user profile,
-typically <code>AppData\Spellforge</code>. Everything stays on your
+typically <code>AppData\BITS-EASY</code>. Everything stays on your
 computer.</p>
 <ol type="1">
 <li>AI provider keys live in secure storage (Windows Credential Manager
@@ -948,20 +1193,19 @@ you.</li>
 </ol>
 <hr />
 <h2 id="troubleshooting">19. Troubleshooting</h2>
-<p><strong>A hotkey did nothing.</strong> Press
-<code>Grave+D</code> for hotkey diagnostics. Open the palette and
-search the command name to confirm it exists in your current build.</p>
-<p><strong>Spellforge is talking too much, or not enough.</strong>
-Switch profile in <code>NVDA Settings &gt; Spellforge</code>.</p>
+<p><strong>A hotkey did nothing.</strong> Press <code>Grave+D</code> for
+hotkey diagnostics. Open the palette and search the command name to
+confirm it exists in your current build.</p>
+<p><strong>BITS-EASY is talking too much, or not enough.</strong> Switch
+profile in <code>NVDA Settings &gt; BITS-EASY</code>.</p>
 <p><strong>A command cannot run in this application.</strong> Press
 <code>Grave+F</code> for alternatives, or open the palette and ask
-Spellforge in plain language.</p>
+BITS-EASY in plain language.</p>
 <p><strong>Something feels stuck.</strong> Press
-<code>Grave+Escape</code>. Spellforge stops.</p>
-<p><strong>You feel lost.</strong> Press
-<code>Grave+Backspace</code> to return to source. If you are still
-uncertain, press <code>Grave+Space</code> twice to hear what you
-can press right now.</p>
+<code>Grave+Escape</code>. BITS-EASY stops.</p>
+<p><strong>You feel lost.</strong> Press <code>Grave+Backspace</code> to
+return to source. If you are still uncertain, press
+<code>Grave+Space</code> twice to hear what you can press right now.</p>
 <p><strong>An AI command says it is unavailable.</strong> Run
 <code>cmd.ai.key.status</code> to check whether a key is configured,
 then <code>cmd.ai.key.storeStatus</code> to confirm secure storage.
@@ -972,18 +1216,16 @@ Your First Week</h2>
 <p>There is no pressure to learn everything at once. Here is a one-week
 shape if it helps.</p>
 <ol type="1">
-<li><strong>Day 1.</strong> Press <code>Grave+Space</code> and
-read the palette. Press it twice and hear your hotkeys. Try
-<code>Grave+Q</code> to capture a thought.</li>
+<li><strong>Day 1.</strong> Press <code>Grave+Space</code> and read the
+palette. Press it twice and hear your hotkeys. Try <code>Grave+Q</code>
+to capture a thought.</li>
 <li><strong>Day 2.</strong> Select text in a browser and press
 <code>Grave+S</code>. Read the result in the virtual view with
 <code>Grave+V</code>.</li>
 <li><strong>Day 3.</strong> Save two passages into slots 1 and 2. Paste
-them somewhere. Open the clip library with
-<code>Grave+6</code>.</li>
+them somewhere. Open the clip library with <code>Grave+6</code>.</li>
 <li><strong>Day 4.</strong> Set up two text expansions. Add the
-application you use most as a shortcut with
-<code>Grave+9</code>.</li>
+application you use most as a shortcut with <code>Grave+9</code>.</li>
 <li><strong>Day 5.</strong> Try the markdown authoring helpers and the
 accessibility lint on a notes file.</li>
 <li><strong>Day 6.</strong> Add tasks, diary entries, or time alarms
@@ -993,9 +1235,8 @@ from the palette.</li>
 <code>cmd.profile.portabilityBackup</code> so your setup is safe.</li>
 </ol>
 <p>Once you can open the palette, capture a thought, save and reuse a
-clip, and read one long result in the virtual view, Spellforge is
-already earning its place. Everything else is here when you are
-ready.</p>
+clip, and read one long result in the virtual view, BITS-EASY is already
+earning its place. Everything else is here when you are ready.</p>
 <p>Welcome aboard.</p>
-
-
+</body>
+</html>

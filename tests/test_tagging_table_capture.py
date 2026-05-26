@@ -4,8 +4,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.table_capture import TableCaptureExtractor
-from spellforge_runtime.tagging import TaggingSession
+from bits_easy_runtime.table_capture import TableCaptureExtractor
+from bits_easy_runtime.tagging import TaggingSession
 
 
 class TaggingAndTableCaptureTests(unittest.TestCase):
@@ -65,3 +65,4 @@ class TaggingAndTableCaptureTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

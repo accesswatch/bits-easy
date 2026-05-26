@@ -5,13 +5,13 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import (
+from bits_easy_runtime import (
     AppAdapter,
     AppContext,
     DriftAwareAdapter,
     RuntimeResult,
     RuntimeDispatcher,
-    SpellforgeRuntime,
+    BitsEasyRuntime,
     load_runtime_config,
 )
 
@@ -20,7 +20,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo_root = Path(__file__).resolve().parents[1]
         self.config = load_runtime_config(self.repo_root)
-        self.runtime = SpellforgeRuntime(
+        self.runtime = BitsEasyRuntime(
             adapters={
                 "edge": AppAdapter("edge", supports_selection=True),
                 "word": DriftAwareAdapter("word", supports_selection=True, drift_delta=1),
@@ -530,17 +530,43 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertTrue(toggled_off.result.ok)
         self.assertEqual(toggled_off.result.payload["toggledTo"], "untagged")
 
-        toggled_on = dispatcher.dispatch_key_chord(ctx, "Grave+G", press_count=1)
+        toggled_on = dispatcher.dispatch_key_chord(ctx, "Grave+Alt+G", press_count=1)
         self.assertTrue(toggled_on.result.ok)
         self.assertEqual(toggled_on.plan.command_id, "cmd.tags.session.toggleCurrent")
         self.assertEqual(toggled_on.result.payload["toggledTo"], "tagged")
 
-        via_hotkey = dispatcher.dispatch_key_chord(ctx, "Grave+Shift+G", press_count=1)
+        via_hotkey = dispatcher.dispatch_key_chord(ctx, "Grave+Alt+Shift+G", press_count=1)
         self.assertTrue(via_hotkey.result.ok)
         self.assertEqual(via_hotkey.plan.command_id, "cmd.tags.session.tagFromSelection")
 
+    def test_glow_leader_sequence_help_and_routing(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha", 0)
+
+        class _GlowStub:
+            def health(self):
+                return RuntimeResult(ok=True, message="health", payload={"op": "health"})
+
+        dispatcher._glow = _GlowStub()
+
+        leader = dispatcher.dispatch_key_chord(ctx, "Grave+G", press_count=1)
+        self.assertTrue(leader.result.ok)
+        self.assertEqual(leader.plan.command_id, "cmd.sequence.glow.leader")
+
+        help_out = dispatcher.dispatch_key_chord(ctx, "Grave+Slash", press_count=1)
+        self.assertTrue(help_out.result.ok)
+        self.assertEqual(help_out.plan.command_id, "cmd.help.availableHotkeys")
+        self.assertEqual((help_out.result.payload or {}).get("helpScope"), "glow")
+        self.assertIn("virtualView", help_out.result.payload or {})
+
+        leader_again = dispatcher.dispatch_key_chord(ctx, "Grave+G", press_count=1)
+        self.assertTrue(leader_again.result.ok)
+        routed = dispatcher.dispatch_key_chord(ctx, "Grave+Y", press_count=1)
+        self.assertTrue(routed.result.ok)
+        self.assertEqual(routed.plan.command_id, "cmd.integration.glow.health")
+
     def test_layered_keymap_precedence_app_override(self) -> None:
-        # Same chord as global Spellforge helper key, but app override should win for edge.
+        # Same chord as global BITS-EASY helper key, but app override should win for edge.
         self.config.keymap_bindings.insert(
             0,
             {
@@ -1180,7 +1206,7 @@ class DispatcherIntegrationTests(unittest.TestCase):
 
     def test_e10_database_and_jamal_routes(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced", data_root=Path(tmpdir) / "spellforge")
+            dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced", data_root=Path(tmpdir) / "bits_easy")
             ctx = self._ctx("edge", "alpha", 0)
 
             self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.db.create", name="inventory").result.ok)
@@ -1234,3 +1260,4 @@ class DispatcherIntegrationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

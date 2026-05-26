@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.shortcuts import ShortcutsStore
+from bits_easy_runtime.shortcuts import ShortcutsStore
 
 
 class ShortcutsStoreTests(unittest.TestCase):
@@ -63,3 +63,4 @@ class ShortcutsStoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

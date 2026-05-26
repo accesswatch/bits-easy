@@ -5,8 +5,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.system_report import SystemReportService
-from spellforge_runtime.window_bookmarks import WindowBookmarks
+from bits_easy_runtime.system_report import SystemReportService
+from bits_easy_runtime.window_bookmarks import WindowBookmarks
 
 
 class WindowBookmarksAndSystemReportTests(unittest.TestCase):
@@ -43,3 +43,4 @@ class WindowBookmarksAndSystemReportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

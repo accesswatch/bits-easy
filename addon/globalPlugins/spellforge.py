@@ -20,7 +20,7 @@ except Exception:  # pragma: no cover - logHandler is always present inside NVDA
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
-    scriptCategory = "Spellforge"
+    scriptCategory = "BITS-EASY"
 
     _GLOW_FILE_COMMANDS = {
         "cmd.integration.glow.audit",
@@ -39,7 +39,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
     def __init__(self):
         super().__init__()
-        log.info("Spellforge: GlobalPlugin __init__ start")
+        log.info("BITS-EASY: GlobalPlugin __init__ start")
         self._runtime = None
         self._dispatcher = None
         self._config = None
@@ -54,7 +54,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         self._hotkey_overrides_path = None
         self._tools_menu_id = None
         self._initialize_runtime()
-        log.info("Spellforge: GlobalPlugin __init__ complete")
+        log.info("BITS-EASY: GlobalPlugin __init__ complete")
 
     def _get_focus_snapshot(self):
         try:
@@ -64,7 +64,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             focus = api.getFocusObject()
             return snapshot_from_focus_object(focus)
         except Exception:
-            log.exception("Spellforge: _get_focus_snapshot failed")
+            log.exception("BITS-EASY: _get_focus_snapshot failed")
             return None
 
     def _refresh_context_from_focus(self):
@@ -117,7 +117,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             here.parents[1],
         )
         log.info(
-            "Spellforge: _initialize_runtime start — __file__=%s, repo_root=%s, sys.path additions=%s",
+            "BITS-EASY: _initialize_runtime start — __file__=%s, repo_root=%s, sys.path additions=%s",
             here,
             repo_root,
             added,
@@ -139,9 +139,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             )
             from spellforge_settings import register_settings_panel
 
-            storage_dir = Path(os.getenv("APPDATA", str(repo_root))) / "Spellforge"
+            storage_root = Path(os.getenv("APPDATA", str(repo_root)))
+            storage_dir = storage_root / "BITS-EASY"
+            legacy_storage_dir = storage_root / "Spellforge"
+            if not storage_dir.exists() and legacy_storage_dir.exists():
+                storage_dir = legacy_storage_dir
             storage_dir.mkdir(parents=True, exist_ok=True)
-            log.info("Spellforge: storage dir ready at %s", storage_dir)
+            log.info("BITS-EASY: storage dir ready at %s", storage_dir)
             storage_path = storage_dir / "clip-slots.json"
             settings_path = storage_dir / "settings.json"
             palette_history_path = storage_dir / "palette-history.json"
@@ -150,7 +154,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._settings_store = SettingsStore(settings_path)
             self._settings = self._settings_store.load()
             log.info(
-                "Spellforge: settings loaded — profile=%s, global_hotkeys=%s",
+                "BITS-EASY: settings loaded — profile=%s, global_hotkeys=%s",
                 self._settings.profile_id,
                 self._settings.enable_global_hotkeys,
             )
@@ -167,10 +171,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 "firefox": BrowserLiveAdapter("firefox", snapshot_provider=snapshot_provider),
             }
             self._runtime = SpellforgeRuntime(adapters=adapters, storage_path=storage_path)
-            log.info("Spellforge: runtime constructed with %d adapters", len(adapters))
+            log.info("BITS-EASY: runtime constructed with %d adapters", len(adapters))
             self._config = load_runtime_config(repo_root)
             log.info(
-                "Spellforge: runtime config loaded — %d commands, %d bindings",
+                "BITS-EASY: runtime config loaded — %d commands, %d bindings",
                 len(self._config.command_catalog),
                 len(self._config.keymap_bindings),
             )
@@ -181,14 +185,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 profile_id=self._settings.profile_id,
             )
             self._dispatcher.multi_press_enabled_override = self._settings.enable_multi_press_gestures
-            log.info("Spellforge: dispatcher constructed for profile=%s", self._settings.profile_id)
+            log.info("BITS-EASY: dispatcher constructed for profile=%s", self._settings.profile_id)
             self._palette = PaletteEngine(config=self._config, history_path=palette_history_path)
             self._hotkeys = GlobalHotkeyService(
                 on_command=self._on_os_hotkey_command,
                 emulate_capslock_prefix=self._settings.emulate_capslock_prefix_for_os_hotkeys,
             )
             self._restart_hotkeys()
-            log.info("Spellforge: OS hotkey service started")
+            log.info("BITS-EASY: OS hotkey service started")
 
             focus_snapshot = self._get_focus_snapshot()
             app_id = "nvda"
@@ -219,18 +223,18 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 open_hotkey_editor=self._open_hotkey_editor,
             )
             log.info(
-                "Spellforge: settings panel registered=%s",
+                "BITS-EASY: settings panel registered=%s",
                 self._settings_panel_class is not None,
             )
             self._register_tools_menu_item()
             log.info(
-                "Spellforge: tools menu registered=%s",
+                "BITS-EASY: tools menu registered=%s",
                 self._tools_menu_id is not None,
             )
-            log.info("Spellforge: runtime ready, announcing load")
-            ui.message("Spellforge loaded")
+            log.info("BITS-EASY: runtime ready, announcing load")
+            ui.message("BITS-EASY loaded")
         except Exception as exc:
-            log.exception("Spellforge: failed to load runtime")
+            log.exception("BITS-EASY: failed to load runtime")
             self._runtime = None
             self._dispatcher = None
             self._config = None
@@ -241,22 +245,22 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._hotkeys = None
             self._context = None
             self._tools_menu_id = None
-            ui.message(f"Spellforge failed to load: {exc}")
+            ui.message(f"BITS-EASY failed to load: {exc}")
 
     def _load_hotkey_overrides(self):
         if self._config is None or self._hotkey_overrides_path is None:
             return
         try:
             if not self._hotkey_overrides_path.exists():
-                log.info("Spellforge: no hotkey overrides file present, using shipped keymap")
+                log.info("BITS-EASY: no hotkey overrides file present, using shipped keymap")
                 return
             payload = json.loads(self._hotkey_overrides_path.read_text(encoding="utf-8"))
             bindings = payload.get("bindings", []) if isinstance(payload, dict) else []
             if isinstance(bindings, list) and bindings:
                 self._config.keymap_bindings = [dict(row) for row in bindings if isinstance(row, dict)]
-                log.info("Spellforge: applied %d hotkey overrides", len(self._config.keymap_bindings))
+                log.info("BITS-EASY: applied %d hotkey overrides", len(self._config.keymap_bindings))
         except Exception:
-            log.exception("Spellforge: loading hotkey overrides failed")
+            log.exception("BITS-EASY: loading hotkey overrides failed")
 
     def _save_hotkey_overrides(self, bindings: list[dict]):
         if self._hotkey_overrides_path is None:
@@ -265,25 +269,25 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._hotkey_overrides_path.parent.mkdir(parents=True, exist_ok=True)
             payload = {"version": "v1", "bindings": bindings}
             self._hotkey_overrides_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-            log.info("Spellforge: saved %d hotkey overrides", len(bindings))
+            log.info("BITS-EASY: saved %d hotkey overrides", len(bindings))
         except Exception:
-            log.exception("Spellforge: saving hotkey overrides failed")
+            log.exception("BITS-EASY: saving hotkey overrides failed")
 
     def _register_tools_menu_item(self):
         try:
             import gui
             import wx
         except Exception:
-            log.exception("Spellforge: tools menu gui/wx import failed")
+            log.exception("BITS-EASY: tools menu gui/wx import failed")
             return
 
         try:
             menu = gui.mainFrame.sysTrayIcon.toolsMenu
-            item = menu.Append(wx.ID_ANY, "Spellforge keyboard mappings...")
+            item = menu.Append(wx.ID_ANY, "BITS-EASY keyboard mappings...")
             self._tools_menu_id = int(item.GetId())
             gui.mainFrame.Bind(wx.EVT_MENU, self._on_tools_menu_open_hotkeys, id=self._tools_menu_id)
         except Exception:
-            log.exception("Spellforge: tools menu append failed")
+            log.exception("BITS-EASY: tools menu append failed")
             self._tools_menu_id = None
 
     def _unregister_tools_menu_item(self):
@@ -297,7 +301,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             menu = gui.mainFrame.sysTrayIcon.toolsMenu
             menu.Delete(self._tools_menu_id)
         except Exception:
-            log.exception("Spellforge: tools menu unregister failed")
+            log.exception("BITS-EASY: tools menu unregister failed")
         finally:
             self._tools_menu_id = None
 
@@ -306,13 +310,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
     def _open_hotkey_editor(self):
         if self._config is None:
-            ui.message("Spellforge runtime unavailable")
+            ui.message("BITS-EASY runtime unavailable")
             return
         try:
             import gui
             from spellforge_settings import open_hotkey_editor_dialog
         except Exception:
-            log.exception("Spellforge: hotkey editor import failed")
+            log.exception("BITS-EASY: hotkey editor import failed")
             ui.message("Hotkey editor is unavailable")
             return
 
@@ -343,7 +347,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
             queueHandler.queueFunction(queueHandler.eventQueue, _run)
         except Exception:
-            log.exception("Spellforge: queueHandler import failed; running OS hotkey inline")
+            log.exception("BITS-EASY: queueHandler import failed; running OS hotkey inline")
             _run()
 
     def _restart_hotkeys(self):
@@ -359,7 +363,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._hotkeys.start(self._config.keymap_bindings)
 
     def terminate(self):
-        log.info("Spellforge: terminate start")
+        log.info("BITS-EASY: terminate start")
         try:
             self._unregister_tools_menu_item()
             if self._hotkeys is not None:
@@ -368,9 +372,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
             unregister_settings_panel(self._settings_panel_class)
         except Exception:
-            log.exception("Spellforge: terminate cleanup failed")
+            log.exception("BITS-EASY: terminate cleanup failed")
         super().terminate()
-        log.info("Spellforge: terminate complete")
+        log.info("BITS-EASY: terminate complete")
 
     def _get_settings(self):
         return self._settings
@@ -445,7 +449,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
     def _dispatch(self, command_id: str, **kwargs):
         if self._dispatcher is None or self._context is None:
-            ui.message("Spellforge runtime unavailable")
+            ui.message("BITS-EASY runtime unavailable")
             return
 
         if self._prompt_glow_file_if_needed(command_id, kwargs):
@@ -490,7 +494,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
             wx.CallAfter(self._show_glow_result_dialog, command_id, message, dict(payload))
         except Exception:
-            log.exception("Spellforge: unable to schedule GLOW result dialog")
+            log.exception("BITS-EASY: unable to schedule GLOW result dialog")
 
     @staticmethod
     def _glow_output_path(payload: dict) -> str:
@@ -538,7 +542,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             import wx
             import gui
         except Exception:
-            log.exception("Spellforge: GLOW result dialog dependencies unavailable")
+            log.exception("BITS-EASY: GLOW result dialog dependencies unavailable")
             return
 
         main_frame = gui.mainFrame
@@ -559,7 +563,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
             dlg = wx.Dialog(
                 main_frame,
-                title="Spellforge GLOW Result",
+                title="BITS-EASY GLOW Result",
                 style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
             )
             try:
@@ -600,7 +604,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                     try:
                         os.startfile(target)
                     except Exception:
-                        log.exception("Spellforge: unable to open GLOW output path")
+                        log.exception("BITS-EASY: unable to open GLOW output path")
                         ui.message("Unable to open output file")
 
                 def on_save(_evt):
@@ -629,7 +633,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                             Path(target).write_text(pretty_json, encoding="utf-8")
                         ui.message("GLOW result saved")
                     except Exception:
-                        log.exception("Spellforge: unable to save GLOW result")
+                        log.exception("BITS-EASY: unable to save GLOW result")
                         ui.message("Unable to save GLOW result")
 
                 copy_btn.Bind(wx.EVT_BUTTON, on_copy)
@@ -646,7 +650,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             finally:
                 dlg.Destroy()
         except Exception:
-            log.exception("Spellforge: GLOW result dialog failed")
+            log.exception("BITS-EASY: GLOW result dialog failed")
         finally:
             main_frame.postPopup()
 
@@ -664,7 +668,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             wx.CallAfter(self._show_glow_file_dialog_and_dispatch, command_id, dict(kwargs))
             return True
         except Exception:
-            log.exception("Spellforge: unable to open GLOW file picker")
+            log.exception("BITS-EASY: unable to open GLOW file picker")
             ui.message("GLOW command requires a file path.")
             return True
 
@@ -674,7 +678,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             import gui
             import queueHandler
         except Exception:
-            log.exception("Spellforge: GLOW file picker dependencies unavailable")
+            log.exception("BITS-EASY: GLOW file picker dependencies unavailable")
             try:
                 ui.message("GLOW file picker is unavailable")
             except Exception:
@@ -712,7 +716,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             dispatch_kwargs["path"] = selected_path
             queueHandler.queueFunction(queueHandler.eventQueue, self._dispatch, command_id, **dispatch_kwargs)
         except Exception:
-            log.exception("Spellforge: GLOW file picker flow failed")
+            log.exception("BITS-EASY: GLOW file picker flow failed")
             try:
                 ui.message("GLOW file picker failed")
             except Exception:
@@ -737,7 +741,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         try:
             module = importlib.import_module("globalPlugins.itemChooser")
         except Exception:
-            log.exception("Spellforge: Screen Item Chooser module import failed")
+            log.exception("BITS-EASY: Screen Item Chooser module import failed")
             return (
                 "Screen Item Chooser is not installed. "
                 "Install screenItemChooser-1.0.0.nvda-addon to enable this command."
@@ -757,24 +761,24 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         except TypeError:
             script_handler()
         except Exception:
-            log.exception("Spellforge: Screen Item Chooser invocation failed")
+            log.exception("BITS-EASY: Screen Item Chooser invocation failed")
             return "Screen Item Chooser failed to open."
 
         return ""
 
-    @scriptHandler.script(description="Spellforge command palette")
+    @scriptHandler.script(description="BITS-EASY command palette")
     def script_openCommandPalette(self, gesture):
         if self._dispatcher is None or self._context is None or self._config is None or self._palette is None:
-            ui.message("Spellforge runtime unavailable")
+            ui.message("BITS-EASY runtime unavailable")
             return
         if self._settings and not self._settings.enable_command_palette:
-            ui.message("Spellforge command palette is disabled in settings")
+            ui.message("BITS-EASY command palette is disabled in settings")
             return
 
         try:
             import wx
         except Exception:
-            log.exception("Spellforge: command palette wx import failed")
+            log.exception("BITS-EASY: command palette wx import failed")
             ui.message("Command palette UI is unavailable")
             return
 
@@ -794,7 +798,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             import wx
             import gui
         except Exception:
-            log.exception("Spellforge: command palette wx/gui import failed")
+            log.exception("BITS-EASY: command palette wx/gui import failed")
             try:
                 ui.message("Command palette UI is unavailable")
             except Exception:
@@ -805,7 +809,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         main_frame.prePopup()
         try:
             query = ""
-            query_dlg = wx.TextEntryDialog(main_frame, "Search commands", "Spellforge Command Palette", "")
+            query_dlg = wx.TextEntryDialog(main_frame, "Search commands", "BITS-EASY Command Palette", "")
             try:
                 if query_dlg.ShowModal() == wx.ID_OK:
                     query = query_dlg.GetValue()
@@ -829,7 +833,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             id_by_index = {idx: item.command_id for idx, item in enumerate(ranked)}
 
             command_id = ""
-            dlg = wx.SingleChoiceDialog(main_frame, "Choose Spellforge command", "Spellforge Command Palette", choices)
+            dlg = wx.SingleChoiceDialog(main_frame, "Choose BITS-EASY command", "BITS-EASY Command Palette", choices)
             try:
                 if dlg.ShowModal() != wx.ID_OK:
                     return
@@ -848,10 +852,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 import queueHandler
                 queueHandler.queueFunction(queueHandler.eventQueue, self._dispatch, command_id)
             except Exception:
-                log.exception("Spellforge: queueHandler unavailable; dispatching inline")
+                log.exception("BITS-EASY: queueHandler unavailable; dispatching inline")
                 self._dispatch(command_id)
         except Exception:
-            log.exception("Spellforge: command palette UI failed")
+            log.exception("BITS-EASY: command palette UI failed")
             try:
                 ui.message("Command palette failed")
             except Exception:
@@ -859,23 +863,23 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         finally:
             main_frame.postPopup()
 
-    @scriptHandler.script(description="Spellforge mark selection start")
+    @scriptHandler.script(description="BITS-EASY mark selection start")
     def script_markSelectionStart(self, gesture):
         self._dispatch("cmd.selection.markStart")
 
-    @scriptHandler.script(description="Spellforge mark selection end")
+    @scriptHandler.script(description="BITS-EASY mark selection end")
     def script_markSelectionEnd(self, gesture):
         self._dispatch("cmd.selection.markEnd")
 
-    @scriptHandler.script(description="Spellforge read selection context")
+    @scriptHandler.script(description="BITS-EASY read selection context")
     def script_readSelectionContext(self, gesture):
         self._dispatch("cmd.selection.readContext")
 
-    @scriptHandler.script(description="Spellforge copy to clip slot 1")
+    @scriptHandler.script(description="BITS-EASY copy to clip slot 1")
     def script_copyToSlotOne(self, gesture):
         self._dispatch("cmd.clip.copyToSlot", slot=1)
 
-    @scriptHandler.script(description="Spellforge paste from clip slot 1")
+    @scriptHandler.script(description="BITS-EASY paste from clip slot 1")
     def script_pasteFromSlotOne(self, gesture):
         self._dispatch("cmd.clip.pasteFromSlot", slot=1)
 

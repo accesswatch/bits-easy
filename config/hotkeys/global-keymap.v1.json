@@ -434,7 +434,7 @@
     },
     {
       "commandId": "cmd.tags.session.toggleCurrent",
-      "keyChord": "Grave+G",
+      "keyChord": "Grave+Alt+G",
       "scope": "global",
       "appId": null,
       "enabled": true,
@@ -442,7 +442,7 @@
     },
     {
       "commandId": "cmd.tags.session.tagFromSelection",
-      "keyChord": "Grave+Shift+G",
+      "keyChord": "Grave+Alt+Shift+G",
       "scope": "global",
       "appId": null,
       "enabled": true,

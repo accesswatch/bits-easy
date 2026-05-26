@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://spellforge.local/schemas/global-keymap.schema.json",
+  "$id": "https://bits-easy.local/schemas/global-keymap.schema.json",
   "title": "GlobalKeymap",
   "type": "object",
   "required": [

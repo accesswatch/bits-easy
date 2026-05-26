@@ -21,9 +21,9 @@ This analysis aligns with:
 3. [docs/VIRTUALIZED-BROWSE-AND-HOTKEY-SPEC.md](docs/VIRTUALIZED-BROWSE-AND-HOTKEY-SPEC.md)
 4. [docs/ENGINEERING-STARTER-PACK-VIRTUALIZED-HOTKEYS.md](docs/ENGINEERING-STARTER-PACK-VIRTUALIZED-HOTKEYS.md)
 
-## Baseline to Spellforge Adaptation Matrix
+## Baseline to BITS-EASY Adaptation Matrix
 
-| Baseline area | Parity target | Spellforge adaptation | Magical upgrade |
+| Baseline area | Parity target | BITS-EASY adaptation | Magical upgrade |
 | --- | --- | --- | --- |
 | BaselineSelect start and end markers | Full | SnapSpan marker state machine with adapter-backed range resolution | Context preview with size estimate and next-action suggestions |
 | BaselineSelect context report | Full | Deterministic speech and braille summary for start and end snippets | Confidence-aware fallback suggestions when range quality is low |
@@ -154,4 +154,5 @@ These criteria should be layered on top of existing E01 and E17 backlog tests.
 ## Summary
 
 Parity with Baseline in these areas is feasible and already structurally planned. The key to a better user experience is not just feature parity, but deterministic state handling, transparent fallback behavior, profile-aware feedback, and trusted return-to-context behavior.
+
 

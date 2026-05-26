@@ -1145,7 +1145,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Grave+G",
+    "defaultHotkey": "Grave+Alt+G",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -1157,7 +1157,7 @@
     "supportsHotkey": true,
     "supportsPalette": true,
     "supportsVirtualized": false,
-    "defaultHotkey": "Grave+Shift+G",
+    "defaultHotkey": "Grave+Alt+Shift+G",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },

@@ -6,11 +6,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.contacts_social import ContactsSocialService
-from spellforge_runtime.google_calendar_sync import GoogleCalendarSync
-from spellforge_runtime.google_contacts_sync import GoogleContactsSync
-from spellforge_runtime.tasks_calendar import TaskIcsBridge
-from spellforge_runtime.time_diary import TimeDiaryService
+from bits_easy_runtime.contacts_social import ContactsSocialService
+from bits_easy_runtime.google_calendar_sync import GoogleCalendarSync
+from bits_easy_runtime.google_contacts_sync import GoogleContactsSync
+from bits_easy_runtime.tasks_calendar import TaskIcsBridge
+from bits_easy_runtime.time_diary import TimeDiaryService
 
 
 class TimeDiaryTasksContactsTests(unittest.TestCase):
@@ -87,3 +87,4 @@ class TimeDiaryTasksContactsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

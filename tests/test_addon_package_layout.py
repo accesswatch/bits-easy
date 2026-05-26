@@ -52,17 +52,37 @@ class AddonPackageLayoutTests(unittest.TestCase):
         with zipfile.ZipFile(self._artifact) as zf:
             return zf.namelist()
 
+    def _manifest_dict(self):
+        with zipfile.ZipFile(self._artifact) as zf:
+            manifest_text = zf.read("manifest.ini").decode("utf-8")
+
+        out = {}
+        for raw_line in manifest_text.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            out[key.strip()] = value.strip().strip('"')
+        return out
+
+    @staticmethod
+    def _parse_version(version: str):
+        parts = [p.strip() for p in version.split(".") if p.strip()]
+        if len(parts) == 2:
+            parts.append("0")
+        return tuple(int(p) for p in parts)
+
     def test_required_files_at_zip_root(self):
         names = set(self._names())
         required = {
             "manifest.ini",
             "installTasks.py",
-            "globalPlugins/spellforge.py",
-            # spellforge_settings.py must live at zip root, NOT under globalPlugins/.
+            "globalPlugins/bits_easy.py",
+            # bits_easy_settings.py must live at zip root, NOT under globalPlugins/.
             # NVDA scans globalPlugins/*.py for a GlobalPlugin class and fails on helpers.
-            "spellforge_settings.py",
-            "spellforge_runtime/__init__.py",
-            "spellforge_runtime/diagnostics.py",
+            "bits_easy_settings.py",
+            "bits_easy_runtime/__init__.py",
+            "bits_easy_runtime/diagnostics.py",
             "config/hotkeys/commands/tier1-commands.v1.json",
             "config/hotkeys/global-keymap.v1.json",
             "doc/en/readme.md",
@@ -73,9 +93,9 @@ class AddonPackageLayoutTests(unittest.TestCase):
     def test_settings_helper_not_in_globalplugins(self):
         names = set(self._names())
         self.assertNotIn(
-            "globalPlugins/spellforge_settings.py",
+            "globalPlugins/bits_easy_settings.py",
             names,
-            "spellforge_settings.py must not live under globalPlugins/ — NVDA will fail to import it as a plugin.",
+            "bits_easy_settings.py must not live under globalPlugins/ — NVDA will fail to import it as a plugin.",
         )
 
     def test_no_addon_prefix_anywhere(self):
@@ -90,8 +110,48 @@ class AddonPackageLayoutTests(unittest.TestCase):
         with zipfile.ZipFile(self._artifact) as zf:
             with zf.open("manifest.ini") as fh:
                 text = fh.read().decode("utf-8")
-        self.assertIn("name = spellforgeHotkeys", text)
+        self.assertIn("name = bits-easy", text)
+
+    def test_manifest_doc_filename_exists_in_package(self):
+        names = set(self._names())
+        manifest = self._manifest_dict()
+        doc_name = manifest.get("docFileName", "")
+
+        self.assertTrue(doc_name, "manifest.ini must declare docFileName")
+        self.assertIn(
+            f"doc/en/{doc_name}",
+            names,
+            f"manifest docFileName points to missing packaged file: {doc_name}",
+        )
+
+    def test_manifest_has_release_metadata_fields(self):
+        manifest = self._manifest_dict()
+        required = {
+            "name",
+            "summary",
+            "version",
+            "author",
+            "url",
+            "minimumNVDAVersion",
+            "lastTestedNVDAVersion",
+            "docFileName",
+            "updateChannel",
+            "changelog",
+        }
+        missing = sorted(k for k in required if not manifest.get(k))
+        self.assertFalse(missing, f"Manifest is missing required release metadata fields: {missing}")
+
+    def test_manifest_version_ordering_is_valid(self):
+        manifest = self._manifest_dict()
+        min_v = self._parse_version(manifest["minimumNVDAVersion"])
+        tested_v = self._parse_version(manifest["lastTestedNVDAVersion"])
+        self.assertLessEqual(
+            min_v,
+            tested_v,
+            "minimumNVDAVersion must be less than or equal to lastTestedNVDAVersion",
+        )
 
 
 if __name__ == "__main__":
     unittest.main()
+

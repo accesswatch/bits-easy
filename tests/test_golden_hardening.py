@@ -5,11 +5,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import (
+from bits_easy_runtime import (
     AppAdapter,
     AppContext,
     RuntimeDispatcher,
-    SpellforgeRuntime,
+    BitsEasyRuntime,
     load_runtime_config,
 )
 
@@ -18,7 +18,7 @@ class GoldenHardeningTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo_root = Path(__file__).resolve().parents[1]
         self.config = load_runtime_config(self.repo_root)
-        self.runtime = SpellforgeRuntime(
+        self.runtime = BitsEasyRuntime(
             adapters={
                 "edge": AppAdapter("edge", supports_selection=True),
                 "word": AppAdapter("word", supports_selection=True),
@@ -37,7 +37,7 @@ class GoldenHardeningTests(unittest.TestCase):
 
     def test_restart_resilience_for_completed_features(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            data_root = Path(tmpdir) / "spellforge"
+            data_root = Path(tmpdir) / "bits_easy"
 
             d1 = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced", data_root=data_root)
             ctx = self._ctx("edge", "capture me", 0)
@@ -102,3 +102,4 @@ class GoldenHardeningTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

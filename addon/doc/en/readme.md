@@ -1,8 +1,8 @@
-# Spellforge NVDA Add-on
+# BITS-EASY NVDA Add-on
 
 ## Purpose
 
-Spellforge adds selection-first hotkeys, clip slot workflows, and merge utilities to NVDA.
+BITS-EASY (Efficient Accessibility Shortcuts for You) adds selection-first hotkeys, clip slot workflows, and merge utilities to NVDA.
 
 ## Compatibility Baseline
 
@@ -30,8 +30,8 @@ This add-on handoff profile is validated only on NVDA 2026.1 x64.
 
 ## Development Notes
 
-1. Runtime source lives in src/spellforge_runtime.
-2. Global plugin entrypoint is addon/globalPlugins/spellforge.py.
+1. Runtime source lives in src/bits_easy_runtime.
+2. Global plugin entrypoint is addon/globalPlugins/bits_easy.py.
 3. Hotkey profiles and policies live under config/hotkeys.
 
 ## Optional Integration Dependencies
@@ -44,3 +44,5 @@ For Google Calendar or Google Contacts features, install:
 2. google-auth
 3. google-auth-oauthlib
 4. google-auth-httplib2
+
+

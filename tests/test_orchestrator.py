@@ -6,12 +6,12 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import (
+from bits_easy_runtime import (
     AppAdapter,
     AppContext,
     CommandOrchestrator,
     RuntimeDispatcher,
-    SpellforgeRuntime,
+    BitsEasyRuntime,
     load_runtime_config,
 )
 
@@ -22,7 +22,7 @@ class OrchestratorTests(unittest.TestCase):
         config = load_runtime_config(repo_root)
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            runtime = SpellforgeRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
+            runtime = BitsEasyRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
             dispatcher = RuntimeDispatcher(runtime=runtime, config=config, profile_id="balanced")
             journal = Path(tmpdir) / "journal.jsonl"
             orchestrator = CommandOrchestrator(dispatcher=dispatcher, journal_path=journal)
@@ -62,7 +62,7 @@ class OrchestratorTests(unittest.TestCase):
         config = load_runtime_config(repo_root)
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            runtime = SpellforgeRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
+            runtime = BitsEasyRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
             dispatcher = RuntimeDispatcher(runtime=runtime, config=config, profile_id="balanced")
             journal = Path(tmpdir) / "journal.jsonl"
             memory = Path(tmpdir) / "intent-memory.json"
@@ -87,3 +87,4 @@ class OrchestratorTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

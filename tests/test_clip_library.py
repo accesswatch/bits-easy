@@ -5,14 +5,14 @@ import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.clip_library import ClipLibraryStore
-from spellforge_runtime.engine import AppAdapter, AppContext, SpellforgeRuntime
+from bits_easy_runtime.clip_library import ClipLibraryStore
+from bits_easy_runtime.engine import AppAdapter, AppContext, BitsEasyRuntime
 
 
 class ClipLibraryStoreTests(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
-        self.runtime = SpellforgeRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
+        self.runtime = BitsEasyRuntime(adapters={"edge": AppAdapter("edge", supports_selection=True)})
         self.ctx = AppContext(
             app_id="edge",
             window_id="w1",
@@ -109,3 +109,4 @@ class ClipLibraryStoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

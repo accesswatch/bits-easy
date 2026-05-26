@@ -4,7 +4,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import (
+from bits_easy_runtime import (
     AppContext,
     BrowserLiveAdapter,
     OutlookLiveAdapter,
@@ -125,3 +125,4 @@ class LiveAdapterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

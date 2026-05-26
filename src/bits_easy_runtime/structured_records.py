@@ -1,0 +1,752 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+import csv
+import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from .diagnostics import get_logger
+from .engine import RuntimeResult
+
+_logger = get_logger("bits_easy.structured_records")
+
+
+@dataclass
+class FieldDef:
+    name: str
+    field_type: str = "text"
+    required: bool = False
+    help_text: str = ""
+    validator: str = ""
+    choices: List[str] | None = None
+
+
+class StructuredRecordService:
+    TEMPLATE_PACKS: Dict[str, List[Dict[str, Any]]] = {
+        "contacts": [
+            {"name": "name", "type": "text", "required": True, "validator": "", "helpText": "Contact display name"},
+            {"name": "email", "type": "text", "required": False, "validator": "email", "helpText": "Primary email"},
+            {"name": "phone", "type": "text", "required": False, "validator": "", "helpText": "Primary phone"},
+            {"name": "company", "type": "text", "required": False, "validator": "", "helpText": "Organization"},
+        ],
+        "inventory": [
+            {"name": "item", "type": "text", "required": True, "validator": "", "helpText": "Item title"},
+            {"name": "sku", "type": "text", "required": True, "validator": "", "helpText": "Stock unit code"},
+            {"name": "quantity", "type": "number", "required": True, "validator": "", "helpText": "In-stock amount"},
+            {"name": "updatedAt", "type": "date", "required": False, "validator": "", "helpText": "Last update ISO date"},
+        ],
+        "tasks": [
+            {"name": "title", "type": "text", "required": True, "validator": "", "helpText": "Task title"},
+            {"name": "status", "type": "choice", "required": True, "validator": "", "choices": ["todo", "doing", "done"]},
+            {"name": "dueDate", "type": "date", "required": False, "validator": "", "helpText": "Due ISO date"},
+            {"name": "owner", "type": "text", "required": False, "validator": "", "helpText": "Task owner"},
+        ],
+    }
+
+    def __init__(self, storage_path: Path | str | None = None):
+        self._storage_path = Path(storage_path) if storage_path else None
+        self._databases: Dict[str, Dict[str, Any]] = {}
+        self._deleted_snapshots: Dict[str, Dict[str, Any]] = {}
+        self._sync_plans: Dict[str, Dict[str, Any]] = {}
+        self._current_db = ""
+        self._entry_counter = 0
+        self._launch_bookmark: Dict[str, str] | None = None
+        self._load()
+
+    def _save(self) -> None:
+        if self._storage_path is None:
+            return
+        self._storage_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "databases": self._databases,
+            "deleted": self._deleted_snapshots,
+            "syncPlans": self._sync_plans,
+            "current": self._current_db,
+            "entryCounter": self._entry_counter,
+            "launchBookmark": self._launch_bookmark,
+        }
+        self._storage_path.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
+
+    def _load(self) -> None:
+        if self._storage_path is None or not self._storage_path.exists():
+            return
+        try:
+            payload = json.loads(self._storage_path.read_text(encoding="utf-8"))
+        except Exception:
+            _logger.exception("BITS-EASY: loading structured records at %s failed", self._storage_path)
+            return
+        self._databases = payload.get("databases", {}) if isinstance(payload.get("databases", {}), dict) else {}
+        self._deleted_snapshots = payload.get("deleted", {}) if isinstance(payload.get("deleted", {}), dict) else {}
+        self._sync_plans = payload.get("syncPlans", {}) if isinstance(payload.get("syncPlans", {}), dict) else {}
+        self._current_db = str(payload.get("current", ""))
+        self._entry_counter = int(payload.get("entryCounter", 0))
+        launch = payload.get("launchBookmark")
+        self._launch_bookmark = launch if isinstance(launch, dict) else None
+
+    def _active(self) -> tuple[Optional[str], Optional[Dict[str, Any]], Optional[RuntimeResult]]:
+        if not self._current_db:
+            return None, None, RuntimeResult(ok=False, message="No database is selected.")
+        db = self._databases.get(self._current_db)
+        if db is None:
+            return None, None, RuntimeResult(ok=False, message="Selected database was not found.")
+        return self._current_db, db, None
+
+    @staticmethod
+    def _normalize_name(name: str) -> str:
+        return name.strip().lower()
+
+    def create_database(self, name: str) -> RuntimeResult:
+        db_name = self._normalize_name(name)
+        if not db_name:
+            return RuntimeResult(ok=False, message="Database name is required.")
+        if db_name in self._databases:
+            return RuntimeResult(ok=False, message="Database name must be unique.")
+        self._databases[db_name] = {"schema": {}, "entries": []}
+        self._current_db = db_name
+        self._save()
+        return RuntimeResult(ok=True, message="Database created.", payload={"database": db_name})
+
+    def select_database(self, name: str) -> RuntimeResult:
+        db_name = self._normalize_name(name)
+        if db_name not in self._databases:
+            return RuntimeResult(ok=False, message="Database was not found.")
+        self._current_db = db_name
+        self._save()
+        return RuntimeResult(ok=True, message="Database selected.", payload={"database": db_name})
+
+    def list_databases(self) -> RuntimeResult:
+        items = []
+        for db_name in sorted(self._databases.keys()):
+            db = self._databases.get(db_name, {})
+            schema = db.get("schema", {})
+            entries = db.get("entries", [])
+            items.append(
+                {
+                    "database": db_name,
+                    "selected": db_name == self._current_db,
+                    "fieldCount": len(schema) if isinstance(schema, dict) else 0,
+                    "entryCount": len(entries) if isinstance(entries, list) else 0,
+                }
+            )
+        return RuntimeResult(
+            ok=True,
+            message="Database list ready.",
+            payload={"items": items, "count": len(items), "current": self._current_db},
+        )
+
+    def apply_template(self, name: str, *, database_name: str = "") -> RuntimeResult:
+        template = self._normalize_name(name)
+        fields = self.TEMPLATE_PACKS.get(template)
+        if fields is None:
+            return RuntimeResult(
+                ok=False,
+                message="Template was not found.",
+                payload={"available": sorted(self.TEMPLATE_PACKS.keys())},
+            )
+        target = self._normalize_name(database_name or template)
+        if not target:
+            target = template
+        self._databases[target] = {"schema": {}, "entries": []}
+        self._current_db = target
+        db = self._databases[target]
+        for row in fields:
+            fname = str(row.get("name", "")).strip()
+            if not fname:
+                continue
+            db["schema"][fname] = {
+                "name": fname,
+                "type": str(row.get("type", "text")),
+                "required": bool(row.get("required", False)),
+                "helpText": str(row.get("helpText", "")),
+                "validator": str(row.get("validator", "")),
+                "choices": [str(x) for x in list(row.get("choices", []))],
+            }
+        self._save()
+        return RuntimeResult(
+            ok=True,
+            message="Template applied.",
+            payload={"database": target, "template": template, "fieldCount": len(db["schema"])},
+        )
+
+    def delete_database(self, name: str, *, confirm: bool) -> RuntimeResult:
+        db_name = self._normalize_name(name)
+        if db_name not in self._databases:
+            return RuntimeResult(ok=False, message="Database was not found.")
+        if not confirm:
+            return RuntimeResult(ok=False, message="Delete requires confirmation.")
+        self._deleted_snapshots[db_name] = self._databases[db_name]
+        del self._databases[db_name]
+        if self._current_db == db_name:
+            self._current_db = ""
+        self._save()
+        return RuntimeResult(ok=True, message="Database deleted with restore point.", payload={"database": db_name})
+
+    def restore_database(self, name: str) -> RuntimeResult:
+        db_name = self._normalize_name(name)
+        snap = self._deleted_snapshots.get(db_name)
+        if snap is None:
+            return RuntimeResult(ok=False, message="Restore point was not found.")
+        self._databases[db_name] = snap
+        self._current_db = db_name
+        self._save()
+        return RuntimeResult(ok=True, message="Database restored.", payload={"database": db_name})
+
+    def define_field(
+        self,
+        field_name: str,
+        *,
+        field_type: str = "text",
+        required: bool = False,
+        help_text: str = "",
+        validator: str = "",
+        choices: Optional[List[str]] = None,
+    ) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        fname = field_name.strip()
+        if not fname:
+            return RuntimeResult(ok=False, message="Field name is required.")
+        ftype = field_type.strip().lower()
+        if ftype not in ("text", "number", "bool", "date", "choice"):
+            return RuntimeResult(ok=False, message="Field type must be text, number, bool, date, or choice.")
+        db["schema"][fname] = {
+            "name": fname,
+            "type": ftype,
+            "required": bool(required),
+            "helpText": help_text.strip(),
+            "validator": validator.strip(),
+            "choices": [str(x) for x in (choices or [])],
+        }
+        self._save()
+        return RuntimeResult(ok=True, message="Field defined.", payload={"field": fname, "type": ftype})
+
+    def _validate_value(self, field: Dict[str, Any], value: Any) -> Optional[str]:
+        ftype = str(field.get("type", "text"))
+        raw = "" if value is None else str(value)
+        if field.get("required", False) and not raw.strip():
+            return f"Field {field.get('name','')} is required."
+        if not raw.strip():
+            return None
+
+        if ftype == "number":
+            try:
+                float(raw)
+            except Exception:
+                return f"Field {field.get('name','')} must be numeric."
+        elif ftype == "bool":
+            if raw.strip().lower() not in ("true", "false", "1", "0", "yes", "no"):
+                return f"Field {field.get('name','')} must be boolean."
+        elif ftype == "date":
+            from datetime import datetime
+
+            try:
+                datetime.fromisoformat(raw)
+            except Exception:
+                return f"Field {field.get('name','')} must be ISO date/datetime."
+        elif ftype == "choice":
+            choices = [str(x) for x in field.get("choices", [])]
+            if choices and raw not in choices:
+                return f"Field {field.get('name','')} must match allowed choices."
+
+        validator = str(field.get("validator", "")).strip().lower()
+        if validator == "email" and "@" not in raw:
+            return f"Field {field.get('name','')} must be a valid email."
+        return None
+
+    def _validate_entry(self, schema: Dict[str, Any], values: Dict[str, Any]) -> List[str]:
+        errors = []
+        for field_name, field in schema.items():
+            err = self._validate_value(field, values.get(field_name))
+            if err:
+                errors.append(err)
+        return errors
+
+    def add_entry(self, values: Dict[str, Any]) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        schema = db.get("schema", {})
+        if not schema:
+            return RuntimeResult(ok=False, message="Define at least one field before adding entries.")
+
+        errors = self._validate_entry(schema, values)
+        if errors:
+            return RuntimeResult(ok=False, message="Entry validation failed.", payload={"errors": errors})
+
+        self._entry_counter += 1
+        eid = f"rec-{self._entry_counter:05d}"
+        row = {"entryId": eid, "values": {k: values.get(k) for k in schema.keys()}}
+        db["entries"].append(row)
+        self._save()
+        return RuntimeResult(ok=True, message="Entry added.", payload={"entryId": eid})
+
+    def edit_entry(self, entry_id: str, values: Dict[str, Any]) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        schema = db.get("schema", {})
+        entry = next((x for x in db.get("entries", []) if str(x.get("entryId", "")) == entry_id.strip()), None)
+        if entry is None:
+            return RuntimeResult(ok=False, message="Entry not found.")
+
+        merged = dict(entry.get("values", {}))
+        merged.update(values)
+        errors = self._validate_entry(schema, merged)
+        if errors:
+            return RuntimeResult(ok=False, message="Entry validation failed.", payload={"errors": errors})
+
+        entry["values"] = {k: merged.get(k) for k in schema.keys()}
+        self._save()
+        return RuntimeResult(ok=True, message="Entry updated.", payload={"entryId": entry_id.strip()})
+
+    def delete_entry(self, entry_id: str, *, confirm: bool) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        if not confirm:
+            return RuntimeResult(ok=False, message="Delete requires confirmation.")
+
+        target = entry_id.strip()
+        before = len(db.get("entries", []))
+        db["entries"] = [x for x in db.get("entries", []) if str(x.get("entryId", "")) != target]
+        if len(db["entries"]) == before:
+            return RuntimeResult(ok=False, message="Entry not found.")
+        self._save()
+        return RuntimeResult(ok=True, message="Entry deleted.", payload={"entryId": target})
+
+    def list_entries(self, columns: Optional[List[str]] = None) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        schema = db.get("schema", {})
+        chosen = [str(x) for x in (columns or list(schema.keys()))]
+        rows = []
+        for e in db.get("entries", []):
+            vals = e.get("values", {})
+            row = {"entryId": e.get("entryId", "")}
+            for col in chosen:
+                row[col] = vals.get(col)
+            rows.append(row)
+        return RuntimeResult(ok=True, message="Entries ready.", payload={"columns": chosen, "items": rows, "count": len(rows)})
+
+    def entry_detail(self, entry_id: str) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        entry = next((x for x in db.get("entries", []) if str(x.get("entryId", "")) == entry_id.strip()), None)
+        if entry is None:
+            return RuntimeResult(ok=False, message="Entry not found.")
+        return RuntimeResult(ok=True, message="Entry detail ready.", payload={"entry": entry})
+
+    def search_entries(self, field: str, query: str) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        key = field.strip()
+        q = query.strip().lower()
+        rows = []
+        for e in db.get("entries", []):
+            value = str(e.get("values", {}).get(key, ""))
+            if q and q not in value.lower():
+                continue
+            rows.append(e)
+        return RuntimeResult(ok=True, message="Search results ready.", payload={"items": rows, "count": len(rows), "field": key})
+
+    def sort_entries(self, field: str, descending: bool = False) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        key = field.strip()
+        schema = db.get("schema", {})
+        field_meta = schema.get(key, {}) if isinstance(schema, dict) else {}
+        ftype = str(field_meta.get("type", "text"))
+        rows = list(db.get("entries", []))
+
+        def sort_key(row: Dict[str, Any]):
+            value = row.get("values", {}).get(key, "")
+            if value is None:
+                return ""
+            text = str(value)
+            if ftype == "number":
+                try:
+                    return float(text)
+                except Exception:
+                    return float("-inf")
+            if ftype == "bool":
+                return text.strip().lower() in ("true", "1", "yes")
+            return text
+
+        rows.sort(key=sort_key, reverse=bool(descending))
+        return RuntimeResult(ok=True, message="Sorted entries ready.", payload={"items": rows, "count": len(rows), "field": key, "descending": bool(descending)})
+
+    def search_advanced(
+        self,
+        *,
+        text_query: str = "",
+        filters: Optional[Dict[str, Any]] = None,
+        limit: int = 50,
+    ) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        q = text_query.strip().lower()
+        active_filters = {str(k): str(v) for k, v in (filters or {}).items() if str(v).strip()}
+        rows = []
+        for entry in db.get("entries", []):
+            values = entry.get("values", {})
+            if active_filters:
+                mismatch = False
+                for fk, fv in active_filters.items():
+                    if fv.lower() not in str(values.get(fk, "")).lower():
+                        mismatch = True
+                        break
+                if mismatch:
+                    continue
+            if q:
+                haystack = " ".join(str(v) for v in values.values()).lower()
+                if q not in haystack:
+                    continue
+            rows.append(entry)
+            if len(rows) >= max(1, int(limit)):
+                break
+        return RuntimeResult(
+            ok=True,
+            message="Advanced search results ready.",
+            payload={"items": rows, "count": len(rows), "query": q, "filters": active_filters},
+        )
+
+    def entry_grid(
+        self,
+        *,
+        fields: Optional[List[str]] = None,
+        sort_by: str = "",
+        descending: bool = False,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        schema = db.get("schema", {})
+        selected_fields = [str(x) for x in (fields or list(schema.keys()))]
+        rows = list(db.get("entries", []))
+        if sort_by.strip():
+            sorted_out = self.sort_entries(sort_by, descending=descending)
+            if not sorted_out.ok:
+                return sorted_out
+            rows = list((sorted_out.payload or {}).get("items", []))
+        start = max(0, int(offset))
+        size = max(1, int(limit))
+        page = rows[start:start + size]
+        items = []
+        for entry in page:
+            values = entry.get("values", {})
+            row = {"entryId": entry.get("entryId", "")}
+            for key in selected_fields:
+                row[key] = values.get(key)
+            items.append(row)
+        return RuntimeResult(
+            ok=True,
+            message="Entry grid ready.",
+            payload={
+                "fields": selected_fields,
+                "items": items,
+                "count": len(items),
+                "total": len(rows),
+                "offset": start,
+                "limit": size,
+            },
+        )
+
+    def export_csv(self, out_path: Path | str) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        path = Path(out_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        schema = list(db.get("schema", {}).keys())
+        with path.open("w", encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(["entryId"] + schema)
+            for e in db.get("entries", []):
+                vals = e.get("values", {})
+                writer.writerow([e.get("entryId", "")] + [vals.get(c, "") for c in schema])
+        return RuntimeResult(ok=True, message="CSV export complete.", payload={"path": str(path)})
+
+    def export_text(self, out_path: Path | str) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+        path = Path(out_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        lines = []
+        for e in db.get("entries", []):
+            lines.append(f"[{e.get('entryId','')}]")
+            for k, v in e.get("values", {}).items():
+                lines.append(f"{k}: {v}")
+            lines.append("")
+        path.write_text("\n".join(lines), encoding="utf-8")
+        return RuntimeResult(ok=True, message="Text export complete.", payload={"path": str(path)})
+
+    def export_json(self, out_path: Path | str) -> RuntimeResult:
+        db_name, db, err = self._active()
+        if err:
+            return err
+        path = Path(out_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "database": db_name,
+            "schema": db.get("schema", {}),
+            "entries": db.get("entries", []),
+        }
+        path.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
+        return RuntimeResult(ok=True, message="JSON export complete.", payload={"path": str(path), "database": db_name})
+
+    def dashboard(self) -> RuntimeResult:
+        db_name, db, err = self._active()
+        if err:
+            return err
+        schema = db.get("schema", {})
+        entries = list(db.get("entries", []))
+        required_fields = [k for k, v in schema.items() if bool((v or {}).get("required", False))]
+        completeness_checks = 0
+        completeness_filled = 0
+        for row in entries:
+            values = row.get("values", {})
+            for key in required_fields:
+                completeness_checks += 1
+                if str(values.get(key, "")).strip():
+                    completeness_filled += 1
+        completeness_rate = 1.0 if completeness_checks == 0 else round(completeness_filled / completeness_checks, 4)
+        by_type: Dict[str, int] = {}
+        for meta in schema.values():
+            field_type = str((meta or {}).get("type", "text"))
+            by_type[field_type] = by_type.get(field_type, 0) + 1
+        return RuntimeResult(
+            ok=True,
+            message="Database dashboard ready.",
+            payload={
+                "database": db_name,
+                "fieldCount": len(schema),
+                "entryCount": len(entries),
+                "requiredFieldCount": len(required_fields),
+                "completenessRate": completeness_rate,
+                "fieldTypes": by_type,
+                "databases": self.list_databases().payload,
+            },
+        )
+
+    def jamal_export(self, out_path: Path | str) -> RuntimeResult:
+        db_name, db, err = self._active()
+        if err:
+            return err
+        path = Path(out_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "jamalVersion": 1,
+            "database": db_name,
+            "schema": db.get("schema", {}),
+            "entries": db.get("entries", []),
+        }
+        path.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
+        return RuntimeResult(ok=True, message="Jamal export complete.", payload={"path": str(path), "database": db_name})
+
+    def jamal_import(self, in_path: Path | str, *, database_name: str = "") -> RuntimeResult:
+        path = Path(in_path)
+        if not path.exists():
+            return RuntimeResult(ok=False, message="Jamal import file not found.")
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return RuntimeResult(ok=False, message=f"Jamal import failed: {exc}")
+
+        schema = payload.get("schema", {})
+        entries = payload.get("entries", [])
+        if not isinstance(schema, dict) or not isinstance(entries, list):
+            return RuntimeResult(ok=False, message="Jamal import data is invalid.")
+
+        target = self._normalize_name(database_name or str(payload.get("database", "jamal-import")))
+        if not target:
+            target = "jamal-import"
+        self._databases[target] = {"schema": schema, "entries": entries}
+        self._current_db = target
+
+        for e in entries:
+            eid = str(e.get("entryId", ""))
+            if eid.startswith("rec-"):
+                try:
+                    n = int(eid.replace("rec-", ""))
+                    self._entry_counter = max(self._entry_counter, n)
+                except Exception:
+                    pass
+
+        self._save()
+        return RuntimeResult(ok=True, message="Jamal import complete.", payload={"database": target, "count": len(entries)})
+
+    def jamal_launch(self, dataset_path: Path | str) -> RuntimeResult:
+        db_name, _, err = self._active()
+        if err:
+            return err
+        path = Path(dataset_path)
+        self._launch_bookmark = {"database": db_name or "", "datasetPath": str(path)}
+        self._save()
+        return RuntimeResult(ok=True, message="Jamal launch bridge ready.", payload={"datasetPath": str(path), "bookmark": self._launch_bookmark})
+
+    def jamal_return(self) -> RuntimeResult:
+        if self._launch_bookmark is None:
+            return RuntimeResult(ok=False, message="No Jamal launch bookmark found.")
+        target = str(self._launch_bookmark.get("database", ""))
+        if target and target in self._databases:
+            self._current_db = target
+            self._save()
+            return RuntimeResult(ok=True, message="Returned from Jamal launch bookmark.", payload={"database": target})
+        return RuntimeResult(ok=False, message="Launch bookmark database was not found.")
+
+    def jamal_sync(self, incoming_entries: List[Dict[str, Any]], *, apply: bool = False) -> RuntimeResult:
+        _, db, err = self._active()
+        if err:
+            return err
+
+        current = {str(e.get("entryId", "")): e for e in db.get("entries", [])}
+        incoming = {str(e.get("entryId", "")): e for e in incoming_entries}
+
+        conflicts = []
+        for eid, inc in incoming.items():
+            cur = current.get(eid)
+            if cur is None:
+                continue
+            if cur.get("values", {}) != inc.get("values", {}):
+                conflicts.append({"entryId": eid, "current": cur.get("values", {}), "incoming": inc.get("values", {})})
+
+        if not apply:
+            return RuntimeResult(ok=True, message="Jamal sync dry-run complete.", payload={"conflicts": conflicts, "conflictCount": len(conflicts), "wouldApply": True})
+
+        # Apply mode: merge incoming values, keep restore snapshot.
+        db_name = self._current_db
+        if db_name:
+            self._deleted_snapshots[f"sync-snapshot-{db_name}"] = {
+                "schema": dict(db.get("schema", {})),
+                "entries": list(db.get("entries", [])),
+            }
+
+        merged = dict(current)
+        for eid, inc in incoming.items():
+            merged[eid] = inc
+        db["entries"] = list(merged.values())
+        self._save()
+        return RuntimeResult(ok=True, message="Jamal sync applied with snapshot.", payload={"conflictCount": len(conflicts), "mergedCount": len(db['entries'])})
+
+    def jamal_sync_plan(self, incoming_entries: List[Dict[str, Any]], *, strategy: str = "prefer-incoming") -> RuntimeResult:
+        db_name, db, err = self._active()
+        if err:
+            return err
+        current = {str(e.get("entryId", "")): e for e in db.get("entries", [])}
+        incoming = {str(e.get("entryId", "")): e for e in incoming_entries}
+        mode = strategy.strip().lower()
+        if mode not in ("prefer-incoming", "prefer-current", "merge-values"):
+            return RuntimeResult(ok=False, message="Sync strategy must be prefer-incoming, prefer-current, or merge-values.")
+
+        conflicts: List[Dict[str, Any]] = []
+        resolutions: List[Dict[str, Any]] = []
+        for eid, inc in incoming.items():
+            cur = current.get(eid)
+            if cur is None:
+                resolutions.append({"entryId": eid, "action": "create", "resolved": inc})
+                continue
+            cur_vals = dict(cur.get("values", {}))
+            inc_vals = dict(inc.get("values", {}))
+            if cur_vals == inc_vals:
+                resolutions.append({"entryId": eid, "action": "noop", "resolved": cur})
+                continue
+            if mode == "prefer-current":
+                resolved_vals = cur_vals
+            elif mode == "merge-values":
+                resolved_vals = dict(cur_vals)
+                resolved_vals.update(inc_vals)
+            else:
+                resolved_vals = inc_vals
+            conflicts.append({"entryId": eid, "current": cur_vals, "incoming": inc_vals, "resolved": resolved_vals})
+            resolutions.append({"entryId": eid, "action": "update", "resolved": {"entryId": eid, "values": resolved_vals}})
+
+        plan_id = f"sync-plan-{len(self._sync_plans) + 1:04d}"
+        self._sync_plans[plan_id] = {
+            "database": db_name,
+            "strategy": mode,
+            "incoming": list(incoming.values()),
+            "resolutions": resolutions,
+            "conflicts": conflicts,
+        }
+        self._save()
+        return RuntimeResult(
+            ok=True,
+            message="Jamal sync plan ready.",
+            payload={
+                "planId": plan_id,
+                "database": db_name,
+                "strategy": mode,
+                "conflicts": conflicts,
+                "conflictCount": len(conflicts),
+                "resolutionCount": len(resolutions),
+            },
+        )
+
+    def jamal_sync_apply_plan(self, plan_id: str, *, confirm: bool) -> RuntimeResult:
+        if not confirm:
+            return RuntimeResult(ok=False, message="Apply plan requires confirmation.")
+        pid = plan_id.strip()
+        plan = self._sync_plans.get(pid)
+        if plan is None:
+            return RuntimeResult(ok=False, message="Sync plan was not found.")
+
+        db_name = str(plan.get("database", ""))
+        db = self._databases.get(db_name)
+        if db is None:
+            return RuntimeResult(ok=False, message="Sync plan database was not found.")
+
+        current = {str(e.get("entryId", "")): e for e in db.get("entries", [])}
+        self._deleted_snapshots[f"sync-plan-snapshot-{db_name}"] = {
+            "schema": dict(db.get("schema", {})),
+            "entries": list(db.get("entries", [])),
+        }
+
+        for step in list(plan.get("resolutions", [])):
+            eid = str(step.get("entryId", ""))
+            action = str(step.get("action", ""))
+            resolved = step.get("resolved")
+            if action == "create" and isinstance(resolved, dict):
+                current[eid] = resolved
+            elif action == "update" and isinstance(resolved, dict):
+                current[eid] = resolved
+            elif action == "noop":
+                continue
+
+        db["entries"] = list(current.values())
+        self._save()
+        return RuntimeResult(
+            ok=True,
+            message="Jamal sync plan applied with snapshot.",
+            payload={
+                "planId": pid,
+                "database": db_name,
+                "mergedCount": len(db["entries"]),
+                "conflictCount": len(list(plan.get("conflicts", []))),
+            },
+        )
+
+    def jamal_sync_rollback(self, *, database_name: str = "") -> RuntimeResult:
+        target = self._normalize_name(database_name or self._current_db)
+        if not target:
+            return RuntimeResult(ok=False, message="Database name is required for rollback.")
+        snap = self._deleted_snapshots.get(f"sync-plan-snapshot-{target}") or self._deleted_snapshots.get(f"sync-snapshot-{target}")
+        if snap is None:
+            return RuntimeResult(ok=False, message="No sync snapshot was found for rollback.")
+        self._databases[target] = {
+            "schema": dict(snap.get("schema", {})),
+            "entries": list(snap.get("entries", [])),
+        }
+        self._current_db = target
+        self._save()
+        return RuntimeResult(ok=True, message="Jamal sync rollback complete.", payload={"database": target, "restoredCount": len(self._databases[target]["entries"])})
+

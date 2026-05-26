@@ -4,12 +4,12 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import AppAdapter, AppContext, DriftAwareAdapter, RuntimeErrorCode, SpellforgeRuntime
+from bits_easy_runtime import AppAdapter, AppContext, DriftAwareAdapter, RuntimeErrorCode, BitsEasyRuntime
 
 
 class SelectionClipboardE2E(unittest.TestCase):
     def setUp(self) -> None:
-        self.runtime = SpellforgeRuntime(
+        self.runtime = BitsEasyRuntime(
             adapters={
                 "edge": AppAdapter("edge", supports_selection=True),
                 "chrome": AppAdapter("chrome", supports_selection=True),
@@ -135,8 +135,8 @@ class SelectionClipboardE2E(unittest.TestCase):
 
         self.assertEqual(commit_a.payload["content"], commit_b.payload["content"])
 
-    def setUp_runtime(self) -> SpellforgeRuntime:
-        return SpellforgeRuntime(
+    def setUp_runtime(self) -> BitsEasyRuntime:
+        return BitsEasyRuntime(
             adapters={
                 "edge": AppAdapter("edge", supports_selection=True),
                 "chrome": AppAdapter("chrome", supports_selection=True),
@@ -197,3 +197,4 @@ class SelectionClipboardE2E(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

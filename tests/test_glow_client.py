@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.glow_client import GlowMcpService
+from bits_easy_runtime.glow_client import GlowMcpService
 
 
 class _FakeResponse:
@@ -27,7 +27,7 @@ class _FakeResponse:
 class GlowClientTests(unittest.TestCase):
     def test_health_success(self) -> None:
         client = GlowMcpService("http://127.0.0.1:8000")
-        with patch("spellforge_runtime.glow_client.request.urlopen", return_value=_FakeResponse({"status": "ok"})):
+        with patch("bits_easy_runtime.glow_client.request.urlopen", return_value=_FakeResponse({"status": "ok"})):
             out = client.health()
         self.assertTrue(out.ok)
         self.assertEqual((out.payload or {}).get("status"), "ok")
@@ -44,7 +44,7 @@ class GlowClientTests(unittest.TestCase):
             src = Path(tmpdir) / "sample.docx"
             src.write_bytes(b"doc")
             with patch(
-                "spellforge_runtime.glow_client.request.urlopen",
+                "bits_easy_runtime.glow_client.request.urlopen",
                 return_value=_FakeResponse({"output_file": "x.md", "converted_text": "# hi"}),
             ):
                 out = client.convert(src, from_format="docx", to_format="markdown")
@@ -55,3 +55,4 @@ class GlowClientTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

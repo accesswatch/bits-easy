@@ -2,7 +2,7 @@
 # This is intentionally lightweight for repository use.
 #
 # Layout mirrors scripts/build_addon.py: the contents of addon/ and the
-# spellforge_runtime package are flattened so the dev tree matches what NVDA
+# bits_easy_runtime package are flattened so the dev tree matches what NVDA
 # will see at runtime when the .nvda-addon is installed.
 
 import os
@@ -44,10 +44,10 @@ def _stage(src: Path, dst: Path) -> None:
 _stage(repo_root / "addon" / "globalPlugins", build_dir / "globalPlugins")
 _stage(repo_root / "addon" / "doc", build_dir / "doc")
 _stage(repo_root / "addon" / "installTasks.py", build_dir / "installTasks.py")
-_stage(repo_root / "addon" / "spellforge_settings.py", build_dir / "spellforge_settings.py")
+_stage(repo_root / "addon" / "bits_easy_settings.py", build_dir / "bits_easy_settings.py")
 
 # Config and runtime package land at the dev-tree root, matching the built zip.
 _stage(repo_root / "config" / "hotkeys", build_dir / "config" / "hotkeys")
-_stage(repo_root / "src" / "spellforge_runtime", build_dir / "spellforge_runtime")
+_stage(repo_root / "src" / "bits_easy_runtime", build_dir / "bits_easy_runtime")
 
 print("Prepared development add-on tree at", build_dir)

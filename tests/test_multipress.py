@@ -1,6 +1,6 @@
 import unittest
 
-from spellforge_runtime.multipress import MultiPressResolver
+from bits_easy_runtime.multipress import MultiPressResolver
 
 
 class MultiPressResolverTests(unittest.TestCase):
@@ -56,3 +56,4 @@ class MultiPressResolverTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.quick_capture import QuickCaptureInbox
+from bits_easy_runtime.quick_capture import QuickCaptureInbox
 
 
 class QuickCaptureInboxTests(unittest.TestCase):
@@ -39,3 +39,4 @@ class QuickCaptureInboxTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

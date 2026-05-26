@@ -6,7 +6,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import SettingsStore, SpellforgeSettings
+from bits_easy_runtime import SettingsStore, BitsEasySettings
 
 
 class SettingsStoreTests(unittest.TestCase):
@@ -27,13 +27,31 @@ class SettingsStoreTests(unittest.TestCase):
             path = Path(tmpdir) / "settings.json"
             store = SettingsStore(path)
             store.save(
-                SpellforgeSettings(
+                BitsEasySettings(
                     profile_id="expert",
                     announce_surface_mode=False,
                     enable_contextual_fallbacks=True,
                     enable_command_palette=False,
                     slot_default=3,
                     preview_threshold_chars=128,
+                    active_mode="focusMode",
+                    custom_modes={
+                        "focusMode": {
+                            "baseProfile": "expert",
+                            "overrides": {
+                                "enable_command_palette": False,
+                                "enable_multi_press_gestures": True,
+                            },
+                            "hotkeyBindings": [
+                                {
+                                    "commandId": "cmd.help.availableHotkeys",
+                                    "keyChord": "GRAVE+H",
+                                    "scope": "global",
+                                    "enabled": True,
+                                }
+                            ],
+                        }
+                    },
                 )
             )
             loaded = store.load()
@@ -42,6 +60,8 @@ class SettingsStoreTests(unittest.TestCase):
             self.assertFalse(loaded.enable_command_palette)
             self.assertEqual(loaded.slot_default, 3)
             self.assertEqual(loaded.preview_threshold_chars, 128)
+            self.assertEqual(loaded.active_mode, "focusMode")
+            self.assertIn("focusMode", loaded.custom_modes)
 
     def test_legacy_settings_missing_palette_flag_defaults_enabled(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -64,7 +84,10 @@ class SettingsStoreTests(unittest.TestCase):
             self.assertTrue(settings.enable_global_hotkeys)
             self.assertTrue(settings.emulate_capslock_prefix_for_os_hotkeys)
             self.assertTrue(settings.enable_multi_press_gestures)
+            self.assertEqual(settings.active_mode, "")
+            self.assertEqual(settings.custom_modes, {})
 
 
 if __name__ == "__main__":
     unittest.main()
+

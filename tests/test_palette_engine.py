@@ -5,7 +5,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import PaletteEngine, load_runtime_config
+from bits_easy_runtime import PaletteEngine, load_runtime_config
 
 
 class PaletteEngineTests(unittest.TestCase):
@@ -76,3 +76,4 @@ class PaletteEngineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

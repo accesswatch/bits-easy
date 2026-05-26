@@ -4,8 +4,8 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime import AppContext, OutlookLiveAdapter, WordLiveAdapter
-from spellforge_runtime.live_adapters import FocusSnapshot
+from bits_easy_runtime import AppContext, OutlookLiveAdapter, WordLiveAdapter
+from bits_easy_runtime.live_adapters import FocusSnapshot
 
 
 class LiveAdapterEdgeCaseTests(unittest.TestCase):
@@ -62,3 +62,4 @@ class LiveAdapterEdgeCaseTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

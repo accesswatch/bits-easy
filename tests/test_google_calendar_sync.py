@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from spellforge_runtime.google_calendar_sync import GoogleCalendarSync
+from bits_easy_runtime.google_calendar_sync import GoogleCalendarSync
 
 
 class GoogleCalendarSyncTests(unittest.TestCase):
@@ -24,3 +24,4 @@ class GoogleCalendarSyncTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

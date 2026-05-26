@@ -11,7 +11,7 @@ SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from spellforge_runtime import AppAdapter, AppContext, RuntimeDispatcher, SpellforgeRuntime, load_runtime_config
+from bits_easy_runtime import AppAdapter, AppContext, RuntimeDispatcher, BitsEasyRuntime, load_runtime_config
 
 
 def _parse_inline_kv(parts: list[str]) -> Dict[str, str]:
@@ -28,7 +28,7 @@ def _emit(payload: dict) -> None:
     print(json.dumps(payload, ensure_ascii=True))
 
 
-def _build_runtime(storage_path: Path) -> SpellforgeRuntime:
+def _build_runtime(storage_path: Path) -> BitsEasyRuntime:
     adapters = {
         "edge": AppAdapter("edge", supports_selection=True),
         "chrome": AppAdapter("chrome", supports_selection=True),
@@ -38,7 +38,7 @@ def _build_runtime(storage_path: Path) -> SpellforgeRuntime:
         "notepad": AppAdapter("notepad", supports_selection=True),
         "vscode": AppAdapter("vscode", supports_selection=True),
     }
-    return SpellforgeRuntime(adapters=adapters, storage_path=storage_path)
+    return BitsEasyRuntime(adapters=adapters, storage_path=storage_path)
 
 
 def _run_single_press(dispatcher: RuntimeDispatcher, context: AppContext, key_chord: str, slot: int, text: str, content: str) -> None:
@@ -61,7 +61,7 @@ def _run_single_press(dispatcher: RuntimeDispatcher, context: AppContext, key_ch
 
 
 def _run_repl(dispatcher: RuntimeDispatcher, context: AppContext) -> int:
-    print("Spellforge hotkey session REPL. Commands: press <KeyChord> [slot=1] [text=...] [content=...], set caret=<n>, set clipboard=..., set buffer=..., show, quit")
+    print("BITS-EASY hotkey session REPL. Commands: press <KeyChord> [slot=1] [text=...] [content=...], set caret=<n>, set clipboard=..., set buffer=..., show, quit")
     while True:
         try:
             line = input("> ").strip()
@@ -119,7 +119,7 @@ def _run_repl(dispatcher: RuntimeDispatcher, context: AppContext) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Simulate Spellforge hotkey sessions using repo keymap and profile configs.")
+    parser = argparse.ArgumentParser(description="Simulate BITS-EASY hotkey sessions using repo keymap and profile configs.")
     parser.add_argument("--profile", default="balanced", choices=["beginner", "balanced", "expert"])
     parser.add_argument("--app", default="vscode")
     parser.add_argument("--window", default="win-default")
@@ -127,7 +127,7 @@ def main() -> int:
     parser.add_argument("--buffer", default="")
     parser.add_argument("--caret", type=int, default=0)
     parser.add_argument("--clipboard", default="")
-    parser.add_argument("--storage", default=str(REPO_ROOT / ".spellforge" / "clip-slots.json"))
+    parser.add_argument("--storage", default=str(REPO_ROOT / ".bits-easy" / "clip-slots.json"))
     parser.add_argument("--press", default=None, help="Single key chord press to execute once.")
     parser.add_argument("--slot", type=int, default=1)
     parser.add_argument("--text", default="")
@@ -168,3 +168,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

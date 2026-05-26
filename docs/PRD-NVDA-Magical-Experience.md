@@ -241,6 +241,63 @@ Acceptance criteria:
 2. No silent failures on selection state loss.
 3. Every action provides user feedback with reversible path where applicable.
 
+### 9.1B P0 to P1: Reading Units, Structured Segments, and Table Export
+Objective:
+Replace vague block-based selection language with explicit reading units and structured segment output that users can control.
+
+Reading unit model:
+1. Default unit name is Reading Unit, not block.
+2. Built-in units: character, word, line, sentence, paragraph, heading section, list item, table row, table cell, code block, quote block, page, and smart semantic chunk.
+3. Users can set a per-app default unit and override unit for one command invocation.
+4. Selection commands must announce active unit before capture and after unit changes.
+
+Structured segment behavior:
+1. Segment boundaries must be deterministic for structural units such as heading section, list item, table row, and table cell.
+2. Smart semantic chunk mode must expose confidence and permit stepwise next or previous chunk traversal.
+3. Every segment capture must include source metadata: app, control role, window title, timestamp, and capture confidence.
+
+Table capture and export formats:
+1. Table captures must preserve row and column ordering.
+2. Export formats: TSV, CSV, Markdown table, HTML table, and JSON rows.
+3. Clipboard copy supports format negotiation with a default profile per workflow.
+4. Where table structure is uncertain, the system must provide a preview and require explicit user confirmation before overwrite or merge.
+
+Acceptance criteria:
+1. User can switch reading units without leaving the current workflow.
+2. Table capture exports round-trip correctly to spreadsheet workflows for TSV and CSV.
+3. Structured exports include headers when detected and indicate when headers are inferred.
+
+### 9.1C Selection Surface Parity Matrix and Acceptance Gates
+Objective:
+Define parity as a measurable contract with explicit surface states and CI-enforced thresholds.
+
+The following table defines expected selection parity state for initial v1 surfaces.
+
+| App Surface | Expected State | Notes |
+|---|---|---|
+| Edge | Native range capture | Primary browser parity target |
+| Chrome | Native range capture | Primary browser parity target |
+| Firefox | Native range capture | Primary browser parity target |
+| Word | Native range capture | Word document-focused target |
+| Notepad | Native range capture | Baseline editor target |
+| VS Code | Native range capture | Developer editor target |
+| Outlook | Fallback-only capture | Message list and transient surfaces require deterministic fallback |
+
+State definitions:
+1. Native range capture: direct range extraction with confidence at or above 0.9 and no fallback flag.
+2. Normalized partial capture: adapter-normalized extraction with confidence below 0.9 and no fallback flag.
+3. Fallback-only capture: unsupported native range, captured using deterministic fallback flow with explicit fallback flag.
+
+Acceptance gates:
+1. Native plus normalized coverage must pass on at least 6 of 7 matrix surfaces in the v1 matrix.
+2. Fallback-only surfaces must be at most 1 of 7 in the v1 matrix.
+3. Any fallback-only result must include explicit guidance and confidence narration.
+4. Secure and password-protected dialog surfaces are policy-blocked and excluded from parity targets.
+
+Executable test contract:
+1. Matrix and gates are enforced by CI tests in tests/test_release_parity_matrix.py.
+2. Any adapter change that shifts a surface state must update both this matrix and the executable gate tests.
+
 ### 9.1A P0: StarKey Everywhere, Global Magical Command Palette
 Objective:
 Create a VS Code-like command palette that can be invoked globally from any focused application and execute context-aware actions for selection, copy, clips, merge, transforms, and navigation.
@@ -283,6 +340,18 @@ Adapter strategies by app class:
 1. Browsers: accessibility tree and virtual buffer signals first, focused-element extraction fallback.
 2. Outlook and Word: UIA role and document signals first, guarded keyboard orchestration fallback.
 3. Notepad and VS Code: native selection and clipboard integration first, line-based capture fallback.
+
+Text-pattern support statement:
+1. Version 1 does not claim full parity with every Windows text pattern surface.
+2. Version 1 scope is capability-based: use native selection providers first, then adapter-specific normalization, then deterministic fallback capture.
+3. Parity reporting must classify each app and surface into one of three states: native range capture, normalized partial capture, fallback-only capture.
+
+Dialog and transient surface capture:
+1. Add a dedicated quick action: Capture dialog text.
+2. Capture order: focused control text, dialog subtree text, speech-history fallback, clipboard fallback.
+3. Captured dialog text must include dialog metadata: title, role, app, and confidence.
+4. For secure and password dialogs, capture must be blocked and replaced with a clear explanation.
+5. Dialog capture output routes to quick capture inbox, clipboard, or selected clip slot.
 
 Performance and reliability targets:
 1. Palette open under 150 milliseconds.
@@ -561,8 +630,20 @@ This section defines the explicit capabilities that make version 1.0 feel magica
 
 ### D11 Virtualized Browse Return Surface
 1. Present command output in a stable virtualized surface when source surfaces are noisy, dynamic, or structurally poor.
-2. Provide structural jumps by heading, action item, citation, and section block with deterministic key behavior.
+2. Provide structural jumps by heading, action item, citation, and reading unit segment with deterministic key behavior.
 3. Guarantee exact focus return to source context when exiting virtualized view.
+
+### D15 Reading Unit Intelligence and Structured Exports
+1. Let users define preferred reading unit per app and per task profile.
+2. Keep segment boundaries explainable and previewable before mutating actions.
+3. Provide one-step export of captured tables and segment sets as TSV, CSV, Markdown table, HTML table, or JSON rows.
+4. Preserve source metadata for downstream note, database, and audit workflows.
+
+### D16 Dialog and Error Text Rescue
+1. Add capture pathways for transient dialogs, toasts, and message surfaces that do not expose stable standard selection.
+2. Provide explicit confidence narration when capture comes from fallback layers.
+3. Support quick copy of captured dialog text into clipboard, quick capture inbox, and clip slots.
+4. Exclude secure and password-protected surfaces by policy.
 
 ### D12 Direct Hotkey Flight Paths
 1. Support direct hotkey execution for top-frequency commands without opening the palette.
@@ -587,8 +668,10 @@ This section defines the explicit capabilities that make version 1.0 feel magica
 2. Preferred default AI mode for beginner users.
 3. Data retention policy for command and telemetry logs.
 4. Enterprise deployment requirements and offline constraints.
-5. Should CapsLock prefix remain mandatory for Tier 1 hotkeys in v1.
+5. Should EASY key sequence timing use one global timeout or per-mode timeout profiles.
 6. Which Tier 2 direct hotkeys are promoted into v1.1.
+7. Which Windows surfaces are committed to native text-pattern parity versus fallback-only in v1.1.
+8. Should dialog capture include optional OCR for image-only message surfaces in v2.
 
 ## 17. Final Recommendation
 Build selection and clip intelligence first, then command and context memory, then markdown and html magic with accessibility-first AI assistance. This sequence delivers the largest user impact with the highest implementation confidence while preserving room for richer media and feed features later without compromising accessibility quality.
@@ -728,6 +811,9 @@ This section converts mapped feature families into implementable atomic scopes. 
 | P0-SEL-02 | Mark selection end | Full | Build-Ready | v1 | Very High | Range summary and instant action suggestions |
 | P0-SEL-03 | Speak start and end context | Full | Build-Ready | v1 | Very High | Context snippets plus estimated size |
 | P0-SEL-04 | Jump back to selection start | Full | Build-Ready | v1 | Very High | Optional breadcrumb history |
+| P0-SEL-05 | Reading unit switcher | Full | Scoped | v1 | High | Fast unit announce and reversible unit toggle |
+| P0-SEL-06 | Deterministic segment capture by unit | Full | Scoped | v1 | High | Segment preview with source metadata |
+| P0-SEL-07 | Dialog and error text rescue capture | Full | Planned | v1.1 | Medium High | Multi-layer fallback capture with confidence narration |
 | P0-CLIP-01 | Multi-slot clip copy 1 to 12 | Full | Build-Ready | v1 | Very High | Auto-label clips by source |
 | P0-CLIP-02 | Multi-slot clip paste 1 to 12 | Full | Build-Ready | v1 | Very High | Preview clip metadata before paste |
 | P0-CLIP-03 | Clip protect and unprotect | Full | Scoped | v1 | High | Lock icon and speech guardrails |
@@ -738,6 +824,9 @@ This section converts mapped feature families into implementable atomic scopes. 
 | P0-MERGE-03 | Custom separator text | Full | Scoped | v1 | High | Separator templates by task |
 | P0-MERGE-04 | Clear clipboard on paste option | Full | Scoped | v1 | High | Smart safety prompt on destructive clear |
 | P0-MERGE-05 | Speak clipboard content fast | Full | Build-Ready | v1 | Very High | Summarized preview for large clipboard text |
+| P0-TABLE-01 | Capture table to TSV or CSV | Full | Scoped | v1 | High | Header detection and confidence report |
+| P0-TABLE-02 | Capture table to Markdown or HTML table | Full | Planned | v1.1 | Medium High | Structure-preserving export with preview |
+| P0-TABLE-03 | Capture table to JSON rows | Full | Planned | v1.1 | Medium High | Database-ready schema-aware output |
 
 ### 21.1A Clipboard and Selection Decomposition Closure
 Clipboard and selection feature decomposition is now complete at execution depth for parity tracking.

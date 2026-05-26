@@ -119,7 +119,7 @@ def parse_key_chord_for_os(chord: str, emulate_capslock_prefix: bool = True) -> 
                 modifiers |= MOD_CONTROL | MOD_ALT
             else:
                 return HotkeySpec(original=chord, modifiers=0, vk=0, supported=False)
-        elif pl in ("grave", "graveaccent", "bits_easy"):
+        elif pl in ("grave", "graveaccent", "bits_easy", "bits-easy", "easy"):
             if total_parts == 1:
                 key_part = "GRAVE"
             elif emulate_capslock_prefix:
@@ -151,7 +151,9 @@ class GlobalHotkeyService:
         self._on_command = on_command
         self._on_key_chord = on_key_chord
         self._emulate_capslock_prefix = emulate_capslock_prefix
-        self._enable_raw_sequences = bool(enable_raw_sequences)
+        # EASY key sequences are always enabled. Keep the constructor parameter
+        # for backward compatibility with older call sites.
+        self._enable_raw_sequences = True
         self._raw_sequence_timeout_seconds = max(0.25, float(raw_sequence_timeout_ms) / 1000.0)
         self._bindings: Dict[int, Dict[str, Any]] = {}
         self._running = Event()

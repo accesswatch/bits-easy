@@ -705,6 +705,65 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertFalse(insert.result.payload["inserted"])
         self.assertGreaterEqual(len(insert.result.payload["fallbackGuidance"]), 1)
 
+    def test_dialog_capture_and_virtualize_routes(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "Error: Sync failed\nReason: Timeout", 0, clipboard_text="clip fallback")
+
+        # Capture routed to quick inbox.
+        capture = dispatcher.dispatch_command(
+            ctx,
+            "cmd.selection.captureDialogText",
+            windowTitle="Sync Error",
+            route="quickInbox",
+        )
+        self.assertTrue(capture.result.ok)
+        self.assertIn("captureId", capture.result.payload)
+        self.assertEqual(capture.result.payload["source"], "focused-control")
+
+        # Capture routed to slot.
+        slot_capture = dispatcher.dispatch_command(
+            ctx,
+            "cmd.selection.captureDialogText",
+            windowTitle="Sync Error",
+            route="slot",
+            slot=2,
+        )
+        self.assertTrue(slot_capture.result.ok)
+        self.assertEqual(slot_capture.result.payload["slot"], 2)
+
+        # Virtualized view from focused control text.
+        vv = dispatcher.dispatch_command(
+            ctx,
+            "cmd.result.virtualizeSurface",
+            windowTitle="Sync Error",
+            title="Dialog Snapshot",
+        )
+        self.assertTrue(vv.result.ok)
+        surface = vv.result.payload["virtualSurface"]
+        self.assertEqual(surface["title"], "Dialog Snapshot")
+        self.assertGreaterEqual(surface["lineCount"], 2)
+        self.assertEqual(surface["source"], "focused-control")
+
+    def test_dialog_capture_blocks_secure_surface(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = AppContext(
+            app_id="edge",
+            window_id="win-edge-login",
+            control_id="password-input",
+            buffer="Top secret",
+            caret=0,
+            clipboard_text="",
+        )
+
+        blocked = dispatcher.dispatch_command(
+            ctx,
+            "cmd.selection.captureDialogText",
+            windowTitle="Sign In",
+            route="quickInbox",
+        )
+        self.assertFalse(blocked.result.ok)
+        self.assertIn("blocked", blocked.result.message.lower())
+
     def test_progress_and_speech_history_routes(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
         ctx = self._ctx("edge", "", 0)
@@ -742,6 +801,34 @@ class DispatcherIntegrationTests(unittest.TestCase):
         recent = dispatcher.dispatch_command(ctx, "cmd.utility.symbol.recent")
         self.assertTrue(recent.result.ok)
         self.assertEqual(recent.result.payload["code"], "169")
+
+    def test_table_capture_export_formats(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "", 0)
+
+        capture = dispatcher.dispatch_command(
+            ctx,
+            "cmd.table.capture",
+            rows=[["Name", "Value"], ["Alpha", "1"]],
+            separator=",",
+        )
+        self.assertTrue(capture.result.ok)
+
+        tsv = dispatcher.dispatch_command(ctx, "cmd.table.capture.exportClipboard", format="tsv")
+        self.assertTrue(tsv.result.ok)
+        self.assertIn("Name\tValue", tsv.result.payload["content"])
+
+        markdown = dispatcher.dispatch_command(ctx, "cmd.table.capture.exportClipboard", format="markdown")
+        self.assertTrue(markdown.result.ok)
+        self.assertIn("| Name", markdown.result.payload["content"])
+
+        html = dispatcher.dispatch_command(ctx, "cmd.table.capture.exportClipboard", format="html")
+        self.assertTrue(html.result.ok)
+        self.assertIn("<table>", html.result.payload["content"])
+
+        json_rows = dispatcher.dispatch_command(ctx, "cmd.table.capture.exportClipboard", format="json")
+        self.assertTrue(json_rows.result.ok)
+        self.assertIn('"Name": "Alpha"', json_rows.result.payload["content"])
 
     def test_window_bookmarks_and_system_report_routes(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")

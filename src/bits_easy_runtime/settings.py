@@ -53,7 +53,8 @@ class SettingsStore:
                 enable_global_hotkeys=bool(payload.get("enable_global_hotkeys", True)),
                 emulate_capslock_prefix_for_os_hotkeys=bool(payload.get("emulate_capslock_prefix_for_os_hotkeys", True)),
                 enable_multi_press_gestures=bool(payload.get("enable_multi_press_gestures", True)),
-                enable_raw_easy_sequences=bool(payload.get("enable_raw_easy_sequences", True)),
+                # EASY key sequences are mandatory; keep persisted field for compatibility.
+                enable_raw_easy_sequences=True,
                 raw_easy_sequence_timeout_ms=int(payload.get("raw_easy_sequence_timeout_ms", 900)),
                 active_mode=str(payload.get("active_mode", "")),
                 custom_modes=custom_modes,
@@ -78,7 +79,7 @@ def mode_payload_from_settings(
         "overrides": {
             "enable_command_palette": bool(settings.enable_command_palette),
             "enable_multi_press_gestures": bool(settings.enable_multi_press_gestures),
-            "enable_raw_easy_sequences": bool(settings.enable_raw_easy_sequences),
+            "enable_raw_easy_sequences": True,
             "raw_easy_sequence_timeout_ms": int(settings.raw_easy_sequence_timeout_ms),
             "enable_contextual_fallbacks": bool(settings.enable_contextual_fallbacks),
             "announce_surface_mode": bool(settings.announce_surface_mode),
@@ -129,9 +130,8 @@ def apply_mode_payload_to_settings(settings: BitsEasySettings, mode_payload: Dic
     settings.enable_multi_press_gestures = bool(
         overrides.get("enable_multi_press_gestures", settings.enable_multi_press_gestures)
     )
-    settings.enable_raw_easy_sequences = bool(
-        overrides.get("enable_raw_easy_sequences", settings.enable_raw_easy_sequences)
-    )
+    # EASY key sequences are always active by design.
+    settings.enable_raw_easy_sequences = True
     settings.raw_easy_sequence_timeout_ms = int(
         overrides.get("raw_easy_sequence_timeout_ms", settings.raw_easy_sequence_timeout_ms)
     )

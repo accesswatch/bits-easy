@@ -65,6 +65,140 @@ class DispatchOutcome:
 
 
 class RuntimeDispatcher:
+    @staticmethod
+    def _format_easy_sequence(chord: str) -> str:
+        raw = str(chord or "").strip()
+        if not raw:
+            return ""
+
+        parts = [p.strip() for p in raw.split("+") if p.strip()]
+        if not parts:
+            return raw
+
+        first = parts[0].lower()
+        if first not in ("grave", "graveaccent", "bits_easy", "bits-easy", "easy"):
+            return raw
+        if len(parts) == 1:
+            return "EASY"
+        return f"EASY then {'+'.join(parts[1:])}"
+
+    @staticmethod
+    def _is_secure_surface(context: AppContext, window_title: str) -> bool:
+        probe = " ".join(
+            [
+                str(context.app_id or ""),
+                str(context.window_id or ""),
+                str(context.control_id or ""),
+                str(window_title or ""),
+            ]
+        ).lower()
+        blocked_markers = (
+            "password",
+            "passcode",
+            "credential",
+            "secure",
+            "pin",
+            "signin",
+            "sign in",
+            "logon",
+            "log on",
+        )
+        return any(marker in probe for marker in blocked_markers)
+
+    def _speech_history_text(self) -> str:
+        view = self._speech_history.open_virtual_view()
+        if not view.ok:
+            return ""
+        items = list((view.payload or {}).get("items", []))
+        chunks = [str(row.get("text", "")).strip() for row in items if str(row.get("text", "")).strip()]
+        return "\n".join(chunks).strip()
+
+    def _capture_surface_text(self, context: AppContext, *, window_title: str = "", subtree_text: str = "") -> RuntimeResult:
+        if self._is_secure_surface(context, window_title):
+            return RuntimeResult(
+                ok=False,
+                message="Capture blocked on secure or password-protected surface.",
+                next_steps=["Move focus to a non-secure surface and retry."],
+            )
+
+        focused = context.buffer.strip()
+        subtree = str(subtree_text or "").strip()
+        speech = self._speech_history_text()
+        clipboard = context.clipboard_text.strip()
+
+        source = ""
+        text = ""
+        confidence = 0.0
+        if focused:
+            source = "focused-control"
+            text = focused
+            confidence = 0.95
+        elif subtree:
+            source = "dialog-subtree"
+            text = subtree
+            confidence = 0.88
+        elif speech:
+            source = "speech-history"
+            text = speech
+            confidence = 0.72
+        elif clipboard:
+            source = "clipboard"
+            text = clipboard
+            confidence = 0.6
+
+        if not text:
+            return RuntimeResult(
+                ok=False,
+                message="No text available from focused control, subtree, speech history, or clipboard.",
+                next_steps=["Use quick capture fallback or copy text to clipboard and retry."],
+            )
+
+        return RuntimeResult(
+            ok=True,
+            message="Surface text captured.",
+            payload={
+                "text": text,
+                "source": source,
+                "confidence": confidence,
+                "metadata": {
+                    "appId": context.app_id,
+                    "windowId": context.window_id,
+                    "controlId": context.control_id,
+                    "windowTitle": window_title,
+                },
+            },
+        )
+
+    def _virtualize_text_payload(self, context: AppContext, text: str, *, title: str, source: str, confidence: float) -> dict:
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        if not lines:
+            lines = [text.strip()]
+        units = [
+            {
+                "index": idx,
+                "kind": "line",
+                "text": line,
+            }
+            for idx, line in enumerate(lines)
+        ]
+        return {
+            "virtualSurface": {
+                "title": title or context.control_id or "Focused Surface",
+                "source": source,
+                "confidence": float(confidence),
+                "readingUnit": "line",
+                "lineCount": len(lines),
+                "charCount": len(text),
+                "units": units,
+                "sourceAnchor": {
+                    "appId": context.app_id,
+                    "windowId": context.window_id,
+                    "controlId": context.control_id,
+                    "caret": context.caret,
+                },
+            }
+        }
+
     def __init__(
         self,
         runtime: BitsEasyRuntime,
@@ -494,10 +628,12 @@ class RuntimeDispatcher:
         rows = []
         for binding in self._bindings_for_context(context):
             trig = binding.get("trigger") or {"kind": "single-press"}
+            raw_chord = str(binding.get("keyChord", ""))
             rows.append(
                 {
                     "commandId": binding.get("commandId", ""),
-                    "keyChord": binding.get("keyChord", ""),
+                    "keyChord": raw_chord,
+                    "displaySequence": self._format_easy_sequence(raw_chord),
                     "trigger": trig.get("kind", "single-press"),
                     "scope": binding.get("scope", "global"),
                     "appId": binding.get("appId"),
@@ -518,47 +654,47 @@ class RuntimeDispatcher:
         mnemonic_hints = [
             {
                 "commandId": "cmd.selection.markStart",
-                "hint": "Use Grave+Shift+S to set selection start anchor.",
+                "hint": "Press EASY then OpenBracket to set selection start anchor.",
             },
             {
                 "commandId": "cmd.integration.itemChooser.open",
-                "hint": "Use Grave+O to open Screen Item Chooser.",
+                "hint": "Press EASY then O to open Screen Item Chooser.",
             },
             {
                 "commandId": "cmd.integration.itemChooser.openOcr",
-                "hint": "Use Grave+Shift+O to open Item Chooser with OCR preselected.",
+                "hint": "Press EASY then Shift+O to open Item Chooser with OCR preselected.",
             },
             {
                 "commandId": "cmd.selection.markEnd",
-                "hint": "Use Grave+Shift+E to capture selection end and range.",
+                "hint": "Press EASY then CloseBracket to capture selection end and range.",
             },
             {
                 "commandId": "cmd.clip.copyToSlot",
-                "hint": "Use Grave+1 to copy selection into the active clip lane.",
+                "hint": "Press EASY then 1 to copy selection into the active clip lane.",
             },
             {
                 "commandId": "cmd.clip.pasteFromSlot",
-                "hint": "Use Grave+2 to paste from the active clip lane.",
+                "hint": "Press EASY then 2 to paste from the active clip lane.",
             },
             {
                 "commandId": "cmd.notes.quickCapture",
-                "hint": "Use Grave+Q to capture quick notes from current context.",
+                "hint": "Press EASY then Q to capture quick notes from current context.",
             },
             {
                 "commandId": "cmd.journal.undoLast",
-                "hint": "Use Grave+Shift+J to undo the latest reversible action.",
+                "hint": "Press EASY then Shift+J to undo the latest reversible action.",
             },
             {
                 "commandId": "cmd.author.pipeline.polish",
-                "hint": "Use Grave+Shift+A to polish draft text in one pass.",
+                "hint": "Press EASY then Shift+A to polish draft text in one pass.",
             },
             {
                 "commandId": "cmd.author.template.apply",
-                "hint": "Use Grave+Shift+N for release-notes template scaffolding.",
+                "hint": "Press EASY then Shift+N for release-notes template scaffolding.",
             },
             {
                 "commandId": "cmd.author.pipeline.undo",
-                "hint": "Use Grave+Shift+Z to undo the latest author pipeline output.",
+                "hint": "Press EASY then Shift+Z to undo the latest author pipeline output.",
             },
         ]
         if help_scope == "glow":
@@ -594,7 +730,7 @@ class RuntimeDispatcher:
             "",
             "Bindings:",
             *[
-                f"- {row['keyChord']} ({row['trigger']}): {row['commandId']}"
+                f"- {row['displaySequence']} ({row['trigger']}): {row['commandId']}"
                 for row in rows
             ],
             "",
@@ -604,8 +740,8 @@ class RuntimeDispatcher:
         sequence_groups = [
             {
                 "group": group_id,
-                "leaderChord": str(spec.get("leaderChord", "")),
-                "helpChord": "Grave+Slash",
+                "leaderChord": self._format_easy_sequence(str(spec.get("leaderChord", ""))),
+                "helpChord": "EASY then Slash",
                 "mnemonicRoutes": dict(spec.get("mnemonicRoutes", {})),
             }
             for group_id, spec in self._sequence_groups.items()
@@ -986,7 +1122,7 @@ class RuntimeDispatcher:
                 ),
                 result=RuntimeResult(
                     ok=False,
-                    message=f"No active command is bound to key chord {key_chord}.",
+                    message=f"No active command is bound to EASY key sequence {self._format_easy_sequence(key_chord)}.",
                 ),
             )
 
@@ -1123,6 +1259,85 @@ class RuntimeDispatcher:
             )
         elif command_id == "cmd.capture.quickInbox.list":
             result = self._capture.list_items(route=str(kwargs.get("route", "")))
+        elif command_id == "cmd.selection.captureDialogText":
+            captured = self._capture_surface_text(
+                context,
+                window_title=str(kwargs.get("windowTitle", "")),
+                subtree_text=str(kwargs.get("subtreeText", "")),
+            )
+            if not captured.ok:
+                result = captured
+            else:
+                payload = captured.payload or {}
+                text = str(payload.get("text", ""))
+                route = str(kwargs.get("route", "quickInbox")).strip().lower()
+                if route == "quickinbox":
+                    saved = self._capture.capture(text, source_app=context.app_id, window_id=context.window_id)
+                    if saved.ok:
+                        saved_payload = saved.payload or {}
+                        saved_payload.update(
+                            {
+                                "source": payload.get("source", ""),
+                                "confidence": payload.get("confidence", 0.0),
+                                "metadata": payload.get("metadata", {}),
+                                "capturedText": text,
+                            }
+                        )
+                        saved.payload = saved_payload
+                    result = saved
+                elif route == "slot":
+                    result = self.runtime.copy_to_slot(context, slot=int(kwargs.get("slot", 1)), text=text)
+                    if result.ok:
+                        slot_payload = result.payload or {}
+                        slot_payload.update(
+                            {
+                                "source": payload.get("source", ""),
+                                "confidence": payload.get("confidence", 0.0),
+                                "metadata": payload.get("metadata", {}),
+                                "capturedText": text,
+                            }
+                        )
+                        result.payload = slot_payload
+                elif route == "clipboard":
+                    result = RuntimeResult(
+                        ok=True,
+                        message="Dialog text prepared for clipboard route.",
+                        payload={
+                            "clipboardText": text,
+                            "source": payload.get("source", ""),
+                            "confidence": payload.get("confidence", 0.0),
+                            "metadata": payload.get("metadata", {}),
+                        },
+                    )
+                else:
+                    result = RuntimeResult(
+                        ok=False,
+                        message="Route must be quickInbox, slot, or clipboard.",
+                    )
+        elif command_id == "cmd.result.virtualizeSurface":
+            captured = self._capture_surface_text(
+                context,
+                window_title=str(kwargs.get("windowTitle", "")),
+                subtree_text=str(kwargs.get("subtreeText", "")),
+            )
+            if not captured.ok:
+                result = captured
+            else:
+                payload = captured.payload or {}
+                text = str(payload.get("text", ""))
+                source = str(payload.get("source", "focused-control"))
+                confidence = float(payload.get("confidence", 0.0))
+                result = RuntimeResult(
+                    ok=True,
+                    message="Virtualized surface is ready.",
+                    payload=self._virtualize_text_payload(
+                        context,
+                        text,
+                        title=str(kwargs.get("title", kwargs.get("windowTitle", ""))),
+                        source=source,
+                        confidence=confidence,
+                    ),
+                )
         elif command_id == "cmd.journal.list":
             result = self._journal.list_entries(
                 app_id=str(kwargs.get("appId", "")),
@@ -2127,7 +2342,10 @@ class RuntimeDispatcher:
             rows = kwargs.get("rows", [])
             result = self._table_capture.capture(rows, separator=str(kwargs.get("separator", " | ")))
         elif command_id == "cmd.table.capture.exportClipboard":
-            result = self._table_capture.export_buffer(block_separator=str(kwargs.get("blockSeparator", "\n\n")))
+            result = self._table_capture.export_buffer(
+                block_separator=str(kwargs.get("blockSeparator", "\n\n")),
+                format=str(kwargs.get("format", "plain")),
+            )
         elif command_id == "cmd.table.capture.clearBuffer":
             result = self._table_capture.clear_buffer()
         elif command_id == "cmd.profile.hotkeyChainCreate":

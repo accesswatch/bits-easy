@@ -197,7 +197,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 on_command=self._on_os_hotkey_command,
                 emulate_capslock_prefix=self._settings.emulate_capslock_prefix_for_os_hotkeys,
                 on_key_chord=self._on_os_hotkey_chord,
-                enable_raw_sequences=self._settings.enable_raw_easy_sequences,
+                enable_raw_sequences=True,
                 raw_sequence_timeout_ms=self._settings.raw_easy_sequence_timeout_ms,
             )
             self._restart_hotkeys()
@@ -422,7 +422,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 on_command=self._on_os_hotkey_command,
                 emulate_capslock_prefix=self._settings.emulate_capslock_prefix_for_os_hotkeys,
                 on_key_chord=self._on_os_hotkey_chord,
-                enable_raw_sequences=self._settings.enable_raw_easy_sequences,
+                enable_raw_sequences=True,
                 raw_sequence_timeout_ms=self._settings.raw_easy_sequence_timeout_ms,
             )
             self._hotkeys.start(self._config.keymap_bindings)

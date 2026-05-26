@@ -46,6 +46,22 @@ class TaggingAndTableCaptureTests(unittest.TestCase):
         self.assertIn("Name,Value", exported.payload["content"])
         self.assertIn("Beta,2", exported.payload["content"])
 
+        tsv = capture.export_buffer(format="tsv")
+        self.assertTrue(tsv.ok)
+        self.assertIn("Name\tValue", tsv.payload["content"])
+
+        markdown = capture.export_buffer(format="markdown")
+        self.assertTrue(markdown.ok)
+        self.assertIn("| Name", markdown.payload["content"])
+
+        html = capture.export_buffer(format="html")
+        self.assertTrue(html.ok)
+        self.assertIn("<table>", html.payload["content"])
+
+        json_rows = capture.export_buffer(format="json")
+        self.assertTrue(json_rows.ok)
+        self.assertIn('"Name": "Alpha"', json_rows.payload["content"])
+
         cleared = capture.clear_buffer()
         self.assertTrue(cleared.ok)
         self.assertEqual(cleared.payload["cleared"], 2)

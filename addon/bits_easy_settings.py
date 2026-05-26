@@ -63,7 +63,7 @@ def _normalize_chord(chord: str) -> str:
             mods.append("ALT")
         elif p in ("WIN", "WINDOWS"):
             mods.append("WIN")
-        elif p in ("GRAVE", "GRAVEACCENT", "BITSEASY", "BITS-EASY") and len(parts) > 1:
+        elif p in ("GRAVE", "GRAVEACCENT", "BITSEASY", "BITS-EASY", "EASY") and len(parts) > 1:
             mods.append("GRAVE")
         else:
             key = p
@@ -75,6 +75,22 @@ def _normalize_chord(chord: str) -> str:
     if key:
         ordered.append(key)
     return "+".join(ordered)
+
+
+def _display_easy_sequence(chord: str) -> str:
+    raw = str(chord or "").strip()
+    if not raw:
+        return ""
+
+    normalized = _normalize_chord(raw)
+    parts = [p.strip() for p in normalized.split("+") if p.strip()]
+    if not parts:
+        return raw
+    if parts[0] != "GRAVE":
+        return normalized
+    if len(parts) == 1:
+        return "EASY"
+    return f"EASY then {'+'.join(parts[1:])}"
 
 
 def _binding_signature(binding: dict) -> str:
@@ -141,7 +157,7 @@ def _trigger_kind(binding: dict) -> str:
 def _binding_label(index: int, binding: dict, command_catalog: dict) -> str:
     command_id = str(binding.get("commandId", ""))
     command_name = str((command_catalog.get(command_id) or {}).get("name", command_id))
-    chord = str(binding.get("keyChord", ""))
+    chord = _display_easy_sequence(str(binding.get("keyChord", "")))
     scope = str(binding.get("scope", "global"))
     trigger_kind = _trigger_kind(binding)
     enabled = "on" if bool(binding.get("enabled", True)) else "off"
@@ -173,7 +189,7 @@ def build_mode_payload(settings, *, hotkey_bindings: list[dict] | None = None) -
             "overrides": {
                 "enable_command_palette": bool(getattr(settings, "enable_command_palette", True)),
                 "enable_multi_press_gestures": bool(getattr(settings, "enable_multi_press_gestures", True)),
-                "enable_raw_easy_sequences": bool(getattr(settings, "enable_raw_easy_sequences", True)),
+                "enable_raw_easy_sequences": True,
                 "raw_easy_sequence_timeout_ms": int(getattr(settings, "raw_easy_sequence_timeout_ms", 900)),
                 "enable_contextual_fallbacks": bool(getattr(settings, "enable_contextual_fallbacks", True)),
                 "announce_surface_mode": bool(getattr(settings, "announce_surface_mode", True)),
@@ -241,7 +257,7 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
             self.triggerText = wx.StaticText(self, label="Trigger: ")
             form.Add(self.triggerText, border=8, flag=wx.BOTTOM)
 
-            form.Add(wx.StaticText(self, label="Key chord"), border=4, flag=wx.BOTTOM)
+            form.Add(wx.StaticText(self, label="Key sequence (EASY then key)"), border=4, flag=wx.BOTTOM)
             self.keyChordInput = wx.TextCtrl(self)
             form.Add(self.keyChordInput, border=8, flag=wx.EXPAND | wx.BOTTOM)
 
@@ -351,7 +367,7 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
 
             new_chord = self.keyChordInput.GetValue().strip()
             if len(new_chord) < 3:
-                wx.MessageBox("Key chord must be at least 3 characters.", "BITS-EASY", wx.OK | wx.ICON_WARNING)
+                wx.MessageBox("Key sequence must be at least 3 characters.", "BITS-EASY", wx.OK | wx.ICON_WARNING)
                 return
 
             row = self._rows[self._current_index]
@@ -523,7 +539,9 @@ def open_control_panel_dialog(
             self.multiPressCheck = wx.CheckBox(self, label="Enable multi-press gestures")
             right.Add(self.multiPressCheck, border=6, flag=wx.BOTTOM)
 
-            self.rawSeqCheck = wx.CheckBox(self, label="Enable raw EASY sequences")
+            self.rawSeqCheck = wx.CheckBox(self, label="Use EASY key sequences (required)")
+            self.rawSeqCheck.SetValue(True)
+            self.rawSeqCheck.Enable(False)
             right.Add(self.rawSeqCheck, border=6, flag=wx.BOTTOM)
 
             self.contextFallbackCheck = wx.CheckBox(self, label="Enable contextual fallbacks")
@@ -653,7 +671,7 @@ def open_control_panel_dialog(
             self.baseProfile.SetStringSelection(base)
             self.commandPaletteCheck.SetValue(bool(overrides.get("enable_command_palette", True)))
             self.multiPressCheck.SetValue(bool(overrides.get("enable_multi_press_gestures", True)))
-            self.rawSeqCheck.SetValue(bool(overrides.get("enable_raw_easy_sequences", True)))
+            self.rawSeqCheck.SetValue(True)
             self.contextFallbackCheck.SetValue(bool(overrides.get("enable_contextual_fallbacks", True)))
             self.surfaceAnnounceCheck.SetValue(bool(overrides.get("announce_surface_mode", True)))
             self.globalHotkeysCheck.SetValue(bool(overrides.get("enable_global_hotkeys", True)))
@@ -671,7 +689,7 @@ def open_control_panel_dialog(
                 "overrides": {
                     "enable_command_palette": bool(self.commandPaletteCheck.GetValue()),
                     "enable_multi_press_gestures": bool(self.multiPressCheck.GetValue()),
-                    "enable_raw_easy_sequences": bool(self.rawSeqCheck.GetValue()),
+                    "enable_raw_easy_sequences": True,
                     "raw_easy_sequence_timeout_ms": int(self.rawTimeout.GetValue()),
                     "enable_contextual_fallbacks": bool(self.contextFallbackCheck.GetValue()),
                     "announce_surface_mode": bool(self.surfaceAnnounceCheck.GetValue()),
@@ -697,7 +715,7 @@ def open_control_panel_dialog(
                 self._settings.profile_id = str(mode.get("baseProfile", "balanced"))
                 self._settings.enable_command_palette = bool(overrides.get("enable_command_palette", True))
                 self._settings.enable_multi_press_gestures = bool(overrides.get("enable_multi_press_gestures", True))
-                self._settings.enable_raw_easy_sequences = bool(overrides.get("enable_raw_easy_sequences", True))
+                self._settings.enable_raw_easy_sequences = True
                 self._settings.raw_easy_sequence_timeout_ms = int(overrides.get("raw_easy_sequence_timeout_ms", 900))
                 self._settings.enable_contextual_fallbacks = bool(overrides.get("enable_contextual_fallbacks", True))
                 self._settings.announce_surface_mode = bool(overrides.get("announce_surface_mode", True))
@@ -771,8 +789,9 @@ def register_settings_panel(
             self.multiPressCheck.SetValue(settings.enable_multi_press_gestures)
             sizer.Add(self.multiPressCheck, border=5, flag=wx.ALL)
 
-            self.rawEasySeqCheck = wx.CheckBox(self, label="Enable raw EASY key sequences")
-            self.rawEasySeqCheck.SetValue(getattr(settings, "enable_raw_easy_sequences", True))
+            self.rawEasySeqCheck = wx.CheckBox(self, label="Use EASY key sequences (required)")
+            self.rawEasySeqCheck.SetValue(True)
+            self.rawEasySeqCheck.Enable(False)
             sizer.Add(self.rawEasySeqCheck, border=5, flag=wx.ALL)
 
             timeout_row = wx.BoxSizer(wx.HORIZONTAL)
@@ -807,7 +826,7 @@ def register_settings_panel(
             settings.enable_global_hotkeys = self.globalHotkeysCheck.GetValue()
             settings.emulate_capslock_prefix_for_os_hotkeys = self.capsEmulationCheck.GetValue()
             settings.enable_multi_press_gestures = self.multiPressCheck.GetValue()
-            settings.enable_raw_easy_sequences = self.rawEasySeqCheck.GetValue()
+            settings.enable_raw_easy_sequences = True
             settings.raw_easy_sequence_timeout_ms = int(self.rawEasyTimeout.GetValue())
             set_settings(settings)
             settings_store.save(settings)

@@ -22,6 +22,7 @@ class BitsEasySettings:
     emulate_capslock_prefix_for_os_hotkeys: bool = True
     enable_multi_press_gestures: bool = True
     enable_beta_features: bool = False
+    enable_feature_flag_update_alerts: bool = True
     enable_raw_easy_sequences: bool = True
     raw_easy_sequence_timeout_ms: int = 900
     active_mode: str = ""
@@ -55,6 +56,7 @@ class SettingsStore:
                 emulate_capslock_prefix_for_os_hotkeys=bool(payload.get("emulate_capslock_prefix_for_os_hotkeys", True)),
                 enable_multi_press_gestures=bool(payload.get("enable_multi_press_gestures", True)),
                 enable_beta_features=bool(payload.get("enable_beta_features", False)),
+                enable_feature_flag_update_alerts=bool(payload.get("enable_feature_flag_update_alerts", True)),
                 # EASY key sequences are mandatory; keep persisted field for compatibility.
                 enable_raw_easy_sequences=True,
                 raw_easy_sequence_timeout_ms=int(payload.get("raw_easy_sequence_timeout_ms", 900)),

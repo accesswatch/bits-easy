@@ -27,6 +27,76 @@ class FeatureFlagManager:
         self._manifest = self._load_manifest_bootstrap()
 
     @staticmethod
+    def _flags_index(manifest: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        rows = manifest.get("flags", [])
+        if not isinstance(rows, list):
+            return {}
+        out: Dict[str, Dict[str, Any]] = {}
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            flag_id = str(row.get("id", "")).strip()
+            if not flag_id:
+                continue
+            out[flag_id] = row
+        return out
+
+    @staticmethod
+    def _flag_signature(flag: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "stage": str(flag.get("stage", "stable")).strip().lower() or "stable",
+            "enabledByDefault": bool(flag.get("enabledByDefault", False)),
+            "description": str(flag.get("description", "")),
+            "commandIds": [str(x) for x in (flag.get("commandIds", []) if isinstance(flag.get("commandIds", []), list) else [])],
+            "commandPrefixes": [str(x) for x in (flag.get("commandPrefixes", []) if isinstance(flag.get("commandPrefixes", []), list) else [])],
+        }
+
+    @classmethod
+    def _manifest_changes(cls, previous: Dict[str, Any], current: Dict[str, Any]) -> Dict[str, Any]:
+        prev_index = cls._flags_index(previous)
+        cur_index = cls._flags_index(current)
+
+        new_flags: List[Dict[str, Any]] = []
+        changed_flags: List[Dict[str, Any]] = []
+        removed_flags: List[str] = []
+
+        for flag_id, cur in cur_index.items():
+            if flag_id not in prev_index:
+                new_flags.append(
+                    {
+                        "id": flag_id,
+                        "name": str(cur.get("name", flag_id)),
+                        "stage": str(cur.get("stage", "stable")),
+                        "enabled": bool(cur.get("enabledByDefault", False)),
+                    }
+                )
+                continue
+            before_sig = cls._flag_signature(prev_index[flag_id])
+            after_sig = cls._flag_signature(cur)
+            if before_sig != after_sig:
+                changed_flags.append(
+                    {
+                        "id": flag_id,
+                        "name": str(cur.get("name", flag_id)),
+                        "stageBefore": before_sig.get("stage", "stable"),
+                        "stageAfter": after_sig.get("stage", "stable"),
+                        "enabledBefore": bool(before_sig.get("enabledByDefault", False)),
+                        "enabledAfter": bool(after_sig.get("enabledByDefault", False)),
+                    }
+                )
+
+        for flag_id in prev_index.keys():
+            if flag_id not in cur_index:
+                removed_flags.append(flag_id)
+
+        return {
+            "newFlags": sorted(new_flags, key=lambda x: str(x.get("id", ""))),
+            "changedFlags": sorted(changed_flags, key=lambda x: str(x.get("id", ""))),
+            "removedFlags": sorted(removed_flags),
+            "hasChanges": bool(new_flags or changed_flags or removed_flags),
+        }
+
+    @staticmethod
     def _rank_for_authority(authority: str) -> int:
         return {"stable": 1, "beta": 2, "internal": 3}.get(str(authority or "stable").strip().lower(), 1)
 
@@ -208,6 +278,31 @@ class FeatureFlagManager:
             payload={"flagId": target, "enabled": bool(enabled)},
         )
 
+    def set_overrides(self, updates: Dict[str, bool]) -> RuntimeResult:
+        if not isinstance(updates, dict) or not updates:
+            return RuntimeResult(ok=False, message="At least one feature flag update is required.")
+
+        unknown = []
+        known_ids = {str(flag.get("id", "")).strip() for flag in self._iter_flags()}
+        for flag_id in updates.keys():
+            if str(flag_id).strip() not in known_ids:
+                unknown.append(str(flag_id))
+        if unknown:
+            return RuntimeResult(
+                ok=False,
+                message="One or more feature flag ids are unknown.",
+                payload={"unknown": sorted(unknown)},
+            )
+
+        for flag_id, enabled in updates.items():
+            self._state["overrides"][str(flag_id)] = bool(enabled)
+        self._save_state()
+        return RuntimeResult(
+            ok=True,
+            message="Feature flag overrides updated.",
+            payload={"updated": {str(k): bool(v) for k, v in updates.items()}},
+        )
+
     def clear_override(self, flag_id: str) -> RuntimeResult:
         target = str(flag_id or "").strip()
         if not target:
@@ -264,6 +359,7 @@ class FeatureFlagManager:
         )
 
     def refresh_manifest(self, *, manifest_url: str = "", timeout_seconds: float = 2.5) -> RuntimeResult:
+        previous_manifest = dict(self._manifest) if isinstance(self._manifest, dict) else {}
         requested_url = str(manifest_url or "").strip()
         active_url = requested_url or str(self._state.get("manifestUrl", "")).strip() or self._default_manifest_url
         env_url = str(os.getenv("BITS_EASY_FEATURE_FLAGS_URL", "")).strip()
@@ -272,10 +368,11 @@ class FeatureFlagManager:
 
         if not active_url:
             self._manifest = self._fallback_manifest()
+            changes = self._manifest_changes(previous_manifest, self._manifest)
             return RuntimeResult(
                 ok=True,
                 message="Feature flag manifest refreshed from fallback (no URL configured).",
-                payload={"source": "fallback", "url": ""},
+                payload={"source": "fallback", "url": "", "changes": changes, "updatesAvailable": bool(changes.get("hasChanges", False))},
             )
 
         try:
@@ -290,24 +387,27 @@ class FeatureFlagManager:
             self._write_json(self._cache_path, payload)
             self._state["manifestUrl"] = active_url
             self._save_state()
+            changes = self._manifest_changes(previous_manifest, self._manifest)
             return RuntimeResult(
                 ok=True,
                 message="Feature flag manifest refreshed from remote source.",
-                payload={"source": "remote", "url": active_url},
+                payload={"source": "remote", "url": active_url, "changes": changes, "updatesAvailable": bool(changes.get("hasChanges", False))},
             )
         except Exception:
             cached = self._read_json(self._cache_path)
             if cached:
                 cached["source"] = "cache"
                 self._manifest = cached
+                changes = self._manifest_changes(previous_manifest, self._manifest)
                 return RuntimeResult(
                     ok=True,
                     message="Remote manifest unavailable; using cached feature flag manifest.",
-                    payload={"source": "cache", "url": active_url},
+                    payload={"source": "cache", "url": active_url, "changes": changes, "updatesAvailable": bool(changes.get("hasChanges", False))},
                 )
             self._manifest = self._fallback_manifest()
+            changes = self._manifest_changes(previous_manifest, self._manifest)
             return RuntimeResult(
                 ok=True,
                 message="Remote manifest unavailable; using bundled fallback manifest.",
-                payload={"source": "fallback", "url": active_url},
+                payload={"source": "fallback", "url": active_url, "changes": changes, "updatesAvailable": bool(changes.get("hasChanges", False))},
             )

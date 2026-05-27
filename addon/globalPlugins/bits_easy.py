@@ -255,6 +255,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             )
             self._dispatcher.multi_press_enabled_override = self._settings.enable_multi_press_gestures
             self._dispatcher.set_beta_features_enabled(bool(getattr(self._settings, "enable_beta_features", False)))
+            self._maybe_offer_feature_flag_updates(self._dispatcher.latest_feature_flag_refresh())
             log.info("BITS-EASY: dispatcher constructed for profile=%s", self._settings.profile_id)
             self._palette = PaletteEngine(config=self._config, history_path=palette_history_path)
             self._hotkeys = GlobalHotkeyService(
@@ -618,9 +619,82 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._dispatcher.set_beta_features_enabled(bool(getattr(self._settings, "enable_beta_features", False)))
 
     def _set_settings(self, settings):
+        old_settings = self._settings
         self._settings = settings
         self._apply_active_mode_resolution()
         self._restart_hotkeys()
+
+        was_beta_enabled = bool(getattr(old_settings, "enable_beta_features", False))
+        now_beta_enabled = bool(getattr(self._settings, "enable_beta_features", False))
+        had_alerts = bool(getattr(old_settings, "enable_feature_flag_update_alerts", True))
+        has_alerts = bool(getattr(self._settings, "enable_feature_flag_update_alerts", True))
+        if self._dispatcher is not None and now_beta_enabled and has_alerts and (not was_beta_enabled or not had_alerts):
+            refresh = self._dispatcher.refresh_feature_flags(timeout_seconds=1.0)
+            self._maybe_offer_feature_flag_updates(refresh)
+
+    def _maybe_offer_feature_flag_updates(self, refresh_result):
+        if self._dispatcher is None or self._settings is None or refresh_result is None:
+            return
+        if not bool(getattr(self._settings, "enable_beta_features", False)):
+            return
+        if not bool(getattr(self._settings, "enable_feature_flag_update_alerts", True)):
+            return
+
+        payload = refresh_result.payload or {}
+        if not bool(payload.get("updatesAvailable", False)):
+            return
+
+        changes = payload.get("changes", {}) if isinstance(payload.get("changes", {}), dict) else {}
+        new_flags = changes.get("newFlags", []) if isinstance(changes.get("newFlags", []), list) else []
+        changed_flags = changes.get("changedFlags", []) if isinstance(changes.get("changedFlags", []), list) else []
+        candidate_ids = sorted(
+            {
+                str(row.get("id", "")).strip()
+                for row in (new_flags + changed_flags)
+                if isinstance(row, dict) and str(row.get("id", "")).strip()
+            }
+        )
+        if not candidate_ids:
+            return
+
+        source = str(payload.get("source", "remote"))
+        prompt = _format_message(
+            _(
+                "BITS-EASY found {newCount} new and {changedCount} updated feature flags from {source}. "
+                "Enable these updated flags now?"
+            ),
+            newCount=len(new_flags),
+            changedCount=len(changed_flags),
+            source=source,
+        )
+
+        try:
+            import wx
+
+            response = wx.MessageBox(
+                prompt,
+                _("BITS-EASY Feature Flag Updates"),
+                style=wx.YES_NO | wx.ICON_QUESTION | wx.YES_DEFAULT,
+            )
+            if response != wx.YES:
+                self._announce_text(_("Feature flag updates left disabled."))
+                return
+        except Exception:
+            log.exception("BITS-EASY: failed to show feature flag update prompt")
+            return
+
+        apply_result = self._dispatcher.set_feature_flags_enabled(candidate_ids, enabled=True)
+        if not apply_result.ok:
+            self._announce_text(_("Could not enable updated feature flags."))
+            return
+
+        self._restart_hotkeys()
+        self._announce_text(
+            _format_message(
+                _("Enabled {count} updated feature flags."),
+                count=len(candidate_ids),
+            )
+        )
 
     def _surface_mode(self):
         if self._current_snapshot is None:

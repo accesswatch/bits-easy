@@ -489,7 +489,7 @@ class RuntimeDispatcher:
             fallback_manifest_path=fallback_manifest,
             default_manifest_url=str(getattr(self.config, "feature_flag_manifest_url", "") or ""),
         )
-        self._feature_flags.refresh_manifest(timeout_seconds=1.5)
+        self._latest_feature_flag_refresh = self._feature_flags.refresh_manifest(timeout_seconds=1.5)
         self._emoji = EmojiAssistant(cache_path=base_dir / "emoji-catalog-cache.json")
         self._google_calendar = GoogleCalendarSync(
             base_dir / "google-calendar-credentials.json",
@@ -873,6 +873,20 @@ class RuntimeDispatcher:
     def set_beta_features_enabled(self, enabled: bool) -> RuntimeResult:
         authority = "beta" if bool(enabled) else "stable"
         return self._feature_flags.set_authority(authority)
+
+    def latest_feature_flag_refresh(self) -> RuntimeResult:
+        return self._latest_feature_flag_refresh
+
+    def refresh_feature_flags(self, *, manifest_url: str = "", timeout_seconds: float = 2.5) -> RuntimeResult:
+        self._latest_feature_flag_refresh = self._feature_flags.refresh_manifest(
+            manifest_url=manifest_url,
+            timeout_seconds=timeout_seconds,
+        )
+        return self._latest_feature_flag_refresh
+
+    def set_feature_flags_enabled(self, flag_ids: list[str], enabled: bool = True) -> RuntimeResult:
+        updates = {str(flag_id): bool(enabled) for flag_id in flag_ids if str(flag_id).strip()}
+        return self._feature_flags.set_overrides(updates)
 
     def _bindings_for_context(self, context: AppContext) -> list[dict]:
         visible: list[dict] = []
@@ -1586,7 +1600,7 @@ class RuntimeDispatcher:
         elif command_id == "cmd.feature.flags.clearOverride":
             result = self._feature_flags.clear_override(str(kwargs.get("flagId", "")))
         elif command_id == "cmd.feature.flags.refreshManifest":
-            result = self._feature_flags.refresh_manifest(
+            result = self.refresh_feature_flags(
                 manifest_url=str(kwargs.get("manifestUrl", "")),
                 timeout_seconds=float(kwargs.get("timeoutSeconds", 2.5)),
             )

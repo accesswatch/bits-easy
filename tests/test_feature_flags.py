@@ -106,6 +106,112 @@ class FeatureFlagTests(unittest.TestCase):
             self.assertTrue(refreshed.ok)
             self.assertIn((refreshed.payload or {}).get("source"), ("fallback", "cache"))
 
+    def test_refresh_manifest_reports_changes_from_previous_snapshot(self):
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            fallback_manifest = td_path / "fallback.json"
+            fallback_manifest.write_text(
+                json.dumps(
+                    {
+                        "version": "1",
+                        "authorityStages": {
+                            "stable": ["stable"],
+                            "beta": ["stable", "beta"],
+                            "internal": ["stable", "beta", "experimental"],
+                        },
+                        "flags": [
+                            {
+                                "id": "flag.alpha",
+                                "stage": "beta",
+                                "enabledByDefault": False,
+                                "commandIds": ["cmd.alpha"],
+                            }
+                        ],
+                        "grants": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            manager = FeatureFlagManager(
+                state_path=td_path / "state.json",
+                cache_path=td_path / "cache.json",
+                fallback_manifest_path=fallback_manifest,
+                default_manifest_url="https://127.0.0.1:9/manifest.json",
+            )
+            first = manager.refresh_manifest(timeout_seconds=0.1)
+            self.assertTrue(first.ok)
+            self.assertFalse((first.payload or {}).get("updatesAvailable"))
+
+            cache_manifest = {
+                "version": "1",
+                "authorityStages": {
+                    "stable": ["stable"],
+                    "beta": ["stable", "beta"],
+                    "internal": ["stable", "beta", "experimental"],
+                },
+                "flags": [
+                    {
+                        "id": "flag.alpha",
+                        "stage": "beta",
+                        "enabledByDefault": True,
+                        "commandIds": ["cmd.alpha"],
+                    },
+                    {
+                        "id": "flag.beta",
+                        "stage": "beta",
+                        "enabledByDefault": False,
+                        "commandIds": ["cmd.beta"],
+                    },
+                ],
+                "grants": [],
+            }
+            (td_path / "cache.json").write_text(json.dumps(cache_manifest), encoding="utf-8")
+            refreshed = manager.refresh_manifest(timeout_seconds=0.1)
+            self.assertTrue(refreshed.ok)
+
+            changes = (refreshed.payload or {}).get("changes", {})
+            self.assertTrue((refreshed.payload or {}).get("updatesAvailable"))
+            self.assertEqual(len(changes.get("newFlags", [])), 1)
+            self.assertEqual(changes.get("newFlags", [])[0].get("id"), "flag.beta")
+            self.assertEqual(len(changes.get("changedFlags", [])), 1)
+            self.assertEqual(changes.get("changedFlags", [])[0].get("id"), "flag.alpha")
+
+    def test_set_overrides_updates_multiple_flags(self):
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            fallback_manifest = td_path / "fallback.json"
+            fallback_manifest.write_text(
+                json.dumps(
+                    {
+                        "version": "1",
+                        "authorityStages": {
+                            "stable": ["stable"],
+                            "beta": ["stable", "beta"],
+                            "internal": ["stable", "beta", "experimental"],
+                        },
+                        "flags": [
+                            {"id": "flag.alpha", "stage": "beta", "enabledByDefault": False},
+                            {"id": "flag.beta", "stage": "beta", "enabledByDefault": False},
+                        ],
+                        "grants": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            manager = FeatureFlagManager(
+                state_path=td_path / "state.json",
+                cache_path=td_path / "cache.json",
+                fallback_manifest_path=fallback_manifest,
+            )
+            updated = manager.set_overrides({"flag.alpha": True, "flag.beta": True})
+            self.assertTrue(updated.ok)
+            listed = manager.list_flags()
+            rows = {row.get("id"): row for row in (listed.payload or {}).get("flags", [])}
+            self.assertTrue(rows.get("flag.alpha", {}).get("enabled"))
+            self.assertTrue(rows.get("flag.beta", {}).get("enabled"))
+
 
 if __name__ == "__main__":
     unittest.main()

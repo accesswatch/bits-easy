@@ -21,6 +21,7 @@ class SettingsStoreTests(unittest.TestCase):
             self.assertTrue(settings.enable_global_hotkeys)
             self.assertTrue(settings.emulate_capslock_prefix_for_os_hotkeys)
             self.assertTrue(settings.enable_multi_press_gestures)
+            self.assertTrue(settings.enable_feature_flag_update_alerts)
 
     def test_roundtrip_save_load(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -32,6 +33,7 @@ class SettingsStoreTests(unittest.TestCase):
                     announce_surface_mode=False,
                     enable_contextual_fallbacks=True,
                     enable_command_palette=False,
+                    enable_feature_flag_update_alerts=False,
                     slot_default=3,
                     preview_threshold_chars=128,
                     active_mode="focusMode",
@@ -58,6 +60,7 @@ class SettingsStoreTests(unittest.TestCase):
             self.assertEqual(loaded.profile_id, "expert")
             self.assertFalse(loaded.announce_surface_mode)
             self.assertFalse(loaded.enable_command_palette)
+            self.assertFalse(loaded.enable_feature_flag_update_alerts)
             self.assertEqual(loaded.slot_default, 3)
             self.assertEqual(loaded.preview_threshold_chars, 128)
             self.assertEqual(loaded.active_mode, "focusMode")
@@ -84,6 +87,7 @@ class SettingsStoreTests(unittest.TestCase):
             self.assertTrue(settings.enable_global_hotkeys)
             self.assertTrue(settings.emulate_capslock_prefix_for_os_hotkeys)
             self.assertTrue(settings.enable_multi_press_gestures)
+            self.assertTrue(settings.enable_feature_flag_update_alerts)
             self.assertEqual(settings.active_mode, "")
             self.assertEqual(settings.custom_modes, {})
 

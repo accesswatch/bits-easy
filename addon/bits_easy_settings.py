@@ -2,7 +2,15 @@ from __future__ import annotations
 
 from typing import Callable
 
-import addonHandler
+try:
+    import addonHandler  # type: ignore[import-not-found]
+except Exception:  # pragma: no cover - test runtime outside NVDA
+    class _AddonHandlerShim:
+        @staticmethod
+        def initTranslation() -> None:
+            return None
+
+    addonHandler = _AddonHandlerShim()
 
 addonHandler.initTranslation()
 

@@ -2,12 +2,79 @@ from __future__ import annotations
 
 from typing import Callable
 
+import addonHandler
+
+addonHandler.initTranslation()
+
+if "_" not in globals():
+    def _(message: str) -> str:
+        return message
+
 try:
     from logHandler import log
 except Exception:  # pragma: no cover - logHandler is always present inside NVDA
     import logging
 
     log = logging.getLogger("bits_easy.addon.settings")
+
+
+_SCOPE_CHOICES = [
+    ("global", _("Global")),
+    ("virtualized", _("Virtualized")),
+    ("app-override", _("App override")),
+]
+
+_TRIGGER_CHOICES = [
+    ("single-press", _("Single press")),
+    ("double-press", _("Double press")),
+    ("triple-press", _("Triple press")),
+    ("press-and-hold", _("Press and hold")),
+]
+
+_PROFILE_CHOICES = [
+    ("beginner", _("Beginner")),
+    ("balanced", _("Balanced")),
+    ("expert", _("Expert")),
+]
+
+
+def _choice_labels(options: list[tuple[str, str]]) -> list[str]:
+    return [label for _, label in options]
+
+
+def _choice_set_value(choice, options: list[tuple[str, str]], value: str, default: str):
+    selected = default
+    for raw_value, _label in options:
+        if raw_value == value:
+            selected = raw_value
+            break
+    for index, (raw_value, _label) in enumerate(options):
+        if raw_value == selected:
+            choice.SetSelection(index)
+            return
+    if options:
+        choice.SetSelection(0)
+
+
+def _choice_get_value(choice, options: list[tuple[str, str]], default: str) -> str:
+    selection = int(choice.GetSelection())
+    if 0 <= selection < len(options):
+        return options[selection][0]
+    return default
+
+
+def _scope_label(scope: str) -> str:
+    for raw_value, label in _SCOPE_CHOICES:
+        if raw_value == scope:
+            return label
+    return scope
+
+
+def _trigger_label(trigger_kind: str) -> str:
+    for raw_value, label in _TRIGGER_CHOICES:
+        if raw_value == trigger_kind:
+            return label
+    return trigger_kind
 
 
 _KNOWN_NVDA_GESTURES = {
@@ -158,9 +225,9 @@ def _binding_label(index: int, binding: dict, command_catalog: dict) -> str:
     command_id = str(binding.get("commandId", ""))
     command_name = str((command_catalog.get(command_id) or {}).get("name", command_id))
     chord = _display_easy_sequence(str(binding.get("keyChord", "")))
-    scope = str(binding.get("scope", "global"))
-    trigger_kind = _trigger_kind(binding)
-    enabled = "on" if bool(binding.get("enabled", True)) else "off"
+    scope = _scope_label(str(binding.get("scope", "global")))
+    trigger_kind = _trigger_label(_trigger_kind(binding))
+    enabled = _("Enabled") if bool(binding.get("enabled", True)) else _("Disabled")
     return f"{index + 1}. {command_name} | {chord} | {trigger_kind} | {scope} | {enabled}"
 
 
@@ -224,7 +291,7 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
 
     class HotkeyEditorDialog(wx.Dialog):
         def __init__(self):
-            super().__init__(parent, title="BITS-EASY Keyboard Mappings", size=(900, 520))
+            super().__init__(parent, title=_("BITS-EASY Keyboard Mappings"), size=(900, 520))
             self._rows = [dict(row) for row in keymap_bindings]
             self._current_index = -1
 
@@ -234,8 +301,8 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
                 wx.StaticText(
                     self,
                     label=(
-                        "Edit key chords and enable state for any mapping. "
-                        "Use Advanced mode to edit trigger kind and scope."
+                        _("Edit key chords and enable state for any mapping. ")
+                        + _("Use Advanced mode to edit trigger kind and scope.")
                     ),
                 ),
                 border=8,
@@ -248,53 +315,53 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
             body.Add(self.bindingList, proportion=1, flag=wx.EXPAND | wx.ALL, border=8)
 
             form = wx.BoxSizer(wx.VERTICAL)
-            self.commandText = wx.StaticText(self, label="Command: ")
+            self.commandText = wx.StaticText(self, label=_("Command: "))
             form.Add(self.commandText, border=4, flag=wx.BOTTOM)
 
-            self.scopeText = wx.StaticText(self, label="Scope: ")
+            self.scopeText = wx.StaticText(self, label=_("Scope: "))
             form.Add(self.scopeText, border=4, flag=wx.BOTTOM)
 
-            self.triggerText = wx.StaticText(self, label="Trigger: ")
+            self.triggerText = wx.StaticText(self, label=_("Trigger: "))
             form.Add(self.triggerText, border=8, flag=wx.BOTTOM)
 
-            form.Add(wx.StaticText(self, label="Key sequence (EASY then key)"), border=4, flag=wx.BOTTOM)
+            form.Add(wx.StaticText(self, label=_("Key sequence (EASY then key)")), border=4, flag=wx.BOTTOM)
             self.keyChordInput = wx.TextCtrl(self)
             form.Add(self.keyChordInput, border=8, flag=wx.EXPAND | wx.BOTTOM)
 
-            self.enabledCheck = wx.CheckBox(self, label="Binding enabled")
+            self.enabledCheck = wx.CheckBox(self, label=_("Binding enabled"))
             form.Add(self.enabledCheck, border=8, flag=wx.BOTTOM)
 
-            self.advancedCheck = wx.CheckBox(self, label="Advanced mode")
+            self.advancedCheck = wx.CheckBox(self, label=_("Advanced mode"))
             self.advancedCheck.SetValue(False)
             form.Add(self.advancedCheck, border=8, flag=wx.BOTTOM)
 
-            self.scopeLabel = wx.StaticText(self, label="Scope")
+            self.scopeLabel = wx.StaticText(self, label=_("Scope"))
             form.Add(self.scopeLabel, border=4, flag=wx.BOTTOM)
-            self.scopeChoice = wx.Choice(self, choices=["global", "virtualized", "app-override"])
+            self.scopeChoice = wx.Choice(self, choices=_choice_labels(_SCOPE_CHOICES))
             form.Add(self.scopeChoice, border=8, flag=wx.EXPAND | wx.BOTTOM)
 
-            self.appIdLabel = wx.StaticText(self, label="App override appId (only for app-override scope)")
+            self.appIdLabel = wx.StaticText(self, label=_("App override appId (only for app-override scope)"))
             form.Add(self.appIdLabel, border=4, flag=wx.BOTTOM)
             self.appIdInput = wx.TextCtrl(self)
             form.Add(self.appIdInput, border=8, flag=wx.EXPAND | wx.BOTTOM)
 
-            self.triggerLabel = wx.StaticText(self, label="Trigger kind")
+            self.triggerLabel = wx.StaticText(self, label=_("Trigger kind"))
             form.Add(self.triggerLabel, border=4, flag=wx.BOTTOM)
-            self.triggerChoice = wx.Choice(self, choices=["single-press", "double-press", "triple-press", "press-and-hold"])
+            self.triggerChoice = wx.Choice(self, choices=_choice_labels(_TRIGGER_CHOICES))
             form.Add(self.triggerChoice, border=8, flag=wx.EXPAND | wx.BOTTOM)
 
-            applyRowButton = wx.Button(self, label="Apply To Selected")
+            applyRowButton = wx.Button(self, label=_("Apply To Selected"))
             form.Add(applyRowButton, border=8, flag=wx.BOTTOM)
 
-            scrubButton = wx.Button(self, label="Run NVDA gesture scrub")
+            scrubButton = wx.Button(self, label=_("Run NVDA gesture scrub"))
             form.Add(scrubButton, border=8, flag=wx.BOTTOM)
 
             body.Add(form, proportion=0, flag=wx.EXPAND | wx.ALL, border=8)
             root.Add(body, proportion=1, flag=wx.EXPAND)
 
             buttons = wx.StdDialogButtonSizer()
-            self.saveButton = wx.Button(self, wx.ID_OK, "Save")
-            self.cancelButton = wx.Button(self, wx.ID_CANCEL, "Cancel")
+            self.saveButton = wx.Button(self, wx.ID_OK, _("Save"))
+            self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
             buttons.AddButton(self.saveButton)
             buttons.AddButton(self.cancelButton)
             buttons.Realize()
@@ -327,25 +394,19 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
             command_id = str(row.get("commandId", ""))
             command_name = str((command_catalog.get(command_id) or {}).get("name", command_id))
 
-            self.commandText.SetLabel(f"Command: {command_name} ({command_id})")
-            self.scopeText.SetLabel(f"Scope: {row.get('scope', 'global')}")
-            self.triggerText.SetLabel(f"Trigger: {_trigger_kind(row)}")
+            self.commandText.SetLabel(_("Command: ") + f"{command_name} ({command_id})")
+            self.scopeText.SetLabel(_("Scope: ") + _scope_label(str(row.get("scope", "global"))))
+            self.triggerText.SetLabel(_("Trigger: ") + _trigger_label(_trigger_kind(row)))
             self.keyChordInput.SetValue(str(row.get("keyChord", "")))
             self.enabledCheck.SetValue(bool(row.get("enabled", True)))
             scope = str(row.get("scope", "global"))
-            if scope in ("global", "virtualized", "app-override"):
-                self.scopeChoice.SetStringSelection(scope)
-            else:
-                self.scopeChoice.SetStringSelection("global")
+            _choice_set_value(self.scopeChoice, _SCOPE_CHOICES, scope, "global")
 
             app_id = row.get("appId")
             self.appIdInput.SetValue("" if app_id is None else str(app_id))
 
             trig = _trigger_kind(row)
-            if trig in ("single-press", "double-press", "triple-press", "press-and-hold"):
-                self.triggerChoice.SetStringSelection(trig)
-            else:
-                self.triggerChoice.SetStringSelection("single-press")
+            _choice_set_value(self.triggerChoice, _TRIGGER_CHOICES, trig, "single-press")
 
         def _set_advanced_enabled(self, enabled: bool):
             self.scopeLabel.Enable(enabled)
@@ -367,7 +428,7 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
 
             new_chord = self.keyChordInput.GetValue().strip()
             if len(new_chord) < 3:
-                wx.MessageBox("Key sequence must be at least 3 characters.", "BITS-EASY", wx.OK | wx.ICON_WARNING)
+                wx.MessageBox(_("Key sequence must be at least 3 characters."), _("BITS-EASY"), wx.OK | wx.ICON_WARNING)
                 return
 
             row = self._rows[self._current_index]
@@ -375,19 +436,19 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
             row["enabled"] = bool(self.enabledCheck.GetValue())
 
             if self.advancedCheck.GetValue():
-                scope = self.scopeChoice.GetStringSelection() or "global"
+                scope = _choice_get_value(self.scopeChoice, _SCOPE_CHOICES, "global")
                 row["scope"] = scope
 
                 if scope == "app-override":
                     app_id = self.appIdInput.GetValue().strip()
                     if not app_id:
-                        wx.MessageBox("appId is required for app-override scope.", "BITS-EASY", wx.OK | wx.ICON_WARNING)
+                        wx.MessageBox(_("appId is required for app-override scope."), _("BITS-EASY"), wx.OK | wx.ICON_WARNING)
                         return
                     row["appId"] = app_id
                 else:
                     row["appId"] = None
 
-                trigger_kind = self.triggerChoice.GetStringSelection() or "single-press"
+                trigger_kind = _choice_get_value(self.triggerChoice, _TRIGGER_CHOICES, "single-press")
                 prev_trigger = row.get("trigger") if isinstance(row.get("trigger"), dict) else {}
                 if trigger_kind == "single-press":
                     row.pop("trigger", None)
@@ -415,21 +476,21 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
             nvda_hits = _collect_nvda_collisions(self._rows, nvda_gestures)
 
             lines = []
-            lines.append(f"Internal collisions: {len(internal)}")
+            lines.append(_("Internal collisions: {count}").format(count=len(internal)))
             for sig, command_ids in internal[:12]:
                 lines.append(f"- {sig}: {', '.join(command_ids)}")
             if len(internal) > 12:
-                lines.append(f"- ... {len(internal) - 12} more")
+                lines.append(_("- ... {count} more").format(count=len(internal) - 12))
 
             lines.append("")
-            lines.append(f"Potential NVDA collisions: {len(nvda_hits)}")
+            lines.append(_("Potential NVDA collisions: {count}").format(count=len(nvda_hits)))
             for chord, command_id in nvda_hits[:20]:
                 lines.append(f"- {chord}: {command_id}")
             if len(nvda_hits) > 20:
-                lines.append(f"- ... {len(nvda_hits) - 20} more")
+                lines.append(_("- ... {count} more").format(count=len(nvda_hits) - 20))
 
             msg = "\n".join(lines)
-            wx.MessageBox(msg, "BITS-EASY Hotkey Scrub", wx.OK | wx.ICON_INFORMATION)
+            wx.MessageBox(msg, _("BITS-EASY Hotkey Scrub"), wx.OK | wx.ICON_INFORMATION)
 
     dialog = HotkeyEditorDialog()
     try:
@@ -441,9 +502,10 @@ def open_hotkey_editor_dialog(parent, keymap_bindings: list[dict], command_catal
         internal = _collect_internal_collisions(dialog._rows)
         if internal:
             wx.MessageBox(
-                "One or more enabled bindings collide exactly (same key, trigger, scope, and app). "
-                "Please resolve collisions before saving.",
-                "BITS-EASY",
+                _(
+                    "One or more enabled bindings collide exactly (same key, trigger, scope, and app). Please resolve collisions before saving."
+                ),
+                _("BITS-EASY"),
                 wx.OK | wx.ICON_WARNING,
             )
             return False
@@ -470,7 +532,7 @@ def open_control_panel_dialog(
 
     class ControlPanelDialog(wx.Dialog):
         def __init__(self):
-            super().__init__(parent, title="BITS-EASY Control Panel", size=(980, 620))
+            super().__init__(parent, title=_("BITS-EASY Control Panel"), size=(980, 620))
             self._settings = get_settings()
             self._modes = dict(getattr(self._settings, "custom_modes", {}) or {})
             self._active_mode = str(getattr(self._settings, "active_mode", "") or "")
@@ -480,14 +542,14 @@ def open_control_panel_dialog(
             root.Add(
                 wx.StaticText(
                     self,
-                    label="Manage advanced key behavior, launch key assignment tools, and create custom user modes.",
+                    label=_("Manage advanced key behavior, launch key assignment tools, and create custom user modes."),
                 ),
                 border=8,
                 flag=wx.ALL,
             )
 
             tools_row = wx.BoxSizer(wx.HORIZONTAL)
-            self.hotkeysButton = wx.Button(self, label="Open Key Assignment Editor")
+            self.hotkeysButton = wx.Button(self, label=_("Open Key Assignment Editor"))
             self.hotkeysButton.Bind(wx.EVT_BUTTON, self._on_open_hotkeys)
             tools_row.Add(self.hotkeysButton, border=8, flag=wx.RIGHT)
             root.Add(tools_row, border=8, flag=wx.LEFT | wx.RIGHT | wx.BOTTOM)
@@ -495,22 +557,22 @@ def open_control_panel_dialog(
             split = wx.BoxSizer(wx.HORIZONTAL)
 
             left = wx.BoxSizer(wx.VERTICAL)
-            left.Add(wx.StaticText(self, label="Custom Modes"), border=4, flag=wx.BOTTOM)
+            left.Add(wx.StaticText(self, label=_("Custom Modes")), border=4, flag=wx.BOTTOM)
             self.modeList = wx.ListBox(self)
             left.Add(self.modeList, proportion=1, flag=wx.EXPAND | wx.BOTTOM, border=8)
 
             create_row = wx.BoxSizer(wx.HORIZONTAL)
             self.newModeName = wx.TextCtrl(self)
-            self.createModeBtn = wx.Button(self, label="Create")
+            self.createModeBtn = wx.Button(self, label=_("Create"))
             self.createModeBtn.Bind(wx.EVT_BUTTON, self._on_create_mode)
             create_row.Add(self.newModeName, proportion=1, flag=wx.RIGHT, border=6)
             create_row.Add(self.createModeBtn)
             left.Add(create_row, flag=wx.EXPAND | wx.BOTTOM, border=8)
 
             action_row = wx.BoxSizer(wx.HORIZONTAL)
-            self.deleteModeBtn = wx.Button(self, label="Delete")
+            self.deleteModeBtn = wx.Button(self, label=_("Delete"))
             self.deleteModeBtn.Bind(wx.EVT_BUTTON, self._on_delete_mode)
-            self.activateModeBtn = wx.Button(self, label="Activate")
+            self.activateModeBtn = wx.Button(self, label=_("Activate"))
             self.activateModeBtn.Bind(wx.EVT_BUTTON, self._on_activate_mode)
             action_row.Add(self.deleteModeBtn, border=8, flag=wx.RIGHT)
             action_row.Add(self.activateModeBtn)
@@ -519,47 +581,47 @@ def open_control_panel_dialog(
             split.Add(left, proportion=1, flag=wx.EXPAND | wx.ALL, border=8)
 
             right = wx.BoxSizer(wx.VERTICAL)
-            right.Add(wx.StaticText(self, label="Mode Configuration"), border=4, flag=wx.BOTTOM)
+            right.Add(wx.StaticText(self, label=_("Mode Configuration")), border=4, flag=wx.BOTTOM)
 
-            self.modeInfo = wx.StaticText(self, label="Select or create a mode.")
+            self.modeInfo = wx.StaticText(self, label=_("Select or create a mode."))
             right.Add(self.modeInfo, border=8, flag=wx.BOTTOM)
 
-            self.modeHotkeysBtn = wx.Button(self, label="Edit Mode Keymap")
+            self.modeHotkeysBtn = wx.Button(self, label=_("Edit Mode Keymap"))
             self.modeHotkeysBtn.Bind(wx.EVT_BUTTON, self._on_edit_mode_hotkeys)
             self.modeHotkeysBtn.Enable(False)
             right.Add(self.modeHotkeysBtn, border=8, flag=wx.BOTTOM)
 
-            right.Add(wx.StaticText(self, label="Base profile"), border=4, flag=wx.BOTTOM)
-            self.baseProfile = wx.Choice(self, choices=["beginner", "balanced", "expert"])
+            right.Add(wx.StaticText(self, label=_("Base profile")), border=4, flag=wx.BOTTOM)
+            self.baseProfile = wx.Choice(self, choices=_choice_labels(_PROFILE_CHOICES))
             right.Add(self.baseProfile, border=8, flag=wx.EXPAND | wx.BOTTOM)
 
-            self.commandPaletteCheck = wx.CheckBox(self, label="Enable command palette")
+            self.commandPaletteCheck = wx.CheckBox(self, label=_("Enable command palette"))
             right.Add(self.commandPaletteCheck, border=6, flag=wx.BOTTOM)
 
-            self.multiPressCheck = wx.CheckBox(self, label="Enable multi-press gestures")
+            self.multiPressCheck = wx.CheckBox(self, label=_("Enable multi-press gestures"))
             right.Add(self.multiPressCheck, border=6, flag=wx.BOTTOM)
 
-            self.rawSeqCheck = wx.CheckBox(self, label="Use EASY key sequences (required)")
+            self.rawSeqCheck = wx.CheckBox(self, label=_("Use EASY key sequences (required)"))
             self.rawSeqCheck.SetValue(True)
             self.rawSeqCheck.Enable(False)
             right.Add(self.rawSeqCheck, border=6, flag=wx.BOTTOM)
 
-            self.contextFallbackCheck = wx.CheckBox(self, label="Enable contextual fallbacks")
+            self.contextFallbackCheck = wx.CheckBox(self, label=_("Enable contextual fallbacks"))
             right.Add(self.contextFallbackCheck, border=6, flag=wx.BOTTOM)
 
-            self.surfaceAnnounceCheck = wx.CheckBox(self, label="Announce surface mode")
+            self.surfaceAnnounceCheck = wx.CheckBox(self, label=_("Announce surface mode"))
             right.Add(self.surfaceAnnounceCheck, border=6, flag=wx.BOTTOM)
 
-            self.globalHotkeysCheck = wx.CheckBox(self, label="Enable OS-level hotkeys")
+            self.globalHotkeysCheck = wx.CheckBox(self, label=_("Enable OS-level hotkeys"))
             right.Add(self.globalHotkeysCheck, border=6, flag=wx.BOTTOM)
 
             timeout_row = wx.BoxSizer(wx.HORIZONTAL)
-            timeout_row.Add(wx.StaticText(self, label="Raw EASY timeout (ms)"), border=4, flag=wx.RIGHT)
+            timeout_row.Add(wx.StaticText(self, label=_("Raw EASY timeout (ms)")), border=4, flag=wx.RIGHT)
             self.rawTimeout = wx.SpinCtrl(self, min=250, max=3000)
             timeout_row.Add(self.rawTimeout)
             right.Add(timeout_row, border=8, flag=wx.BOTTOM)
 
-            self.saveModeBtn = wx.Button(self, label="Save Mode")
+            self.saveModeBtn = wx.Button(self, label=_("Save Mode"))
             self.saveModeBtn.Bind(wx.EVT_BUTTON, self._on_save_mode)
             right.Add(self.saveModeBtn, border=8, flag=wx.BOTTOM)
 
@@ -567,7 +629,7 @@ def open_control_panel_dialog(
             root.Add(split, proportion=1, flag=wx.EXPAND)
 
             buttons = wx.StdDialogButtonSizer()
-            self.okButton = wx.Button(self, wx.ID_OK, "Close")
+            self.okButton = wx.Button(self, wx.ID_OK, _("Close"))
             buttons.AddButton(self.okButton)
             buttons.Realize()
             root.Add(buttons, flag=wx.ALIGN_RIGHT | wx.ALL, border=8)
@@ -607,7 +669,7 @@ def open_control_panel_dialog(
                 base_bindings, command_catalog = get_hotkey_editor_context()
             except Exception:
                 log.exception("BITS-EASY: mode keymap context failed")
-                wx.MessageBox("Mode keymap editor is unavailable.", "BITS-EASY", wx.OK | wx.ICON_WARNING)
+                wx.MessageBox(_("Mode keymap editor is unavailable."), _("BITS-EASY"), wx.OK | wx.ICON_WARNING)
                 return
 
             selected_mode = str(self._selected_mode)
@@ -624,16 +686,16 @@ def open_control_panel_dialog(
                 on_save=_save_mode_bindings,
             )
             if changed:
-                active_note = " (active)" if self._active_mode == selected_mode else ""
-                self.modeInfo.SetLabel(f"Mode: {selected_mode}{active_note} keymap saved")
+                active_note = _(" (active)") if self._active_mode == selected_mode else ""
+                self.modeInfo.SetLabel(_("Mode: {mode}{active} keymap saved").format(mode=selected_mode, active=active_note))
 
         def _on_create_mode(self, _evt):
             name = self.newModeName.GetValue().strip()
             if len(name) < 2:
-                wx.MessageBox("Mode name must be at least 2 characters.", "BITS-EASY", wx.OK | wx.ICON_WARNING)
+                wx.MessageBox(_("Mode name must be at least 2 characters."), _("BITS-EASY"), wx.OK | wx.ICON_WARNING)
                 return
             if name in self._modes:
-                wx.MessageBox("Mode already exists.", "BITS-EASY", wx.OK | wx.ICON_WARNING)
+                wx.MessageBox(_("Mode already exists."), _("BITS-EASY"), wx.OK | wx.ICON_WARNING)
                 return
             self._modes = upsert_custom_mode(self._modes, name, self._default_mode_payload())
             self._selected_mode = name
@@ -668,7 +730,7 @@ def open_control_panel_dialog(
             base = str(mode.get("baseProfile", "balanced"))
             if base not in ("beginner", "balanced", "expert"):
                 base = "balanced"
-            self.baseProfile.SetStringSelection(base)
+            _choice_set_value(self.baseProfile, _PROFILE_CHOICES, base, "balanced")
             self.commandPaletteCheck.SetValue(bool(overrides.get("enable_command_palette", True)))
             self.multiPressCheck.SetValue(bool(overrides.get("enable_multi_press_gestures", True)))
             self.rawSeqCheck.SetValue(True)
@@ -676,8 +738,8 @@ def open_control_panel_dialog(
             self.surfaceAnnounceCheck.SetValue(bool(overrides.get("announce_surface_mode", True)))
             self.globalHotkeysCheck.SetValue(bool(overrides.get("enable_global_hotkeys", True)))
             self.rawTimeout.SetValue(int(overrides.get("raw_easy_sequence_timeout_ms", 900)))
-            active_note = " (active)" if self._active_mode == self._selected_mode else ""
-            self.modeInfo.SetLabel(f"Mode: {self._selected_mode}{active_note}")
+            active_note = _(" (active)") if self._active_mode == self._selected_mode else ""
+            self.modeInfo.SetLabel(_("Mode: {mode}{active}").format(mode=self._selected_mode, active=active_note))
             self.modeHotkeysBtn.Enable(get_hotkey_editor_context is not None)
 
         def _on_save_mode(self, _evt):
@@ -685,7 +747,7 @@ def open_control_panel_dialog(
                 return
             current = dict(self._modes.get(self._selected_mode, {}))
             next_payload = {
-                "baseProfile": self.baseProfile.GetStringSelection() or "balanced",
+                "baseProfile": _choice_get_value(self.baseProfile, _PROFILE_CHOICES, "balanced"),
                 "overrides": {
                     "enable_command_palette": bool(self.commandPaletteCheck.GetValue()),
                     "enable_multi_press_gestures": bool(self.multiPressCheck.GetValue()),
@@ -702,7 +764,7 @@ def open_control_panel_dialog(
             self._modes = upsert_custom_mode(self._modes, self._selected_mode, next_payload)
             if self._active_mode == self._selected_mode:
                 self._apply_mode_to_settings(self._selected_mode)
-            self.modeInfo.SetLabel(f"Mode: {self._selected_mode} saved")
+            self.modeInfo.SetLabel(_("Mode: {mode} saved").format(mode=self._selected_mode))
 
         def _apply_mode_to_settings(self, mode_name: str):
             mode = dict(self._modes.get(mode_name, {}))
@@ -755,57 +817,57 @@ def register_settings_panel(
         return None
 
     class BitsEasySettingsPanel(SettingsPanel):
-        title = "BITS-EASY"
+        title = _("BITS-EASY")
 
         def makeSettings(self, sizer):
             settings = get_settings()
 
-            self.profileChoice = wx.Choice(self, choices=["beginner", "balanced", "expert"])
-            self.profileChoice.SetStringSelection(settings.profile_id)
-            sizer.Add(wx.StaticText(self, label="Profile"), border=5, flag=wx.ALL)
+            self.profileChoice = wx.Choice(self, choices=_choice_labels(_PROFILE_CHOICES))
+            _choice_set_value(self.profileChoice, _PROFILE_CHOICES, settings.profile_id, "balanced")
+            sizer.Add(wx.StaticText(self, label=_("Profile")), border=5, flag=wx.ALL)
             sizer.Add(self.profileChoice, border=5, flag=wx.EXPAND | wx.ALL)
 
-            self.announceSurfaceModeCheck = wx.CheckBox(self, label="Announce detected surface mode")
+            self.announceSurfaceModeCheck = wx.CheckBox(self, label=_("Announce detected surface mode"))
             self.announceSurfaceModeCheck.SetValue(settings.announce_surface_mode)
             sizer.Add(self.announceSurfaceModeCheck, border=5, flag=wx.ALL)
 
-            self.contextFallbackCheck = wx.CheckBox(self, label="Enable contextual fallback steps")
+            self.contextFallbackCheck = wx.CheckBox(self, label=_("Enable contextual fallback steps"))
             self.contextFallbackCheck.SetValue(settings.enable_contextual_fallbacks)
             sizer.Add(self.contextFallbackCheck, border=5, flag=wx.ALL)
 
-            self.commandPaletteCheck = wx.CheckBox(self, label="Enable command palette")
+            self.commandPaletteCheck = wx.CheckBox(self, label=_("Enable command palette"))
             self.commandPaletteCheck.SetValue(settings.enable_command_palette)
             sizer.Add(self.commandPaletteCheck, border=5, flag=wx.ALL)
 
-            self.globalHotkeysCheck = wx.CheckBox(self, label="Enable OS-level global hotkeys")
+            self.globalHotkeysCheck = wx.CheckBox(self, label=_("Enable OS-level global hotkeys"))
             self.globalHotkeysCheck.SetValue(settings.enable_global_hotkeys)
             sizer.Add(self.globalHotkeysCheck, border=5, flag=wx.ALL)
 
-            self.capsEmulationCheck = wx.CheckBox(self, label="Emulate CapsLock prefix as Control+Alt for OS hooks")
+            self.capsEmulationCheck = wx.CheckBox(self, label=_("Emulate CapsLock prefix as Control+Alt for OS hooks"))
             self.capsEmulationCheck.SetValue(settings.emulate_capslock_prefix_for_os_hotkeys)
             sizer.Add(self.capsEmulationCheck, border=5, flag=wx.ALL)
 
-            self.multiPressCheck = wx.CheckBox(self, label="Enable multi-press gestures")
+            self.multiPressCheck = wx.CheckBox(self, label=_("Enable multi-press gestures"))
             self.multiPressCheck.SetValue(settings.enable_multi_press_gestures)
             sizer.Add(self.multiPressCheck, border=5, flag=wx.ALL)
 
-            self.rawEasySeqCheck = wx.CheckBox(self, label="Use EASY key sequences (required)")
+            self.rawEasySeqCheck = wx.CheckBox(self, label=_("Use EASY key sequences (required)"))
             self.rawEasySeqCheck.SetValue(True)
             self.rawEasySeqCheck.Enable(False)
             sizer.Add(self.rawEasySeqCheck, border=5, flag=wx.ALL)
 
             timeout_row = wx.BoxSizer(wx.HORIZONTAL)
-            timeout_row.Add(wx.StaticText(self, label="Raw EASY timeout (ms)"), border=5, flag=wx.ALL)
+            timeout_row.Add(wx.StaticText(self, label=_("Raw EASY timeout (ms)")), border=5, flag=wx.ALL)
             self.rawEasyTimeout = wx.SpinCtrl(self, min=250, max=3000)
             self.rawEasyTimeout.SetValue(int(getattr(settings, "raw_easy_sequence_timeout_ms", 900)))
             timeout_row.Add(self.rawEasyTimeout, border=5, flag=wx.ALL)
             sizer.Add(timeout_row, border=0, flag=wx.LEFT)
 
-            self.hotkeyEditorButton = wx.Button(self, label="Edit keyboard mappings")
+            self.hotkeyEditorButton = wx.Button(self, label=_("Edit keyboard mappings"))
             self.hotkeyEditorButton.Bind(wx.EVT_BUTTON, self._on_open_hotkey_editor)
             sizer.Add(self.hotkeyEditorButton, border=5, flag=wx.ALL)
 
-            self.controlPanelButton = wx.Button(self, label="Open BITS-EASY Control Panel")
+            self.controlPanelButton = wx.Button(self, label=_("Open BITS-EASY Control Panel"))
             self.controlPanelButton.Bind(wx.EVT_BUTTON, self._on_open_control_panel)
             sizer.Add(self.controlPanelButton, border=5, flag=wx.ALL)
 
@@ -819,7 +881,7 @@ def register_settings_panel(
 
         def onSave(self):
             settings = get_settings()
-            settings.profile_id = self.profileChoice.GetStringSelection()
+            settings.profile_id = _choice_get_value(self.profileChoice, _PROFILE_CHOICES, "balanced")
             settings.announce_surface_mode = self.announceSurfaceModeCheck.GetValue()
             settings.enable_contextual_fallbacks = self.contextFallbackCheck.GetValue()
             settings.enable_command_palette = self.commandPaletteCheck.GetValue()

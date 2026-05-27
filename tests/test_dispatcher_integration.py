@@ -214,6 +214,34 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertTrue(end.result.ok)
         self.assertEqual(end.plan.confirmation, "inherit")
         self.assertTrue(end.result.payload["executionPolicy"]["safetyGate"] in ["none", "low-confidence-confirm", "always-confirm"])
+        self.assertIn("outlookSurfaceDiagnostics", end.result.payload)
+        self.assertTrue(str(end.result.payload["outlookSurfaceDiagnostics"].get("layoutSignature", "")).startswith("outlook-layout-"))
+
+    def test_outlook_reading_pane_diagnostics_mode_is_signature_driven(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = AppContext("outlook", "win-outlook", "reading pane", "mail body text", 4, clipboard_text="")
+
+        self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.selection.markStart").result.ok)
+        ctx.caret = 8
+        ended = dispatcher.dispatch_command(ctx, "cmd.selection.markEnd")
+
+        self.assertTrue(ended.result.ok)
+        diag = (ended.result.payload or {}).get("outlookSurfaceDiagnostics", {})
+        self.assertEqual(diag.get("layoutSignature"), "outlook-layout-reading-pane")
+        self.assertEqual(diag.get("mode"), "outlook-reading-pane")
+
+    def test_outlook_search_results_diagnostics_mode_is_signature_driven(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = AppContext("outlook", "win-outlook", "search results", "result row text", 4, clipboard_text="")
+
+        self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.selection.markStart").result.ok)
+        ctx.caret = 8
+        ended = dispatcher.dispatch_command(ctx, "cmd.selection.markEnd")
+
+        self.assertTrue(ended.result.ok)
+        diag = (ended.result.payload or {}).get("outlookSurfaceDiagnostics", {})
+        self.assertEqual(diag.get("layoutSignature"), "outlook-layout-search-results")
+        self.assertEqual(diag.get("mode"), "outlook-search-results")
 
     def test_marker_status_command_reports_state(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
@@ -243,6 +271,29 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertEqual(status_ready.result.payload["activeRangeEnd"], 17)
         self.assertIn("telemetry", status_ready.result.payload)
         self.assertGreaterEqual(status_ready.result.payload["telemetry"]["app"].get("markEndCaptured", 0), 1)
+
+    def test_selection_narration_includes_source_and_confidence_band(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha bravo charlie delta", 6)
+
+        started = dispatcher.dispatch_command(ctx, "cmd.selection.markStart")
+        self.assertTrue(started.result.ok)
+
+        ctx.caret = 17
+        ended = dispatcher.dispatch_command(ctx, "cmd.selection.markEnd")
+        self.assertTrue(ended.result.ok)
+
+        narration = (ended.result.payload or {}).get("narration", {})
+        self.assertEqual(narration.get("selectionSource"), "native-range")
+        self.assertEqual(narration.get("selectionConfidenceBand"), "high")
+        self.assertIn("Selection source:", str(narration.get("summary", "")))
+        self.assertIn("Selection source:", str(narration.get("speechMessage", "")))
+        self.assertIn("Src native range", str(narration.get("brailleMessage", "")))
+
+        confidence = dispatcher.dispatch_command(ctx, "cmd.result.readConfidence")
+        self.assertTrue(confidence.result.ok)
+        self.assertEqual(confidence.result.payload.get("selectionSource"), "native-range")
+        self.assertEqual(confidence.result.payload.get("selectionConfidenceBand"), "high")
 
     def test_hotkey_discoverability_and_diagnostics(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
@@ -488,6 +539,11 @@ class DispatcherIntegrationTests(unittest.TestCase):
         batch = dispatcher.dispatch_command(ctx, "cmd.tags.session.batchDelete")
         self.assertTrue(batch.result.ok)
         self.assertEqual(batch.result.payload["count"], 2)
+        self.assertIn("batchTelemetry", batch.result.payload)
+        self.assertEqual(batch.result.payload["batchTelemetry"]["progressPercent"], 100)
+        self.assertIn("narration", batch.result.payload)
+        self.assertIn("Batch progress:", str((batch.result.payload.get("narration") or {}).get("summary", "")))
+        self.assertIn("Batch 100%/2", str((batch.result.payload.get("narration") or {}).get("brailleMessage", "")))
 
         capture = dispatcher.dispatch_command(
             ctx,
@@ -706,43 +762,118 @@ class DispatcherIntegrationTests(unittest.TestCase):
         self.assertGreaterEqual(len(insert.result.payload["fallbackGuidance"]), 1)
 
     def test_dialog_capture_and_virtualize_routes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced", data_root=tmpdir)
+            ctx = self._ctx("edge", "Error: Sync failed\nReason: Timeout", 0, clipboard_text="clip fallback")
+
+            # Capture routed to quick inbox.
+            capture = dispatcher.dispatch_command(
+                ctx,
+                "cmd.selection.captureDialogText",
+                windowTitle="Sync Error",
+                route="quickInbox",
+            )
+            self.assertTrue(capture.result.ok)
+            self.assertIn("captureId", capture.result.payload)
+            self.assertEqual(capture.result.payload["source"], "focused-control")
+
+            quick = dispatcher.dispatch_command(ctx, "cmd.capture.quickInbox")
+            self.assertTrue(quick.result.ok)
+            self.assertIn("clipboardCapturePolicy", quick.result.payload)
+            self.assertIn("mode", quick.result.payload["clipboardCapturePolicy"])
+            self.assertEqual(quick.result.payload["clipboardCapturePolicy"].get("mode"), "event-listener")
+            self.assertTrue(quick.result.payload["clipboardCapturePolicy"].get("listenerEventDetected"))
+
+            quick_repeat = dispatcher.dispatch_command(ctx, "cmd.capture.quickInbox")
+            self.assertTrue(quick_repeat.result.ok)
+            self.assertEqual(quick_repeat.result.payload["clipboardCapturePolicy"].get("mode"), "polling-fallback")
+            self.assertTrue(quick_repeat.result.payload["clipboardCapturePolicy"].get("fallbackUsed"))
+
+            # Capture routed to slot.
+            slot_capture = dispatcher.dispatch_command(
+                ctx,
+                "cmd.selection.captureDialogText",
+                windowTitle="Sync Error",
+                route="slot",
+                slot=2,
+            )
+            self.assertTrue(slot_capture.result.ok)
+            self.assertEqual(slot_capture.result.payload["slot"], 2)
+
+            # Virtualized view from focused control text.
+            vv = dispatcher.dispatch_command(
+                ctx,
+                "cmd.result.virtualizeSurface",
+                windowTitle="Sync Error",
+                title="Dialog Snapshot",
+            )
+            self.assertTrue(vv.result.ok)
+            surface = vv.result.payload["virtualSurface"]
+            self.assertEqual(surface["title"], "Dialog Snapshot")
+            self.assertGreaterEqual(surface["lineCount"], 2)
+            self.assertEqual(surface["source"], "focused-control")
+            self.assertIn("focusStability", surface)
+            self.assertTrue(surface["focusStability"]["focusStable"])
+
+    def test_read_context_repeat_tiers(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
-        ctx = self._ctx("edge", "Error: Sync failed\nReason: Timeout", 0, clipboard_text="clip fallback")
+        ctx = self._ctx("edge", "alpha bravo charlie delta echo", 6)
 
-        # Capture routed to quick inbox.
-        capture = dispatcher.dispatch_command(
-            ctx,
-            "cmd.selection.captureDialogText",
-            windowTitle="Sync Error",
-            route="quickInbox",
-        )
-        self.assertTrue(capture.result.ok)
-        self.assertIn("captureId", capture.result.payload)
-        self.assertEqual(capture.result.payload["source"], "focused-control")
+        self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.selection.markStart").result.ok)
+        ctx.caret = 18
+        self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.selection.markEnd").result.ok)
 
-        # Capture routed to slot.
-        slot_capture = dispatcher.dispatch_command(
-            ctx,
-            "cmd.selection.captureDialogText",
-            windowTitle="Sync Error",
-            route="slot",
-            slot=2,
-        )
-        self.assertTrue(slot_capture.result.ok)
-        self.assertEqual(slot_capture.result.payload["slot"], 2)
+        first = dispatcher.dispatch_command(ctx, "cmd.selection.readContext", repeatCount=0, browseThreshold=200)
+        self.assertTrue(first.result.ok)
+        self.assertEqual(first.result.payload.get("repeatTier"), "speak")
+        self.assertEqual(first.result.payload.get("renderMode"), "speech")
+        self.assertEqual((first.result.payload.get("narration") or {}).get("readbackMode"), "spoken readback")
 
-        # Virtualized view from focused control text.
-        vv = dispatcher.dispatch_command(
-            ctx,
-            "cmd.result.virtualizeSurface",
-            windowTitle="Sync Error",
-            title="Dialog Snapshot",
-        )
-        self.assertTrue(vv.result.ok)
-        surface = vv.result.payload["virtualSurface"]
-        self.assertEqual(surface["title"], "Dialog Snapshot")
-        self.assertGreaterEqual(surface["lineCount"], 2)
-        self.assertEqual(surface["source"], "focused-control")
+        second = dispatcher.dispatch_command(ctx, "cmd.selection.readContext", repeatCount=1, browseThreshold=200)
+        self.assertTrue(second.result.ok)
+        self.assertEqual(second.result.payload.get("repeatTier"), "spell")
+        self.assertEqual(second.result.payload.get("renderMode"), "spell")
+        self.assertIn("spellText", second.result.payload)
+        self.assertEqual((second.result.payload.get("narration") or {}).get("readbackMode"), "spelled readback")
+
+        third = dispatcher.dispatch_command(ctx, "cmd.selection.readContext", repeatCount=2, browseThreshold=200)
+        self.assertTrue(third.result.ok)
+        self.assertEqual(third.result.payload.get("repeatTier"), "browse")
+        self.assertEqual(third.result.payload.get("renderMode"), "browse-window")
+        self.assertIn("virtualView", third.result.payload)
+        self.assertEqual((third.result.payload.get("narration") or {}).get("readbackMode"), "browse-window readback")
+
+    def test_read_context_repeat_tiers_track_braille_channel(self) -> None:
+        dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")
+        ctx = self._ctx("edge", "alpha bravo charlie delta echo", 6)
+
+        self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.selection.markStart").result.ok)
+        ctx.caret = 18
+        self.assertTrue(dispatcher.dispatch_command(ctx, "cmd.selection.markEnd").result.ok)
+
+        braille = dispatcher.dispatch_command(ctx, "cmd.selection.readContext", repeatCount=1, browseThreshold=200, brailleMode=True)
+        self.assertTrue(braille.result.ok)
+        self.assertEqual(braille.result.payload.get("repeatTier"), "spell")
+        self.assertEqual(braille.result.payload.get("readbackChannel"), "braille")
+        self.assertEqual((braille.result.payload.get("narration") or {}).get("readbackChannel"), "braille")
+        self.assertIn("Readback channel: braille.", str((braille.result.payload.get("narration") or {}).get("summary", "")))
+        self.assertIn("Ch braille", str((braille.result.payload.get("narration") or {}).get("brailleMessage", "")))
+        self.assertIn("Readback channel: braille.", str((braille.result.payload.get("narration") or {}).get("speechMessage", "")))
+
+    def test_clipboard_listener_state_persists_across_dispatchers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            first = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced", data_root=tmpdir)
+            ctx = self._ctx("edge", "buffer fallback", 0, clipboard_text="persist me")
+
+            first_out = first.dispatch_command(ctx, "cmd.capture.quickInbox")
+            self.assertTrue(first_out.result.ok)
+            self.assertEqual(first_out.result.payload["clipboardCapturePolicy"].get("mode"), "event-listener")
+
+            second = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced", data_root=tmpdir)
+            second_out = second.dispatch_command(ctx, "cmd.capture.quickInbox")
+            self.assertTrue(second_out.result.ok)
+            self.assertEqual(second_out.result.payload["clipboardCapturePolicy"].get("mode"), "polling-fallback")
+            self.assertTrue(second_out.result.payload["clipboardCapturePolicy"].get("fallbackUsed"))
 
     def test_dialog_capture_blocks_secure_surface(self) -> None:
         dispatcher = RuntimeDispatcher(self.runtime, self.config, profile_id="balanced")

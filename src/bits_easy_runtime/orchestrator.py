@@ -139,11 +139,23 @@ class CommandOrchestrator:
 
         self._save_intent_store()
 
+        payload = outcome.result.payload or {}
+        narration = payload.get("narration") if isinstance(payload.get("narration"), dict) else {}
+        guided = payload.get("guidedFlow") if isinstance(payload.get("guidedFlow"), dict) else {}
+        selection_source = str(payload.get("selectionSource", "")).strip() or str(narration.get("selectionSource", "")).strip() or str(guided.get("selectionSource", "")).strip()
+        selection_confidence_band = str(payload.get("selectionConfidenceBand", "")).strip() or str(narration.get("selectionConfidenceBand", "")).strip()
+        selection_reason_code = str(payload.get("selectionReasonCode", "")).strip() or str(narration.get("selectionReasonCode", "")).strip() or str(guided.get("selectionReasonCode", "")).strip()
+        summary = str(payload.get("summary", "")).strip() or str(narration.get("summary", "")).strip() or outcome.result.message
+
         row = {
             "appId": context.app_id,
             "commandId": command_id,
             "ok": outcome.result.ok,
             "message": outcome.result.message,
+            "summary": summary,
+            "selectionSource": selection_source,
+            "selectionConfidenceBand": selection_confidence_band,
+            "selectionReasonCode": selection_reason_code,
             "policy": outcome.result.payload.get("executionPolicy") if outcome.result.payload else None,
             "intent": intent,
         }

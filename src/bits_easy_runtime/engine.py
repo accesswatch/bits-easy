@@ -46,6 +46,7 @@ class SelectionRange:
     end: int
     text: str
     confidence: float
+    source_kind: str = "native-range"
 
 
 @dataclass
@@ -222,6 +223,8 @@ class BitsEasyRuntime:
         stage: str,
         fallback_used: bool = False,
         drift_detected: bool = False,
+        selection_source: str = "",
+        selection_reason_code: str = "",
     ) -> Dict[str, Any]:
         hints: List[str] = []
         if stage == "start-set":
@@ -259,8 +262,32 @@ class BitsEasyRuntime:
             "normalSelectionMode": True,
             "fallbackUsed": fallback_used,
             "surfaceDriftDetected": drift_detected,
+            "selectionSource": selection_source,
+            "selectionReasonCode": selection_reason_code,
             "hints": hints,
         }
+
+    @staticmethod
+    def _selection_reason_code(selection: SelectionRange) -> str:
+        mapping = {
+            "native-focus-selection": "native-focus-selection-text",
+            "native-interceptor-selection": "native-interceptor-selection-text",
+            "native-focus-range": "native-focus-buffer-range",
+            "native-interceptor-range": "native-interceptor-buffer-range",
+            "interactive-label-fallback": "interactive-label-no-native-selection",
+            "buffer-range-fallback": "unsupported-surface-buffer-range-fallback",
+            "clipboard-fallback": "unsupported-surface-clipboard-fallback",
+            "native-range": "native-range-selection",
+        }
+        return mapping.get(selection.source_kind, "selection-source-unknown")
+
+    @staticmethod
+    def _selection_confidence_band(confidence: float) -> str:
+        if confidence >= 0.95:
+            return "high"
+        if confidence >= 0.75:
+            return "medium"
+        return "low"
 
     @staticmethod
     def _selection_preview_payload(selection: SelectionRange, snippet: int = 18) -> Dict[str, Any]:
@@ -272,6 +299,9 @@ class BitsEasyRuntime:
             "endSnippet": tail,
             "confidence": selection.confidence,
             "length": len(selection.text),
+            "selectionSource": selection.source_kind,
+            "selectionReasonCode": BitsEasyRuntime._selection_reason_code(selection),
+            "selectionConfidenceBand": BitsEasyRuntime._selection_confidence_band(selection.confidence),
         }
 
     @staticmethod
@@ -496,7 +526,12 @@ class BitsEasyRuntime:
                     "end": selection.end,
                     "startMeta": markers.get("startMeta"),
                     "endMeta": markers.get("endMeta"),
-                    "guidedFlow": self._selection_guided_flow_payload(context, stage="range-captured"),
+                    "guidedFlow": self._selection_guided_flow_payload(
+                        context,
+                        stage="range-captured",
+                        selection_source=selection.source_kind,
+                        selection_reason_code=self._selection_reason_code(selection),
+                    ),
                 }
             )
             self._record_marker_metric(context.app_id, "markEndCaptured")
@@ -509,7 +544,8 @@ class BitsEasyRuntime:
                     "Apply summarize or rewrite on the captured selection.",
                 ],
             )
-        except UnsupportedSurfaceError:
+        except UnsupportedSurfaceError as exc:
+            unsupported_reason = str(exc).strip()
             lo = min(start_caret, context.caret)
             hi = max(start_caret, context.caret)
             if lo >= 0 and hi <= len(context.buffer) and hi > lo:
@@ -521,6 +557,7 @@ class BitsEasyRuntime:
                         end=hi,
                         text=fallback_text,
                         confidence=0.75,
+                        source_kind="buffer-range-fallback",
                     )
                     self._selection_cache[context.app_id] = fallback_selection
                     payload = self._selection_preview_payload(fallback_selection)
@@ -528,6 +565,7 @@ class BitsEasyRuntime:
                         {
                             "fallbackUsed": True,
                             "fallbackSource": "buffer-range",
+                            "unsupportedReason": unsupported_reason,
                             "start": lo,
                             "end": hi,
                             "startMeta": markers.get("startMeta"),
@@ -536,6 +574,8 @@ class BitsEasyRuntime:
                                 context,
                                 stage="fallback-captured",
                                 fallback_used=True,
+                                selection_source=fallback_selection.source_kind,
+                                selection_reason_code=self._selection_reason_code(fallback_selection),
                             ),
                         }
                     )
@@ -558,6 +598,7 @@ class BitsEasyRuntime:
                     end=context.caret,
                     text=fallback_text,
                     confidence=0.6,
+                    source_kind="clipboard-fallback",
                 )
                 self._selection_cache[context.app_id] = fallback_selection
                 payload = self._selection_preview_payload(fallback_selection)
@@ -569,10 +610,13 @@ class BitsEasyRuntime:
                         "startMeta": markers.get("startMeta"),
                         "endMeta": markers.get("endMeta"),
                             "fallbackSource": "clipboard",
+                            "unsupportedReason": unsupported_reason,
                             "guidedFlow": self._selection_guided_flow_payload(
                                 context,
                                 stage="fallback-captured",
                                 fallback_used=True,
+                                selection_source=fallback_selection.source_kind,
+                                selection_reason_code=self._selection_reason_code(fallback_selection),
                             ),
                     }
                 )
@@ -591,6 +635,7 @@ class BitsEasyRuntime:
                 ok=False,
                 code=RuntimeErrorCode.UNSUPPORTED_SURFACE,
                 message="Selection is unsupported in this surface.",
+                payload={"unsupportedReason": unsupported_reason},
                 next_steps=[
                     "Use quick capture to inbox.",
                     "Open palette with fallback actions.",
@@ -612,7 +657,12 @@ class BitsEasyRuntime:
         self._record_marker_metric(context.app_id, "readContext")
         selection = self._selection_cache[context.app_id]
         payload = self._selection_preview_payload(selection, snippet=snippet)
-        payload["guidedFlow"] = self._selection_guided_flow_payload(context, stage="status")
+        payload["guidedFlow"] = self._selection_guided_flow_payload(
+            context,
+            stage="status",
+            selection_source=selection.source_kind,
+            selection_reason_code=self._selection_reason_code(selection),
+        )
         return RuntimeResult(
             ok=True,
             message="Selection context ready.",
@@ -653,6 +703,8 @@ class BitsEasyRuntime:
                         context,
                         stage="status",
                         drift_detected=surface_drift_from_start,
+                        selection_source=selection.source_kind,
+                        selection_reason_code=self._selection_reason_code(selection),
                     ),
                 }
             )

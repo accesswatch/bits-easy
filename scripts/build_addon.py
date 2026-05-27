@@ -87,6 +87,10 @@ def main() -> int:
         # flatten the layout when staging.
         _copy_tree(repo_root / "addon" / "globalPlugins", stage_root / "globalPlugins")
         _copy_tree(repo_root / "addon" / "doc", stage_root / "doc")
+        _copy_tree(repo_root / "addon" / "locale", stage_root / "locale")
+        copying_path = repo_root / "COPYING.txt"
+        if copying_path.exists():
+            shutil.copy2(copying_path, stage_root / "COPYING.txt")
         install_tasks = repo_root / "addon" / "installTasks.py"
         if install_tasks.exists():
             shutil.copy2(install_tasks, stage_root / "installTasks.py")

@@ -43,8 +43,10 @@ def _stage(src: Path, dst: Path) -> None:
 # expects them.
 _stage(repo_root / "addon" / "globalPlugins", build_dir / "globalPlugins")
 _stage(repo_root / "addon" / "doc", build_dir / "doc")
+_stage(repo_root / "addon" / "locale", build_dir / "locale")
 _stage(repo_root / "addon" / "installTasks.py", build_dir / "installTasks.py")
 _stage(repo_root / "addon" / "bits_easy_settings.py", build_dir / "bits_easy_settings.py")
+_stage(repo_root / "COPYING.txt", build_dir / "COPYING.txt")
 
 # Config and runtime package land at the dev-tree root, matching the built zip.
 _stage(repo_root / "config" / "hotkeys", build_dir / "config" / "hotkeys")

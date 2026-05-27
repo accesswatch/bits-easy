@@ -7,9 +7,20 @@ import time
 import json
 import importlib
 
+import addonHandler
 import globalPluginHandler
 import scriptHandler
 import ui
+
+addonHandler.initTranslation()
+
+if "_" not in globals():
+    def _(message: str) -> str:
+        return message
+
+
+def _format_message(template: str, **kwargs) -> str:
+    return str(template).format(**kwargs)
 
 try:
     from logHandler import log
@@ -20,7 +31,8 @@ except Exception:  # pragma: no cover - logHandler is always present inside NVDA
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
-    scriptCategory = "BITS-EASY"
+    # Translators: Category name shown in NVDA's Input Gestures dialog.
+    scriptCategory = _("BITS-EASY")
 
     _GLOW_FILE_COMMANDS = {
         "cmd.integration.glow.audit",
@@ -172,6 +184,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 "edge": BrowserLiveAdapter("edge", snapshot_provider=snapshot_provider),
                 "chrome": BrowserLiveAdapter("chrome", snapshot_provider=snapshot_provider),
                 "firefox": BrowserLiveAdapter("firefox", snapshot_provider=snapshot_provider),
+                "notepad": BrowserLiveAdapter("notepad", snapshot_provider=snapshot_provider),
+                "vscode": BrowserLiveAdapter("vscode", snapshot_provider=snapshot_provider),
             }
             self._runtime = BitsEasyRuntime(adapters=adapters, storage_path=storage_path)
             log.info("BITS-EASY: runtime constructed with %d adapters", len(adapters))
@@ -242,7 +256,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 self._tools_menu_id is not None,
             )
             log.info("BITS-EASY: runtime ready, announcing load")
-            ui.message("BITS-EASY loaded")
+            self._announce_text(_("BITS-EASY loaded"))
         except Exception as exc:
             log.exception("BITS-EASY: failed to load runtime")
             self._runtime = None
@@ -255,7 +269,75 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._hotkeys = None
             self._context = None
             self._tools_menu_id = None
-            ui.message(f"BITS-EASY failed to load: {exc}")
+            self._announce_text(
+                _format_message(
+                    # Translators: Announced if the add-on fails to initialize.
+                    _("BITS-EASY failed to load: {error}"),
+                    error=exc,
+                )
+            )
+
+    def _announce_text(self, speech_text: str, braille_text: str | None = None):
+        speech_value = str(speech_text or "").strip()
+        braille_value = str(braille_text or "").strip()
+        if not speech_value and not braille_value:
+            return
+        if not speech_value:
+            speech_value = braille_value
+        if not braille_value:
+            braille_value = speech_value
+
+        try:
+            if braille_value != speech_value:
+                try:
+                    ui.message(speech_value, None, braille_value)
+                    return
+                except TypeError:
+                    pass
+            ui.message(speech_value)
+        except Exception:
+            log.exception("BITS-EASY: ui.message failed")
+
+    def _announce_result_message(self, default_message: str, payload):
+        narration = payload.get("narration") if isinstance(payload, dict) else None
+        if not isinstance(narration, dict):
+            self._announce_text(default_message)
+            return
+
+        speech_text = str(narration.get("speechMessage") or default_message or "").strip()
+        braille_text = str(narration.get("brailleMessage") or speech_text or "").strip()
+        self._announce_text(speech_text, braille_text)
+
+    def _show_browseable_text(self, title: str, text: str):
+        try:
+            ui.browseableMessage(text, title)
+            return
+        except Exception:
+            log.exception("BITS-EASY: browseableMessage failed, falling back to dialog")
+
+        try:
+            import wx
+
+            wx.CallAfter(self._show_text_dialog, title, text)
+        except Exception:
+            log.exception("BITS-EASY: unable to schedule fallback text dialog")
+
+    def _present_virtual_view(self, payload):
+        if not isinstance(payload, dict):
+            return False
+        virtual = payload.get("virtualView")
+        if not isinstance(virtual, dict):
+            return False
+
+        title = str(virtual.get("title", "")).strip() or _("BITS-EASY")
+        lines = virtual.get("lines", [])
+        if not isinstance(lines, list):
+            return False
+        text = "\n".join(str(line) for line in lines).strip()
+        if not text:
+            return False
+        self._show_browseable_text(title, text)
+        return True
 
     def _load_hotkey_overrides(self):
         if self._config is None or self._hotkey_overrides_path is None:
@@ -293,7 +375,11 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
         try:
             menu = gui.mainFrame.sysTrayIcon.toolsMenu
-            item = menu.Append(wx.ID_ANY, "BITS-EASY keyboard mappings...")
+            item = menu.Append(
+                wx.ID_ANY,
+                # Translators: Tools menu label that opens the keyboard mapping editor.
+                _("BITS-EASY keyboard mappings..."),
+            )
             self._tools_menu_id = int(item.GetId())
             gui.mainFrame.Bind(wx.EVT_MENU, self._on_tools_menu_open_hotkeys, id=self._tools_menu_id)
         except Exception:
@@ -320,14 +406,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
     def _open_hotkey_editor(self):
         if self._config is None:
-            ui.message("BITS-EASY runtime unavailable")
+            self._announce_text(_("BITS-EASY runtime unavailable"))
             return
         try:
             import gui
             from bits_easy_settings import open_hotkey_editor_dialog
         except Exception:
             log.exception("BITS-EASY: hotkey editor import failed")
-            ui.message("Hotkey editor is unavailable")
+            self._announce_text(_("Hotkey editor is unavailable"))
             return
 
         def _on_save(bindings: list[dict]):
@@ -345,7 +431,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             on_save=_on_save,
         )
         if changed:
-            ui.message("Keyboard mappings updated.")
+            self._announce_text(_("Keyboard mappings updated."))
 
     def _open_control_panel(self):
         try:
@@ -353,7 +439,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             from bits_easy_settings import open_control_panel_dialog
         except Exception:
             log.exception("BITS-EASY: control panel import failed")
-            ui.message("Control panel is unavailable")
+            self._announce_text(_("Control panel is unavailable"))
             return
 
         changed = open_control_panel_dialog(
@@ -369,7 +455,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         )
         if changed:
             self._restart_hotkeys()
-            ui.message("Control panel settings applied.")
+            self._announce_text(_("Control panel settings applied."))
 
     def _on_os_hotkey_command(self, command_id: str, command_args: dict | None = None):
         args = dict(command_args) if isinstance(command_args, dict) else {}
@@ -396,13 +482,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             if out.result.ok:
                 integration_error = self._run_integration_action(out.result.payload)
                 if integration_error:
-                    ui.message(integration_error)
+                    self._announce_text(integration_error)
                     return
                 self._present_glow_result_if_needed(out.plan.command_id, out.result.message, out.result.payload)
                 self._present_hotkey_help_if_needed(out.plan.command_id, out.result.payload)
-                ui.message(out.result.message)
+                self._present_virtual_view_if_needed(out.plan.command_id, out.result.payload)
+                self._announce_result_message(out.result.message, out.result.payload)
             else:
-                ui.message(out.result.message)
+                self._announce_result_message(out.result.message, out.result.payload)
 
         try:
             import queueHandler
@@ -490,7 +577,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
     def _secure_store_spoken_message(self, payload):
         if not isinstance(payload, dict):
-            return "AI key store status is available."
+            return _("AI key store status is available.")
 
         backend = str(payload.get("backend") or "unknown")
         secure = bool(payload.get("secure", False))
@@ -502,36 +589,38 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             provider_count = 0
 
         backend_labels = {
-            "windows-credential-manager": "Windows Credential Manager",
-            "in-memory": "temporary memory",
-            "unknown": "an unknown store",
+            "windows-credential-manager": _("Windows Credential Manager"),
+            "in-memory": _("temporary memory"),
+            "unknown": _("an unknown store"),
         }
         backend_label = backend_labels.get(backend, backend.replace("-", " "))
 
         if secure and persistent:
-            storage_phrase = "secure and saved between sessions"
-            reassurance = "Your keys stay protected after restart."
+            storage_phrase = _("secure and saved between sessions")
+            reassurance = _("Your keys stay protected after restart.")
         elif secure:
-            storage_phrase = "secure but temporary"
-            reassurance = "Your keys are protected, but may not persist after restart."
+            storage_phrase = _("secure but temporary")
+            reassurance = _("Your keys are protected, but may not persist after restart.")
         elif persistent:
-            storage_phrase = "saved between sessions but not secure"
-            reassurance = "Consider using a secure credential backend for provider keys."
+            storage_phrase = _("saved between sessions but not secure")
+            reassurance = _("Consider using a secure credential backend for provider keys.")
         else:
-            storage_phrase = "temporary and not secure"
-            reassurance = "Keys are only kept for this run and should be treated as temporary."
+            storage_phrase = _("temporary and not secure")
+            reassurance = _("Keys are only kept for this run and should be treated as temporary.")
 
-        provider_label = "provider" if provider_count == 1 else "providers"
-        return (
-            f"AI key store is {backend_label}. "
-            f"Storage is {storage_phrase}. "
-            f"{provider_count} {provider_label} configured. "
-            f"{reassurance}"
+        provider_label = _("provider") if provider_count == 1 else _("providers")
+        return _format_message(
+            _("AI key store is {backend}. Storage is {storage}. {count} {providerLabel} configured. {reassurance}"),
+            backend=backend_label,
+            storage=storage_phrase,
+            count=provider_count,
+            providerLabel=provider_label,
+            reassurance=reassurance,
         )
 
     def _dispatch(self, command_id: str, **kwargs):
         if self._dispatcher is None or self._context is None:
-            ui.message("BITS-EASY runtime unavailable")
+            self._announce_text(_("BITS-EASY runtime unavailable"))
             return
 
         if self._prompt_glow_file_if_needed(command_id, kwargs):
@@ -540,59 +629,61 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         self._refresh_context_from_focus()
 
         if self._settings and self._settings.announce_surface_mode:
-            ui.message(f"Surface: {self._surface_mode()}")
+            self._announce_text(
+                _format_message(
+                    # Translators: Announces the detected interaction surface before a command runs.
+                    _("Surface: {surfaceMode}"),
+                    surfaceMode=self._surface_mode(),
+                )
+            )
 
         out = self._dispatcher.dispatch_command(self._context, command_id, **kwargs)
         if out.result.ok:
             integration_error = self._run_integration_action(out.result.payload)
             if integration_error:
-                ui.message(integration_error)
+                self._announce_text(integration_error)
                 return
             self._present_glow_result_if_needed(command_id, out.result.message, out.result.payload)
             self._present_hotkey_help_if_needed(command_id, out.result.payload)
+            self._present_virtual_view_if_needed(command_id, out.result.payload)
             if self._palette is not None:
                 self._palette_tick += 1
                 self._palette.record_execution(command_id, int(time.time()) + self._palette_tick)
             if command_id == "cmd.ai.key.storeStatus":
-                ui.message(self._secure_store_spoken_message(out.result.payload))
+                self._announce_text(self._secure_store_spoken_message(out.result.payload))
             else:
-                ui.message(out.result.message)
+                self._announce_result_message(out.result.message, out.result.payload)
         else:
             extra_steps = self._contextual_fallbacks(command_id)
             steps = out.result.next_steps + extra_steps
-            ui.message(f"{out.result.message}. {' '.join(steps)}")
+            if steps:
+                self._announce_text(
+                    _format_message(
+                        # Translators: Spoken after a failed command with suggested recovery steps.
+                        _("{message}. {steps}"),
+                        message=out.result.message,
+                        steps=" ".join(steps),
+                    )
+                )
+            else:
+                self._announce_result_message(out.result.message, out.result.payload)
+
+    def _present_virtual_view_if_needed(self, command_id: str, payload):
+        if command_id == "cmd.help.availableHotkeys":
+            return
+        self._present_virtual_view(payload)
 
     def _present_hotkey_help_if_needed(self, command_id: str, payload):
         if command_id != "cmd.help.availableHotkeys":
             return
-        if not isinstance(payload, dict):
-            return
+        self._present_virtual_view(payload)
 
-        virtual = payload.get("virtualView")
-        if not isinstance(virtual, dict):
-            return
-
-        title = str(virtual.get("title", "BITS-EASY Hotkey Help")).strip() or "BITS-EASY Hotkey Help"
-        lines = virtual.get("lines", [])
-        if not isinstance(lines, list):
-            return
-        text = "\n".join(str(x) for x in lines)
-        if not text.strip():
-            return
-
-        try:
-            import wx
-
-            wx.CallAfter(self._show_hotkey_help_dialog, title, text)
-        except Exception:
-            log.exception("BITS-EASY: unable to schedule hotkey help dialog")
-
-    def _show_hotkey_help_dialog(self, title: str, text: str):
+    def _show_text_dialog(self, title: str, text: str):
         try:
             import wx
             import gui
         except Exception:
-            log.exception("BITS-EASY: hotkey help dialog dependencies unavailable")
+            log.exception("BITS-EASY: text dialog dependencies unavailable")
             return
 
         main_frame = gui.mainFrame
@@ -613,7 +704,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 box.SetMinSize((860, 460))
                 root.Add(box, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
 
-                close_btn = wx.Button(dlg, id=wx.ID_OK, label="Close")
+                close_btn = wx.Button(dlg, id=wx.ID_OK, label=_("Close"))
                 row = wx.BoxSizer(wx.HORIZONTAL)
                 row.Add(close_btn, flag=wx.RIGHT, border=8)
                 root.Add(row, flag=wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
@@ -623,7 +714,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             finally:
                 dlg.Destroy()
         except Exception:
-            log.exception("BITS-EASY: hotkey help dialog failed")
+            log.exception("BITS-EASY: text dialog failed")
         finally:
             main_frame.postPopup()
 
@@ -635,7 +726,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
         summary = self._glow_summary_message(command_id, message, payload)
         if summary:
-            ui.message(summary)
+            self._announce_text(summary)
 
         try:
             import wx
@@ -655,17 +746,17 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         return ""
 
     def _glow_summary_message(self, command_id: str, message: str, payload: dict) -> str:
-        summary_parts = [f"GLOW {command_id.split('.')[-1]} complete"]
+        summary_parts = [_format_message(_("GLOW {action} complete"), action=command_id.split(".")[-1])]
 
         if command_id == "cmd.integration.glow.health":
             status = str(payload.get("status", "")).strip()
             if status:
-                summary_parts.append(f"status {status}")
+                summary_parts.append(_format_message(_("status {status}"), status=status))
             return ". ".join(summary_parts) + "."
 
         total_fixes = payload.get("total_fixes")
         if isinstance(total_fixes, int):
-            summary_parts.append(f"{total_fixes} fixes")
+            summary_parts.append(_format_message(_("{count} fixes"), count=total_fixes))
 
         out_path = self._glow_output_path(payload)
         if out_path:
@@ -674,11 +765,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             except Exception:
                 out_name = out_path
             if out_name:
-                summary_parts.append(f"output {out_name}")
+                summary_parts.append(_format_message(_("output {name}"), name=out_name))
 
         report_text = payload.get("report")
         if isinstance(report_text, str) and report_text.strip():
-            summary_parts.append(f"report length {len(report_text)} characters")
+            summary_parts.append(
+                _format_message(_("report length {count} characters"), count=len(report_text))
+            )
 
         if len(summary_parts) == 1 and message:
             summary_parts.append(message)
@@ -699,19 +792,19 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             output_path = self._glow_output_path(payload)
             pretty_json = json.dumps(payload, ensure_ascii=False, indent=2)
             summary_lines = [
-                f"Command: {command_id}",
-                f"Status: {message}",
+                _format_message(_("Command: {commandId}"), commandId=command_id),
+                _format_message(_("Status: {status}"), status=message),
             ]
             if output_path:
-                summary_lines.append(f"Output file: {output_path}")
+                summary_lines.append(_format_message(_("Output file: {path}"), path=output_path))
             if "report" in payload and isinstance(payload.get("report"), str):
-                summary_lines.append("Report text returned by GLOW.")
+                summary_lines.append(_("Report text returned by GLOW."))
 
-            dialog_text = "\n".join(summary_lines) + "\n\nJSON payload:\n" + pretty_json
+            dialog_text = "\n".join(summary_lines) + "\n\n" + _("JSON payload:") + "\n" + pretty_json
 
             dlg = wx.Dialog(
                 main_frame,
-                title="BITS-EASY GLOW Result",
+                title=_("BITS-EASY GLOW Result"),
                 style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
             )
             try:
@@ -725,10 +818,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 root.Add(text, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
 
                 button_row = wx.BoxSizer(wx.HORIZONTAL)
-                copy_btn = wx.Button(dlg, label="Copy JSON")
-                open_btn = wx.Button(dlg, label="Open output file")
-                save_btn = wx.Button(dlg, label="Save report")
-                close_btn = wx.Button(dlg, id=wx.ID_OK, label="Close")
+                copy_btn = wx.Button(dlg, label=_("Copy JSON"))
+                open_btn = wx.Button(dlg, label=_("Open output file"))
+                save_btn = wx.Button(dlg, label=_("Save report"))
+                close_btn = wx.Button(dlg, id=wx.ID_OK, label=_("Close"))
 
                 if not output_path:
                     open_btn.Enable(False)
@@ -740,29 +833,33 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                             wx.TheClipboard.SetData(data)
                         finally:
                             wx.TheClipboard.Close()
-                        ui.message("GLOW JSON copied")
+                        self._announce_text(_("GLOW JSON copied"))
                     else:
-                        ui.message("Clipboard unavailable")
+                        self._announce_text(_("Clipboard unavailable"))
 
                 def on_open(_evt):
                     target = output_path
                     if not target:
-                        ui.message("No output file to open")
+                        self._announce_text(_("No output file to open"))
                         return
                     try:
                         os.startfile(target)
                     except Exception:
                         log.exception("BITS-EASY: unable to open GLOW output path")
-                        ui.message("Unable to open output file")
+                        self._announce_text(_("Unable to open output file"))
 
                 def on_save(_evt):
                     default_name = command_id.replace(".", "-")
                     report_text = payload.get("report")
                     is_text_report = isinstance(report_text, str)
-                    wildcard = "Text file (*.txt)|*.txt|JSON file (*.json)|*.json" if is_text_report else "JSON file (*.json)|*.json"
+                    wildcard = (
+                        _("Text file (*.txt)|*.txt|JSON file (*.json)|*.json")
+                        if is_text_report
+                        else _("JSON file (*.json)|*.json")
+                    )
                     save_dlg = wx.FileDialog(
                         dlg,
-                        "Save GLOW result",
+                        _("Save GLOW result"),
                         defaultFile=f"{default_name}.{'txt' if is_text_report else 'json'}",
                         wildcard=wildcard,
                         style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
@@ -779,10 +876,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                             Path(target).write_text(str(report_text), encoding="utf-8")
                         else:
                             Path(target).write_text(pretty_json, encoding="utf-8")
-                        ui.message("GLOW result saved")
+                        self._announce_text(_("GLOW result saved"))
                     except Exception:
                         log.exception("BITS-EASY: unable to save GLOW result")
-                        ui.message("Unable to save GLOW result")
+                        self._announce_text(_("Unable to save GLOW result"))
 
                 copy_btn.Bind(wx.EVT_BUTTON, on_copy)
                 open_btn.Bind(wx.EVT_BUTTON, on_open)
@@ -817,7 +914,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             return True
         except Exception:
             log.exception("BITS-EASY: unable to open GLOW file picker")
-            ui.message("GLOW command requires a file path.")
+            self._announce_text(_("GLOW command requires a file path."))
             return True
 
     def _show_glow_file_dialog_and_dispatch(self, command_id: str, kwargs: dict):
@@ -828,7 +925,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         except Exception:
             log.exception("BITS-EASY: GLOW file picker dependencies unavailable")
             try:
-                ui.message("GLOW file picker is unavailable")
+                self._announce_text(_("GLOW file picker is unavailable"))
             except Exception:
                 pass
             return
@@ -844,20 +941,20 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             selected_path = ""
             dlg = wx.FileDialog(
                 main_frame,
-                "Select file for GLOW",
+                _("Select file for GLOW"),
                 wildcard=wildcard,
                 style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
             )
             try:
                 if dlg.ShowModal() != wx.ID_OK:
-                    ui.message("GLOW command canceled.")
+                    self._announce_text(_("GLOW command canceled."))
                     return
                 selected_path = dlg.GetPath()
             finally:
                 dlg.Destroy()
 
             if not selected_path:
-                ui.message("GLOW command canceled.")
+                self._announce_text(_("GLOW command canceled."))
                 return
 
             dispatch_kwargs = dict(kwargs)
@@ -866,7 +963,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         except Exception:
             log.exception("BITS-EASY: GLOW file picker flow failed")
             try:
-                ui.message("GLOW file picker failed")
+                self._announce_text(_("GLOW file picker failed"))
             except Exception:
                 pass
         finally:
@@ -890,19 +987,18 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             module = importlib.import_module("globalPlugins.itemChooser")
         except Exception:
             log.exception("BITS-EASY: Screen Item Chooser module import failed")
-            return (
-                "Screen Item Chooser is not installed. "
-                "Install screenItemChooser-1.0.0.nvda-addon to enable this command."
+            return _(
+                "Screen Item Chooser is not installed. Install screenItemChooser-1.0.0.nvda-addon to enable this command."
             )
 
         plugin = getattr(module, "_pluginInstance", None)
         if plugin is None:
-            return "Screen Item Chooser is installed but not active. Restart NVDA and try again."
+            return _("Screen Item Chooser is installed but not active. Restart NVDA and try again.")
 
         script_name = "script_openItemChooserOcr" if use_ocr else "script_openItemChooser"
         script_handler = getattr(plugin, script_name, None)
         if script_handler is None:
-            return "Screen Item Chooser integration is unavailable in the installed version."
+            return _("Screen Item Chooser integration is unavailable in the installed version.")
 
         try:
             script_handler(None)
@@ -910,24 +1006,24 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             script_handler()
         except Exception:
             log.exception("BITS-EASY: Screen Item Chooser invocation failed")
-            return "Screen Item Chooser failed to open."
+            return _("Screen Item Chooser failed to open.")
 
         return ""
 
-    @scriptHandler.script(description="BITS-EASY command palette")
+    @scriptHandler.script(description=_("BITS-EASY command palette"))
     def script_openCommandPalette(self, gesture):
         if self._dispatcher is None or self._context is None or self._config is None or self._palette is None:
-            ui.message("BITS-EASY runtime unavailable")
+            self._announce_text(_("BITS-EASY runtime unavailable"))
             return
         if self._settings and not self._settings.enable_command_palette:
-            ui.message("BITS-EASY command palette is disabled in settings")
+            self._announce_text(_("BITS-EASY command palette is disabled in settings"))
             return
 
         try:
             import wx
         except Exception:
             log.exception("BITS-EASY: command palette wx import failed")
-            ui.message("Command palette UI is unavailable")
+            self._announce_text(_("Command palette UI is unavailable"))
             return
 
         ai_key_enabled = False
@@ -948,7 +1044,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         except Exception:
             log.exception("BITS-EASY: command palette wx/gui import failed")
             try:
-                ui.message("Command palette UI is unavailable")
+                self._announce_text(_("Command palette UI is unavailable"))
             except Exception:
                 pass
             return
@@ -957,7 +1053,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         main_frame.prePopup()
         try:
             query = ""
-            query_dlg = wx.TextEntryDialog(main_frame, "Search commands", "BITS-EASY Command Palette", "")
+            query_dlg = wx.TextEntryDialog(main_frame, _("Search commands"), _("BITS-EASY Command Palette"), "")
             try:
                 if query_dlg.ShowModal() == wx.ID_OK:
                     query = query_dlg.GetValue()
@@ -974,14 +1070,14 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 has_selection_activity=has_selection_activity,
             )
             if not ranked:
-                ui.message("No commands are registered")
+                self._announce_text(_("No commands are registered"))
                 return
 
             choices = [f"{item.name} [{item.command_id}] score={item.score:.2f}" for item in ranked]
             id_by_index = {idx: item.command_id for idx, item in enumerate(ranked)}
 
             command_id = ""
-            dlg = wx.SingleChoiceDialog(main_frame, "Choose BITS-EASY command", "BITS-EASY Command Palette", choices)
+            dlg = wx.SingleChoiceDialog(main_frame, _("Choose BITS-EASY command"), _("BITS-EASY Command Palette"), choices)
             try:
                 if dlg.ShowModal() != wx.ID_OK:
                     return
@@ -990,7 +1086,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 dlg.Destroy()
 
             if not command_id:
-                ui.message("No command selected")
+                self._announce_text(_("No command selected"))
                 return
 
             # Marshal the actual dispatch back to NVDA's event queue so
@@ -1005,29 +1101,29 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         except Exception:
             log.exception("BITS-EASY: command palette UI failed")
             try:
-                ui.message("Command palette failed")
+                self._announce_text(_("Command palette failed"))
             except Exception:
                 pass
         finally:
             main_frame.postPopup()
 
-    @scriptHandler.script(description="BITS-EASY mark selection start")
+    @scriptHandler.script(description=_("BITS-EASY mark selection start"))
     def script_markSelectionStart(self, gesture):
         self._dispatch("cmd.selection.markStart")
 
-    @scriptHandler.script(description="BITS-EASY mark selection end")
+    @scriptHandler.script(description=_("BITS-EASY mark selection end"))
     def script_markSelectionEnd(self, gesture):
         self._dispatch("cmd.selection.markEnd")
 
-    @scriptHandler.script(description="BITS-EASY read selection context")
+    @scriptHandler.script(description=_("BITS-EASY read selection context"))
     def script_readSelectionContext(self, gesture):
         self._dispatch("cmd.selection.readContext")
 
-    @scriptHandler.script(description="BITS-EASY copy to clip slot 1")
+    @scriptHandler.script(description=_("BITS-EASY copy to clip slot 1"))
     def script_copyToSlotOne(self, gesture):
         self._dispatch("cmd.clip.copyToSlot", slot=1)
 
-    @scriptHandler.script(description="BITS-EASY paste from clip slot 1")
+    @scriptHandler.script(description=_("BITS-EASY paste from clip slot 1"))
     def script_pasteFromSlotOne(self, gesture):
         self._dispatch("cmd.clip.pasteFromSlot", slot=1)
 

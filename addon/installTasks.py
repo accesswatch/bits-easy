@@ -3,6 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 import os
 
+import addonHandler
+
+addonHandler.initTranslation()
+
+if "_" not in globals():
+    def _(message: str) -> str:
+        return message
+
 
 def onInstall():
     appdata_root = Path(os.getenv("APPDATA", ""))

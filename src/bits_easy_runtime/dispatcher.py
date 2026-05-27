@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 import time
+import math
 from typing import Any, Dict, Optional
 
 from .config import RuntimeConfig
@@ -65,6 +67,234 @@ class DispatchOutcome:
 
 
 class RuntimeDispatcher:
+    @staticmethod
+    def _selection_band_from_confidence(confidence: float) -> str:
+        if confidence >= 0.95:
+            return "high"
+        if confidence >= 0.75:
+            return "medium"
+        return "low"
+
+    @staticmethod
+    def _selection_source_phrase(source: str) -> str:
+        mapping = {
+            "native-focus-selection": "native focus selection",
+            "native-interceptor-selection": "native interceptor selection",
+            "native-focus-range": "native focus range",
+            "native-interceptor-range": "native interceptor range",
+            "interactive-label-fallback": "interactive label fallback",
+            "buffer-range-fallback": "buffer range fallback",
+            "clipboard-fallback": "clipboard fallback",
+            "native-range": "native range",
+        }
+        cleaned = str(source or "").strip()
+        return mapping.get(cleaned, cleaned.replace("-", " "))
+
+    @staticmethod
+    def _outlook_layout_signature(control_id: str) -> str:
+        token = str(control_id or "").strip().lower()
+        if "search results" in token or "results list" in token:
+            return "outlook-layout-search-results"
+        if "search" in token or "find" in token:
+            return "outlook-layout-search"
+        if "ribbon" in token or "toolbar" in token or "command bar" in token:
+            return "outlook-layout-ribbon"
+        if "folder pane" in token or "navigation pane" in token or "folder tree" in token:
+            return "outlook-layout-folder-pane"
+        if "message list" in token or "mail list" in token or "thread list" in token or "list" in token:
+            return "outlook-layout-message-list"
+        if "reading pane" in token or "preview pane" in token or "reading" in token:
+            return "outlook-layout-reading-pane"
+        if "compose" in token or "editor" in token or "document" in token:
+            return "outlook-layout-compose"
+        return "outlook-layout-unknown"
+
+    @staticmethod
+    def _outlook_mode_for_signature(signature: str) -> str:
+        mapping = {
+            "outlook-layout-search-results": "outlook-search-results",
+            "outlook-layout-search": "outlook-search",
+            "outlook-layout-ribbon": "outlook-ribbon",
+            "outlook-layout-message-list": "outlook-message-list",
+            "outlook-layout-folder-pane": "outlook-folder-pane",
+            "outlook-layout-reading-pane": "outlook-reading-pane",
+            "outlook-layout-compose": "outlook-compose",
+        }
+        return mapping.get(str(signature or "").strip().lower(), "outlook-other")
+
+    def _load_clipboard_listener_state(self) -> None:
+        if not self._clipboard_state_path.exists():
+            return
+        try:
+            payload = json.loads(self._clipboard_state_path.read_text(encoding="utf-8"))
+        except Exception:
+            return
+        self._clipboard_listener_last_text = str(payload.get("lastText", ""))
+        self._clipboard_listener_event_seq = int(payload.get("eventSequence", 0))
+
+    def _save_clipboard_listener_state(self) -> None:
+        payload = {
+            "lastText": self._clipboard_listener_last_text,
+            "eventSequence": int(self._clipboard_listener_event_seq),
+        }
+        try:
+            self._clipboard_state_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        except Exception:
+            return
+
+    def _enter_clipboard_suppression(self, window_ms: int = 500) -> None:
+        self._clipboard_suppressed_until = time.monotonic() + (float(window_ms) / 1000.0)
+
+    def _observe_clipboard_state(self, context: AppContext) -> Dict[str, Any]:
+        clipboard_text = str(context.clipboard_text or "").strip()
+        suppressed = time.monotonic() < self._clipboard_suppressed_until
+        event_detected = False
+        if clipboard_text and not suppressed and clipboard_text != self._clipboard_listener_last_text:
+            self._clipboard_listener_last_text = clipboard_text
+            self._clipboard_listener_event_seq += 1
+            event_detected = True
+            self._save_clipboard_listener_state()
+
+        if not clipboard_text:
+            capture_mode = "empty"
+            fallback_used = True
+        elif suppressed:
+            capture_mode = "suppressed-write-window"
+            fallback_used = False
+        elif event_detected:
+            capture_mode = self._clipboard_capture_mode
+            fallback_used = False
+        else:
+            capture_mode = self._clipboard_fallback_mode
+            fallback_used = True
+
+        return {
+            "clipboardText": clipboard_text,
+            "suppressed": suppressed,
+            "eventDetected": event_detected,
+            "captureMode": capture_mode,
+            "fallbackUsed": fallback_used,
+            "eventSequence": int(self._clipboard_listener_event_seq),
+        }
+
+    def _clipboard_policy_payload(self, *, event_name: str, state: Optional[Dict[str, Any]] = None, fallback_used: bool = False) -> Dict[str, Any]:
+        state = state or {}
+        suppressed = time.monotonic() < self._clipboard_suppressed_until
+        mode_state = str(state.get("captureMode", "suppressed-write-window" if suppressed else self._clipboard_capture_mode))
+        remaining_ms = 0
+        if suppressed:
+            remaining_ms = int(max(0.0, (self._clipboard_suppressed_until - time.monotonic()) * 1000.0))
+        return {
+            "event": event_name,
+            "mode": mode_state,
+            "preferredMode": self._clipboard_capture_mode,
+            "fallbackMode": self._clipboard_fallback_mode,
+            "suppressionWindowMs": self._clipboard_suppression_window_ms,
+            "suppressionActive": suppressed,
+            "suppressionRemainingMs": remaining_ms,
+            "fallbackUsed": bool(state.get("fallbackUsed", fallback_used)),
+            "listenerEventDetected": bool(state.get("eventDetected", False)),
+            "listenerEventSequence": int(state.get("eventSequence", self._clipboard_listener_event_seq)),
+        }
+
+    @staticmethod
+    def _readback_text_from_payload(payload: Dict[str, Any]) -> str:
+        if not isinstance(payload, dict):
+            return ""
+        direct = str(payload.get("text", "")).strip() or str(payload.get("content", "")).strip()
+        if direct:
+            return direct
+        start = str(payload.get("startSnippet", "")).strip()
+        end = str(payload.get("endSnippet", "")).strip()
+        if start and end and start != end:
+            return f"{start} ... {end}".strip()
+        return start or end
+
+    def _apply_repeat_tier(
+        self,
+        command_id: str,
+        result: RuntimeResult,
+        *,
+        repeat_count: int,
+        browse_threshold: int,
+        braille_mode: bool,
+    ) -> None:
+        if not result.ok or result.payload is None:
+            return
+        if command_id != "cmd.selection.readContext":
+            return
+
+        payload = result.payload
+        readback_text = self._readback_text_from_payload(payload)
+        text_len = len(readback_text)
+
+        if text_len > browse_threshold:
+            tier = "browse"
+            render_mode = "browse-window"
+        elif repeat_count >= 2:
+            tier = "browse"
+            render_mode = "browse-window"
+        elif repeat_count == 1:
+            tier = "spell"
+            render_mode = "spell"
+        else:
+            tier = "speak"
+            render_mode = "speech"
+
+        payload["repeatTier"] = tier
+        payload["renderMode"] = render_mode
+        payload["readbackChannel"] = "braille" if braille_mode else "speech"
+        payload["lengthPolicy"] = {
+            "browseThreshold": int(browse_threshold),
+            "textLength": int(text_len),
+            "escalatedToBrowse": bool(tier == "browse"),
+        }
+
+        if tier == "spell":
+            payload["spellText"] = readback_text
+        elif tier == "browse":
+            payload["virtualView"] = {
+                "title": "Selection Context",
+                "lines": [readback_text] if readback_text else ["No preview text available."],
+            }
+
+    def _attach_batch_telemetry(self, result: RuntimeResult, *, batch_size: int = 80, schedule_ms: int = 15) -> None:
+        if not result.ok or result.payload is None:
+            return
+        payload = result.payload
+
+        total = 0
+        if isinstance(payload.get("count"), int):
+            total = int(payload.get("count", 0))
+        elif isinstance(payload.get("slots"), list):
+            total = len(list(payload.get("slots", [])))
+        elif isinstance(payload.get("items"), list):
+            total = len(list(payload.get("items", [])))
+
+        if total <= 0:
+            return
+
+        planned = max(1, int(math.ceil(float(total) / float(max(1, batch_size)))))
+        payload["batchTelemetry"] = {
+            "batchSize": int(batch_size),
+            "batchIndex": int(planned),
+            "batchTotal": int(planned),
+            "itemCount": int(total),
+            "progressPercent": 100,
+            "scheduleMs": int(schedule_ms),
+        }
+
+    def _attach_outlook_surface_diagnostics(self, context: AppContext, result: RuntimeResult) -> None:
+        if result.payload is None:
+            result.payload = {}
+        signature = self._outlook_layout_signature(context.control_id)
+        result.payload["outlookSurfaceDiagnostics"] = {
+            "mode": self._outlook_mode_for_signature(signature),
+            "layoutSignature": signature,
+            "controlId": context.control_id,
+            "appId": context.app_id,
+        }
+
     @staticmethod
     def _format_easy_sequence(chord: str) -> str:
         raw = str(chord or "").strip()
@@ -169,7 +399,17 @@ class RuntimeDispatcher:
             },
         )
 
-    def _virtualize_text_payload(self, context: AppContext, text: str, *, title: str, source: str, confidence: float) -> dict:
+    def _virtualize_text_payload(
+        self,
+        context: AppContext,
+        text: str,
+        *,
+        title: str,
+        source: str,
+        confidence: float,
+        focus_restore_attempts: int = 1,
+        focus_restore_latency_ms: int = 0,
+    ) -> dict:
         lines = [line.strip() for line in text.splitlines() if line.strip()]
         if not lines:
             lines = [text.strip()]
@@ -195,6 +435,11 @@ class RuntimeDispatcher:
                     "windowId": context.window_id,
                     "controlId": context.control_id,
                     "caret": context.caret,
+                },
+                "focusStability": {
+                    "focusRestoreAttempts": int(max(1, focus_restore_attempts)),
+                    "focusRestoreLatencyMs": int(max(0, focus_restore_latency_ms)),
+                    "focusStable": True,
                 },
             }
         }
@@ -261,6 +506,14 @@ class RuntimeDispatcher:
         self._missions = MissionsContextService(base_dir / "missions.json")
         self._workflow_pack = WorkflowPortabilityService()
         self._spellcheck = SpellCheckService()
+        self._clipboard_capture_mode = "event-listener"
+        self._clipboard_fallback_mode = "polling-fallback"
+        self._clipboard_suppression_window_ms = 500
+        self._clipboard_suppressed_until = 0.0
+        self._clipboard_state_path = base_dir / "clipboard-capture-state.json"
+        self._clipboard_listener_last_text = ""
+        self._clipboard_listener_event_seq = 0
+        self._load_clipboard_listener_state()
         self._latest_result: Dict[str, Any] = {
             "confidence": 0.0,
             "fallbacks": ["cmd.palette.open"],
@@ -823,6 +1076,7 @@ class RuntimeDispatcher:
         return (
             command_id.startswith("cmd.selection.")
             or command_id.startswith("cmd.clip.")
+            or command_id.startswith("cmd.tags.")
             or command_id.startswith("cmd.cuts.")
             or command_id.startswith("cmd.notes.")
             or command_id.startswith("cmd.diary.")
@@ -861,13 +1115,118 @@ class RuntimeDispatcher:
 
         if "nextAction" not in result.payload:
             result.payload["nextAction"] = next_action
-        result.payload["narration"] = {
+
+        selection_source = str(result.payload.get("selectionSource", "")).strip()
+        selection_reason_code = str(result.payload.get("selectionReasonCode", "")).strip()
+        selection_confidence_band = str(result.payload.get("selectionConfidenceBand", "")).strip()
+        guided = result.payload.get("guidedFlow")
+        if isinstance(guided, dict):
+            if not selection_source:
+                selection_source = str(guided.get("selectionSource", "")).strip()
+            if not selection_reason_code:
+                selection_reason_code = str(guided.get("selectionReasonCode", "")).strip()
+        if not selection_confidence_band and selection_source:
+            selection_confidence_band = self._selection_band_from_confidence(float(confidence))
+
+        narration_payload = {
             "confidence": float(confidence),
             "nextAction": str(result.payload.get("nextAction", next_action)),
             "tone": "guidance",
         }
+        if selection_source:
+            narration_payload["selectionSource"] = selection_source
+        if selection_reason_code:
+            narration_payload["selectionReasonCode"] = selection_reason_code
+        if selection_confidence_band:
+            narration_payload["selectionConfidenceBand"] = selection_confidence_band
+        if selection_source and selection_confidence_band:
+            source_phrase = self._selection_source_phrase(selection_source)
+            narration_payload["summary"] = f"Selection source: {source_phrase}. Confidence band: {selection_confidence_band}."
+
+        repeat_tier = str(result.payload.get("repeatTier", "")).strip().lower()
+        render_mode = str(result.payload.get("renderMode", "")).strip().lower()
+        readback_channel = str(result.payload.get("readbackChannel", "")).strip().lower()
+        if repeat_tier:
+            tier_label = {
+                "speak": "spoken readback",
+                "spell": "spelled readback",
+                "browse": "browse-window readback",
+            }.get(repeat_tier, f"{repeat_tier} readback")
+            narration_payload["readbackMode"] = tier_label
+            narration_payload["readbackRenderMode"] = render_mode
+            if readback_channel:
+                narration_payload["readbackChannel"] = readback_channel
+            prefix = str(narration_payload.get("summary", "")).strip()
+            mode_summary = f"Readback mode: {tier_label}."
+            if readback_channel:
+                mode_summary = f"{mode_summary} Readback channel: {readback_channel}."
+            narration_payload["summary"] = f"{prefix} {mode_summary}".strip() if prefix else mode_summary
+
+        batch = result.payload.get("batchTelemetry")
+        if isinstance(batch, dict):
+            progress = int(batch.get("progressPercent", 0))
+            count = int(batch.get("itemCount", 0))
+            batch_summary = f"Batch progress: {progress} percent across {count} items."
+            narration_payload["batchSummary"] = batch_summary
+            prefix = str(narration_payload.get("summary", "")).strip()
+            narration_payload["summary"] = f"{prefix} {batch_summary}".strip() if prefix else batch_summary
+
+        speech_message = str(narration_payload.get("summary", "")).strip()
+        braille_parts = []
+        if selection_source:
+            braille_parts.append(f"Src {self._selection_source_phrase(selection_source)}")
+        if selection_confidence_band:
+            braille_parts.append(f"Conf {selection_confidence_band}")
+        if repeat_tier:
+            braille_parts.append(f"Mode {repeat_tier}")
+        if readback_channel:
+            braille_parts.append(f"Ch {readback_channel}")
+        if isinstance(batch, dict):
+            braille_parts.append(f"Batch {int(batch.get('progressPercent', 0))}%/{int(batch.get('itemCount', 0))}")
+        braille_message = "; ".join(part for part in braille_parts if part).strip()
+        if not braille_message:
+            braille_message = speech_message
+        if speech_message:
+            narration_payload["speechMessage"] = speech_message
+        if braille_message:
+            narration_payload["brailleMessage"] = braille_message
+
+        result.payload["narration"] = narration_payload
         if not result.next_steps:
             result.next_steps = [str(result.payload.get("nextAction", next_action))]
+
+    def _update_latest_result_from_runtime(self, result: RuntimeResult) -> None:
+        payload = result.payload or {}
+        confidence = payload.get("confidence")
+        if not isinstance(confidence, (int, float)):
+            return
+
+        narration = payload.get("narration")
+        if not isinstance(narration, dict):
+            narration = {}
+        guided = payload.get("guidedFlow")
+        if not isinstance(guided, dict):
+            guided = {}
+
+        selection_source = str(payload.get("selectionSource", "")).strip() or str(narration.get("selectionSource", "")).strip() or str(guided.get("selectionSource", "")).strip()
+        selection_reason_code = str(payload.get("selectionReasonCode", "")).strip() or str(narration.get("selectionReasonCode", "")).strip() or str(guided.get("selectionReasonCode", "")).strip()
+        selection_confidence_band = str(payload.get("selectionConfidenceBand", "")).strip() or str(narration.get("selectionConfidenceBand", "")).strip()
+        if not selection_confidence_band and selection_source:
+            selection_confidence_band = self._selection_band_from_confidence(float(confidence))
+
+        summary = str(payload.get("summary", "")).strip() or str(narration.get("summary", "")).strip() or str(result.message)
+        fallback_ids = payload.get("fallbackCommandIds")
+        if not isinstance(fallback_ids, list):
+            fallback_ids = list(self._latest_result.get("fallbacks", ["cmd.palette.open"]))
+
+        self._latest_result = {
+            "confidence": float(confidence),
+            "fallbacks": list(fallback_ids),
+            "summary": summary,
+            "selectionSource": selection_source,
+            "selectionConfidenceBand": selection_confidence_band,
+            "selectionReasonCode": selection_reason_code,
+        }
 
     def _core_mutating_command_ids(self) -> list[str]:
         prefixes = ("cmd.selection.", "cmd.clip.", "cmd.cuts.", "cmd.notes.", "cmd.diary.", "cmd.author.")
@@ -1249,9 +1608,19 @@ class RuntimeDispatcher:
                 checked_word = str((result.payload or {}).get("word", ""))
                 self._attach_ai_spellcheck_augmentation(result, source=checked_word)
         elif command_id == "cmd.capture.quickInbox":
-            text = context.clipboard_text.strip() or context.buffer.strip()
+            clip_state = self._observe_clipboard_state(context)
+            clip_text = str(clip_state.get("clipboardText", ""))
+            used_clipboard = bool(clip_text) and not bool(clip_state.get("suppressed", False))
+            text = clip_text if used_clipboard else context.buffer.strip()
             result = self._capture.capture(text, source_app=context.app_id, window_id=context.window_id)
             self._attach_ai_augmentation(result, tool="summarize", source=text)
+            if result.ok and result.payload is not None:
+                result.payload["captureSource"] = "clipboard" if used_clipboard else "focused-control"
+                result.payload["clipboardCapturePolicy"] = self._clipboard_policy_payload(
+                    event_name="cmd.capture.quickInbox",
+                    state=clip_state,
+                    fallback_used=not used_clipboard,
+                )
         elif command_id == "cmd.capture.quickInbox.route":
             result = self._capture.route(
                 str(kwargs.get("captureId", "")),
@@ -1299,6 +1668,7 @@ class RuntimeDispatcher:
                         )
                         result.payload = slot_payload
                 elif route == "clipboard":
+                    self._enter_clipboard_suppression(self._clipboard_suppression_window_ms)
                     result = RuntimeResult(
                         ok=True,
                         message="Dialog text prepared for clipboard route.",
@@ -1307,6 +1677,16 @@ class RuntimeDispatcher:
                             "source": payload.get("source", ""),
                             "confidence": payload.get("confidence", 0.0),
                             "metadata": payload.get("metadata", {}),
+                            "clipboardCapturePolicy": self._clipboard_policy_payload(
+                                event_name="cmd.selection.captureDialogText",
+                                state={
+                                    "captureMode": "suppressed-write-window",
+                                    "fallbackUsed": str(payload.get("source", "")) != "clipboard",
+                                    "eventDetected": False,
+                                    "eventSequence": int(self._clipboard_listener_event_seq),
+                                },
+                                fallback_used=str(payload.get("source", "")) != "clipboard",
+                            ),
                         },
                     )
                 else:
@@ -1336,6 +1716,8 @@ class RuntimeDispatcher:
                         title=str(kwargs.get("title", kwargs.get("windowTitle", ""))),
                         source=source,
                         confidence=confidence,
+                        focus_restore_attempts=int(kwargs.get("focusRestoreAttempts", 1)),
+                        focus_restore_latency_ms=int(kwargs.get("focusRestoreLatencyMs", 0)),
                     ),
                 )
         elif command_id == "cmd.journal.list":
@@ -2058,6 +2440,8 @@ class RuntimeDispatcher:
         elif command_id == "cmd.clip.pasteFromSlot":
             slot = int(kwargs.get("slot", self.runtime.active_slot()))
             result = self.runtime.paste_from_slot(slot=slot)
+            if result.ok:
+                self._enter_clipboard_suppression(self._clipboard_suppression_window_ms)
         elif command_id == "cmd.clip.protectSlot":
             slot = int(kwargs.get("slot", self.runtime.active_slot()))
             result = self.runtime.protect_slot(slot=slot)
@@ -2248,6 +2632,9 @@ class RuntimeDispatcher:
                     "confidence": conf,
                     "mode": mode,
                     "summary": str(self._latest_result.get("summary", "")),
+                    "selectionSource": str(self._latest_result.get("selectionSource", "")),
+                    "selectionConfidenceBand": str(self._latest_result.get("selectionConfidenceBand", "")),
+                    "selectionReasonCode": str(self._latest_result.get("selectionReasonCode", "")),
                 },
             )
         elif command_id == "cmd.result.openFallbacks":
@@ -2609,6 +2996,32 @@ class RuntimeDispatcher:
                 next_steps=["Open palette for fallback actions."],
             )
 
+        repeat_count = int(kwargs.get("repeatCount", 0))
+        browse_threshold = int(kwargs.get("browseThreshold", 240))
+        self._apply_repeat_tier(
+            command_id,
+            result,
+            repeat_count=repeat_count,
+            browse_threshold=browse_threshold,
+            braille_mode=bool(kwargs.get("brailleMode", False)),
+        )
+
+        if command_id in (
+            "cmd.tags.session.batchCopy",
+            "cmd.tags.session.batchCut",
+            "cmd.tags.session.batchDelete",
+            "cmd.tags.session.batchPlaylistAdd",
+            "cmd.tags.outlook.batchMove",
+            "cmd.tags.outlook.batchCopy",
+            "cmd.tags.outlook.batchDelete",
+            "cmd.clip.browser.batchAction",
+            "cmd.file.tag.batch",
+        ):
+            self._attach_batch_telemetry(result)
+
+        if context.app_id.lower() == "outlook" and command_id in ("cmd.selection.markEnd", "cmd.selection.readContext"):
+            self._attach_outlook_surface_diagnostics(context, result)
+
         if result.payload is None:
             result.payload = {}
         result.payload["executionPolicy"] = {
@@ -2628,6 +3041,7 @@ class RuntimeDispatcher:
         )
 
         self._attach_core_narration(command_id, result)
+        self._update_latest_result_from_runtime(result)
 
         if result.ok:
             self._attach_mission_telemetry(command_id, result)

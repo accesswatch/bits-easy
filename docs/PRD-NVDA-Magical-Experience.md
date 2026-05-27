@@ -216,6 +216,230 @@ Joplin integration should be included because many users already maintain large 
 2. Pre-sync dry-run and conflict report.
 3. Snapshot before apply and one-command rollback.
 
+## 8.5 Source-Inspected Add-on Patterns and Product Directives
+This section captures implementation patterns verified by direct source inspection of overlapping NVDA add-ons and translates them into actionable BITS-EASY directives.
+
+Inspected repositories:
+1. placeMarkers
+2. snippetsForNVDA
+3. Enhanced-Clipboard-Reading
+4. clipboard-content-editor
+5. ClipHistory
+6. outlookExtended
+7. wordNav
+
+### 8.5.1 Verified implementation patterns
+
+#### PlaceMarkers (primary reference for bookmark navigation)
+1. Uses native NVDA text surfaces first: selection, caret, first, and all text info positions.
+2. Differentiates UIA browse documents from non-UIA paths and uses separate movement logic.
+3. Stores bookmark data per effective document identity, not as one global list.
+4. Persists position bookmarks as serialized structures and temporary bookmarks as lightweight text files.
+5. Couples bookmarks with optional note metadata and exposes deterministic next and previous bookmark navigation.
+6. Uses explicit backup and restore of marker folders, including migration paths from prior layouts.
+
+#### snippetsForNVDA
+1. Captures selected text through treeInterceptor selection when available, then falls back to focus object selection.
+2. Uses fixed numeric memory slots for low-latency clipboard workflows.
+3. Uses single-press speak and double-press paste behavior for slot recall.
+4. Persists snippets to disk as JSON under user config path.
+
+#### Enhanced-Clipboard-Reading
+1. Extends existing NVDA clipboard command paths rather than replacing user mental models.
+2. Uses configurable thresholding to switch from spoken output to browseable message output.
+3. Adds a dedicated character-count script to improve predictability before heavy clipboard operations.
+
+#### clipboard-content-editor
+1. Uses a command-layer interaction model with fast single-key actions after activation.
+2. Includes backup and restore controls for clipboard safety.
+3. Maintains clipboard history and append-mode behavior with configurable limits.
+4. Uses periodic polling to detect clipboard changes.
+
+#### ClipHistory
+1. Uses Windows clipboard listener events instead of polling for capture updates.
+2. Applies throttling and suppression windows to avoid self-trigger loops during internal paste operations.
+3. Stores rich clipboard records, including text plus HTML payload support.
+4. Persists large history with pinning and debounced atomic save behavior.
+
+#### outlookExtended
+1. Builds by extending the NVDA built-in Outlook app module rather than replacing the stack.
+2. Reuses native COM selection pathways for message state reporting.
+3. Adds scoped behavior on top of native objects and scripts for Outlook-specific workflows.
+
+#### wordNav
+1. Provides high-power navigation value but relies heavily on regex segmentation and broad surface adaptation.
+2. Demonstrates that advanced heuristics can be useful but increase long-term maintenance and compatibility risk.
+
+### 8.5.2 Product directives for BITS-EASY
+1. Native-first contract: always attempt native text and selection providers before custom normalization.
+2. Surface identity model: key persisted anchors and captures by deterministic surface identity, not only process name.
+3. Clipboard architecture: adopt event-driven listener capture with throttling and explicit self-write suppression.
+4. Data model: preserve both plain text and rich clipboard payloads when available.
+5. Safety model: require backup and rollback pathways for mutating clipboard and selection transforms.
+6. Interaction model: support both direct hotkeys and optional command-layer execution for expert throughput.
+7. Persistence model: separate fast transient state from durable state and use atomic writes for durable records.
+8. Outlook strategy: layer behavior on top of NVDA native Outlook support and avoid bypassing native object paths.
+
+### 8.5.3 Anti-pattern guardrails
+1. Do not depend on private NVDA internals as stable contracts.
+2. Do not lead with app-specific heuristic slicing when native range and selection providers already exist.
+3. Do not rely on polling-only clipboard capture where event listeners are available.
+4. Do not collapse all app contexts into one global bookmark namespace.
+
+### 8.5.4 Release implications
+1. P0 and P1 selection and clipboard features must pass native-first conformance checks before release.
+2. Any heuristic fallback introduced for a specific surface must include explicit justification, telemetry, and removal criteria.
+3. Competitive parity claims for bookmarks and clip workflows must reference these source-verified patterns.
+
+### 8.5.5 Second-wave source additions (older and niche add-ons)
+Additional inspected repositories:
+1. clipContentsDesigner
+2. EasyTableCopy
+3. showSelectionWhenBrailleTetheredToReview
+4. invisinote
+5. xPlorer
+
+#### clipContentsDesigner
+1. Uses native selection capture first via `makeTextInfo(POSITION_SELECTION)` and browse mode tree interceptor handoff.
+2. Uses confirmation gates before mutating clipboard state and supports browseable clipboard preview.
+3. Also contains a private-internals dependency on `_selectThenCopyRange` from review-position objects.
+
+BITS-EASY decision:
+1. Keep native-first selection acquisition and confirmation-gated clipboard mutations.
+2. Reject private-internals dependencies as non-contract behavior.
+
+#### EasyTableCopy
+1. Implements explicit multi-engine copy paths: native selection-and-copy first, then manual reconstruction fallback, then desktop list and explorer-specific handling.
+2. Maintains explicit marked row and column state with deterministic clear and copy actions.
+3. Preserves dual clipboard payloads where possible, including HTML plus plain text.
+
+BITS-EASY decision:
+1. Keep explicit engine ordering with native first and bounded fallback layers.
+2. Keep deterministic marked selection state machine and explicit clear actions.
+3. Keep dual payload export where the source provides structure.
+
+#### showSelectionWhenBrailleTetheredToReview
+1. Anchors selection rendering to native `POSITION_SELECTION` and review-position collapse semantics.
+2. Handles no-selection and COM failure paths explicitly.
+3. Integrates with braille review regions by updating selection windows only when cursor-follow contracts are satisfied.
+
+BITS-EASY decision:
+1. Keep explicit no-selection and COM-error handling contracts for selection surfaces.
+2. Keep separate review and selection state paths for braille-sensitive workflows.
+
+#### invisinote
+1. Uses an explicit marker model for local text buffer selection with user-set start and end, and repeat-to-copy behavior.
+2. Keeps copy behavior deterministic by operating on internal note buffers instead of external app surfaces.
+
+BITS-EASY decision:
+1. Use this model only for internal virtual surfaces and authored buffer workflows.
+2. Do not generalize this local marker approach as a replacement for external native app selections.
+
+#### xPlorer
+1. Adds explorer-specific clipboard actions for selected names and file content, with explicit content filtering.
+2. Implements create-folder-and-rename assist using clipboard text sanitation and staged fallback input injection paths.
+3. Uses delayed action scheduling for Explorer transitions and UI timing stability.
+
+BITS-EASY decision:
+1. Keep strict sanitation and suitability checks before any clipboard-assisted rename or injection path.
+2. Keep fallback injection paths as last resort and scope them to explicit user intent and known-safe contexts.
+
+### 8.5.6 Extended guardrails from second-wave analysis
+1. Do not promote local-buffer marker workflows into global cross-app selection logic.
+2. Do not invoke input-injection fallback paths unless native selection and command paths have failed and user intent is explicit.
+3. Require sanitization and length limits before clipboard-assisted naming workflows.
+4. Preserve a deterministic engine order for complex captures: native path, structured fallback, then specialized surface adapters.
+
+### 8.5.7 Virtualized surface parity matrix (selection and interactive controls)
+Objective:
+Define expected behavior for virtualized text and interactive surfaces so parity is measurable and testable.
+
+| Surface Class | Typical APIs | Expected BITS-EASY Path | Fallback Path | Risk Notes |
+|---|---|---|---|---|
+| Browser virtual buffer document | treeInterceptor + `makeTextInfo(POSITION_SELECTION or POSITION_CARET)` | Use treeInterceptor as primary text provider when not pass-through | Focus object text info if interceptor unavailable | Drift between review and focus positions |
+| UIA browse document variant | UIA text ranges and bookmarks | Prefer native bookmark-derived caret and range offsets | Recompute from visible text only when offsets unavailable | UIA range endpoint mismatch across versions |
+| Link and button elements in virtual docs | Role and accessible name | Treat interactive label as selectable text when native selection is empty | Name and description fallback with low confidence | False positive capture when control name is generic |
+| Virtualized list and tree items | List item and tree item roles under dynamic containers | Capture via role-aware traversal and active row context | Surface-specific adapter path for inaccessible child trees | Dynamic object identity can invalidate stale anchors |
+| Outlook message list rows | UIA grid row and list row variants | Explicitly unsupported for stable text-range operations | User-guided fallback actions only | High churn and unstable row text anchors |
+| Reading pane and compose documents | Native selection text in document or editable roles | Native selection text first | Deterministic range from visible buffer | Selection anchoring differs by Outlook build |
+
+Implementation directives:
+1. Runtime adapters must classify interactive roles and support explicit low-confidence label capture when range selection is absent.
+2. Snapshot extraction must prefer interceptor-backed providers before focus-object providers.
+3. Anchor restore must reject cross-control drift and clamp only within the current surface text length.
+4. Any unsupported virtualized surface must return explicit reason codes, never silent no-op behavior.
+
+Validation gates:
+1. Unit coverage must include interceptor-first selection extraction, interactive-label fallback, and message-list unsupported behavior.
+2. Regression tests must verify no private NVDA internals are required for offsets.
+3. Release checklists must include at least one browser virtual-buffer link scenario and one list item scenario.
+
+### 8.5.8 Third-wave source learnings from newly pulled content
+Additional inspected repositories:
+1. ClipHistory
+2. Enhanced-Clipboard-Reading
+3. xPlorer
+4. snippetsForNVDA
+5. outlookExtended
+6. invisinote
+
+#### ClipHistory
+1. Uses native Windows clipboard listener events (`WM_CLIPBOARDUPDATE`) with bounded throttling and suppression windows.
+2. Avoids self-trigger feedback loops by temporarily disabling listener processing during internal clipboard writes.
+3. Uses batched delayed actions for tap-multiplexed gestures (single action versus double action).
+
+BITS-EASY decision:
+1. Promote event-listener-first clipboard capture where available and keep polling only as degraded fallback.
+2. Standardize self-loop suppression windows for all clipboard-mutating commands.
+3. Keep bounded tap-multiplex windows for overloaded gestures and expose timeout settings.
+
+#### Enhanced-Clipboard-Reading
+1. Uses repeat-count behavior for one command (speak, spell, browse) with explicit length thresholding.
+2. Switches to browseable output when content exceeds configured size.
+
+BITS-EASY decision:
+1. Extend selection and clipboard readback commands with repeat-count tiers and deterministic escalation.
+2. Add a configurable browse-threshold contract for long content in all readback surfaces.
+
+#### xPlorer
+1. Uses chunked batch operations with `core.callLater` for large explorer selections to prevent UI starvation.
+2. Uses deterministic progress messaging for long-running selection transforms.
+
+BITS-EASY decision:
+1. Add chunked mutation execution for large clip and selection transforms.
+2. Add progress and completion telemetry announcements for large-batch operations.
+
+#### snippetsForNVDA
+1. Uses deterministic fixed slot gestures with repeat-to-paste behavior and optional persistence.
+2. Uses role-aware selection capture via treeInterceptor-first then focus fallback.
+
+BITS-EASY decision:
+1. Keep fixed slot semantics for zero-latency recall workflows and preserve repeat behavior parity.
+2. Keep role-aware selection capture ordering as a hard contract.
+
+#### outlookExtended
+1. Uses robust multi-layout detection for message header extraction based on ordered control identifiers.
+2. Provides explicit user-visible fallback behavior when unsupported column navigation states occur.
+
+BITS-EASY decision:
+1. Keep explicit layout-signature mapping for Outlook reading and compose surfaces.
+2. Require user-visible unsupported-state messaging rather than silent fallback.
+
+#### invisinote
+1. Uses local virtual-surface editing with deterministic file type and path scoping.
+2. Uses local vendored markdown stack and delayed window relocation to avoid focus churn.
+
+BITS-EASY decision:
+1. Use scoped virtual-surface editing for local notes and authoring workflows only.
+2. Add focus-stability timing contracts for virtual render windows.
+
+### 8.5.9 New implementation candidates from third-wave analysis
+1. Selection and clipboard readback command family should expose repeat-tier payload fields (`repeatTier`, `renderMode`, `lengthPolicy`).
+2. Clipboard capture engine should expose listener mode telemetry (`event-listener`, `polling-fallback`, `suppressed-write-window`).
+3. Long-running selection transforms should expose batch telemetry (`batchSize`, `batchIndex`, `batchTotal`, `progressPercent`).
+4. Outlook adapters should expose layout signature IDs and unsupported-state reason codes for reproducible diagnostics.
+5. Virtual-surface note and render flows should expose focus-stability diagnostics (`focusRestoreAttempts`, `focusRestoreLatencyMs`).
+
 ## 9. Feature-Level Parity Detail and Implementation Paths
 
 ### 9.1 P0: Selection-First Experience

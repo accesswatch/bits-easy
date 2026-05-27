@@ -40,6 +40,10 @@ class OrchestratorTests(unittest.TestCase):
             self.assertTrue(out.result.ok)
             self.assertIn("cmd.selection.markStart", orchestrator.recent_commands)
 
+            ctx.caret = 12
+            captured = orchestrator.execute(ctx, "cmd.selection.markEnd", intent="selection workflow")
+            self.assertTrue(captured.result.ok)
+
             suggestions = orchestrator.suggestions_for_app("edge")
             self.assertIn("cmd.selection.markEnd", suggestions)
 
@@ -52,10 +56,13 @@ class OrchestratorTests(unittest.TestCase):
             self.assertIn("cmd.help.availableHotkeys", orchestrator.suggestions_for_app("edge"))
 
             lines = journal.read_text(encoding="utf-8").strip().splitlines()
-            self.assertEqual(len(lines), 1)
-            row = json.loads(lines[0])
-            self.assertEqual(row["commandId"], "cmd.selection.markStart")
+            self.assertEqual(len(lines), 2)
+            row = json.loads(lines[-1])
+            self.assertEqual(row["commandId"], "cmd.selection.markEnd")
             self.assertTrue(row["ok"])
+            self.assertEqual(row["selectionSource"], "native-range")
+            self.assertEqual(row["selectionConfidenceBand"], "high")
+            self.assertIn("Selection source:", row["summary"])
 
     def test_per_app_ranking_persists(self) -> None:
         repo_root = Path(__file__).resolve().parents[1]

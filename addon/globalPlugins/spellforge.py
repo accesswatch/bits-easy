@@ -169,6 +169,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 "edge": BrowserLiveAdapter("edge", snapshot_provider=snapshot_provider),
                 "chrome": BrowserLiveAdapter("chrome", snapshot_provider=snapshot_provider),
                 "firefox": BrowserLiveAdapter("firefox", snapshot_provider=snapshot_provider),
+                "notepad": BrowserLiveAdapter("notepad", snapshot_provider=snapshot_provider),
+                "vscode": BrowserLiveAdapter("vscode", snapshot_provider=snapshot_provider),
             }
             self._runtime = SpellforgeRuntime(adapters=adapters, storage_path=storage_path)
             log.info("BITS-EASY: runtime constructed with %d adapters", len(adapters))

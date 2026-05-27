@@ -171,6 +171,8 @@ class SelectionClipboardE2E(unittest.TestCase):
         self.assertTrue(end.ok)
         self.assertEqual(end.code, RuntimeErrorCode.UNSUPPORTED_SURFACE)
         self.assertTrue(end.payload["fallbackUsed"])
+        self.assertEqual(end.payload["selectionSource"], "clipboard-fallback")
+        self.assertEqual(end.payload["selectionReasonCode"], "unsupported-surface-clipboard-fallback")
 
         read = self.runtime.read_selection_context(ctx)
         self.assertTrue(read.ok)
@@ -188,7 +190,10 @@ class SelectionClipboardE2E(unittest.TestCase):
         self.assertEqual(end.code, RuntimeErrorCode.UNSUPPORTED_SURFACE)
         self.assertTrue(end.payload["fallbackUsed"])
         self.assertEqual(end.payload["fallbackSource"], "buffer-range")
+        self.assertEqual(end.payload["selectionSource"], "buffer-range-fallback")
+        self.assertEqual(end.payload["selectionReasonCode"], "unsupported-surface-buffer-range-fallback")
         self.assertEqual(end.payload["guidedFlow"]["stage"], "fallback-captured")
+        self.assertEqual(end.payload["guidedFlow"]["selectionSource"], "buffer-range-fallback")
 
         read = self.runtime.read_selection_context(ctx)
         self.assertTrue(read.ok)

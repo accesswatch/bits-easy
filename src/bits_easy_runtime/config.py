@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -11,6 +12,8 @@ class RuntimeConfig:
     command_catalog: Dict[str, Dict[str, Any]]
     keymap_bindings: List[Dict[str, Any]]
     profiles: Dict[str, Dict[str, Any]]
+    feature_flag_fallback_path: str = ""
+    feature_flag_manifest_url: str = ""
 
     @staticmethod
     def _equivalent_key_chords(key_chord: str) -> List[str]:
@@ -157,5 +160,13 @@ def load_runtime_config(repo_root: Path) -> RuntimeConfig:
 
     catalog = {cmd["id"]: cmd for cmd in catalog_raw}
     bindings = list(keymap_raw.get("bindings", []))
+    feature_flag_fallback_path = str(config_root.parent / "features" / "feature-flags.fallback.v1.json")
+    feature_flag_manifest_url = str(os.getenv("BITS_EASY_FEATURE_FLAGS_URL", "")).strip()
 
-    return RuntimeConfig(command_catalog=catalog, keymap_bindings=bindings, profiles=profiles)
+    return RuntimeConfig(
+        command_catalog=catalog,
+        keymap_bindings=bindings,
+        profiles=profiles,
+        feature_flag_fallback_path=feature_flag_fallback_path,
+        feature_flag_manifest_url=feature_flag_manifest_url,
+    )

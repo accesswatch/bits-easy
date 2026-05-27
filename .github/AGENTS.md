@@ -65,6 +65,6 @@ Expected success output: `Hotkey config validation passed.`
 
 For broader product direction and user journey details, use these references instead of duplicating content:
 
-1. [PRD-NVDA-Magical-Experience.md](PRD-NVDA-Magical-Experience.md)
-2. [MAGICAL-1.0-END-USER-STORY.md](MAGICAL-1.0-END-USER-STORY.md)
-3. [NVDA-UPSTREAM-IMPLEMENTATION-READINESS.md](NVDA-UPSTREAM-IMPLEMENTATION-READINESS.md)
+1. [docs/prd.md](../docs/prd.md)
+2. [docs/BITS-EASY-COMPLETE-GUIDE.md](../docs/BITS-EASY-COMPLETE-GUIDE.md)
+3. [docs/FEATURE-FLAGS-BETA.md](../docs/FEATURE-FLAGS-BETA.md)

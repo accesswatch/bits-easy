@@ -12,6 +12,90 @@
     "fallbackCommandIds": []
   },
   {
+    "id": "cmd.feature.flags.list",
+    "name": "Feature Flags List",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.feature.flags.enable",
+    "name": "Feature Flags Enable",
+    "safetyClass": "mutating",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.feature.flags.disable",
+    "name": "Feature Flags Disable",
+    "safetyClass": "mutating",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.feature.flags.clearOverride",
+    "name": "Feature Flags Clear Override",
+    "safetyClass": "mutating",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.feature.flags.refreshManifest",
+    "name": "Feature Flags Refresh Manifest",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.feature.flags.grantBeta",
+    "name": "Feature Flags Grant Beta",
+    "safetyClass": "mutating",
+    "executionMode": "confirm-first",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": true,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.feature.flags.setAuthority",
+    "name": "Feature Flags Set Authority",
+    "safetyClass": "mutating",
+    "executionMode": "confirm-first",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": true,
+    "fallbackCommandIds": []
+  },
+  {
     "id": "cmd.integration.itemChooser.open",
     "name": "Open Screen Item Chooser",
     "safetyClass": "safe",
@@ -245,44 +329,6 @@
     ]
   },
   {
-    "id": "cmd.result.block.copy",
-    "name": "Copy current virtual block",
-    "safetyClass": "safe",
-    "executionMode": "immediate",
-    "supportsHotkey": true,
-    "supportsPalette": false,
-    "supportsVirtualized": true,
-    "defaultHotkey": "Grave+C",
-    "requiresConfirmation": false,
-    "fallbackCommandIds": [
-      "cmd.result.copyAll"
-    ]
-  },
-  {
-    "id": "cmd.result.block.next",
-    "name": "Next virtual block",
-    "safetyClass": "safe",
-    "executionMode": "immediate",
-    "supportsHotkey": true,
-    "supportsPalette": false,
-    "supportsVirtualized": true,
-    "defaultHotkey": "Grave+RightArrow",
-    "requiresConfirmation": false,
-    "fallbackCommandIds": []
-  },
-  {
-    "id": "cmd.result.block.previous",
-    "name": "Previous virtual block",
-    "safetyClass": "safe",
-    "executionMode": "immediate",
-    "supportsHotkey": true,
-    "supportsPalette": false,
-    "supportsVirtualized": true,
-    "defaultHotkey": "Grave+LeftArrow",
-    "requiresConfirmation": false,
-    "fallbackCommandIds": []
-  },
-  {
     "id": "cmd.context.returnSource",
     "name": "Return to source anchor",
     "safetyClass": "safe",
@@ -447,6 +493,18 @@
     ]
   },
   {
+    "id": "cmd.selection.markEndAppendClipboard",
+    "name": "Mark selection end and append to clipboard",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Grave+Shift+CloseBracket",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
     "id": "cmd.selection.readContext",
     "name": "Read selection context",
     "safetyClass": "safe",
@@ -493,6 +551,30 @@
     "supportsPalette": true,
     "supportsVirtualized": false,
     "defaultHotkey": "Grave+X",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.clipboard.speak",
+    "name": "Speak clipboard",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Grave+Shift+Quote",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.clipboard.clear",
+    "name": "Clear clipboard",
+    "safetyClass": "mutating",
+    "executionMode": "immediate",
+    "supportsHotkey": true,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "Grave+Shift+Backspace",
     "requiresConfirmation": false,
     "fallbackCommandIds": []
   },
@@ -719,7 +801,7 @@
   },
   {
     "id": "cmd.text.expansion.upsert",
-    "name": "Create or update text expansion",
+    "name": "EASYText Studio save or update text",
     "safetyClass": "mutating",
     "executionMode": "preview-first",
     "supportsHotkey": false,
@@ -731,7 +813,19 @@
   },
   {
     "id": "cmd.text.expansion.expand",
-    "name": "Expand abbreviation",
+    "name": "EASYText Studio expand abbreviation",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.text.expansion.resolveTrigger",
+    "name": "EASYText Studio resolve trigger",
     "safetyClass": "safe",
     "executionMode": "immediate",
     "supportsHotkey": false,
@@ -743,7 +837,7 @@
   },
   {
     "id": "cmd.text.expansion.list",
-    "name": "List text expansions",
+    "name": "EASYText Studio list texts",
     "safetyClass": "safe",
     "executionMode": "immediate",
     "supportsHotkey": false,
@@ -754,8 +848,68 @@
     "fallbackCommandIds": []
   },
   {
+    "id": "cmd.text.expansion.tree",
+    "name": "EASYText Studio folder tree",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.text.expansion.createFolder",
+    "name": "EASYText Studio create folder",
+    "safetyClass": "mutating",
+    "executionMode": "preview-first",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": true,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.text.expansion.renameFolder",
+    "name": "EASYText Studio rename folder",
+    "safetyClass": "mutating",
+    "executionMode": "preview-first",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": true,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.text.expansion.deleteFolder",
+    "name": "EASYText Studio delete folder",
+    "safetyClass": "destructive",
+    "executionMode": "confirm-first",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": true,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.text.expansion.moveToFolder",
+    "name": "EASYText Studio move text to folder",
+    "safetyClass": "mutating",
+    "executionMode": "preview-first",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": true,
+    "fallbackCommandIds": []
+  },
+  {
     "id": "cmd.text.expansion.rename",
-    "name": "Rename text expansion",
+    "name": "EASYText Studio rename text",
     "safetyClass": "mutating",
     "executionMode": "preview-first",
     "supportsHotkey": false,
@@ -767,7 +921,7 @@
   },
   {
     "id": "cmd.text.expansion.delete",
-    "name": "Delete text expansion",
+    "name": "EASYText Studio delete text",
     "safetyClass": "destructive",
     "executionMode": "confirm-first",
     "supportsHotkey": false,
@@ -778,8 +932,20 @@
     "fallbackCommandIds": []
   },
   {
+    "id": "cmd.text.expansion.setHotkeyHint",
+    "name": "EASYText Studio assign text hotkey hint",
+    "safetyClass": "mutating",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
     "id": "cmd.text.quickInsert",
-    "name": "Primary quick insert",
+    "name": "EASYText Studio primary quick insert",
     "safetyClass": "mutating",
     "executionMode": "preview-first",
     "supportsHotkey": true,
@@ -791,7 +957,7 @@
   },
   {
     "id": "cmd.text.expansion.setPrimary",
-    "name": "Set primary quick insert",
+    "name": "EASYText Studio set primary quick insert",
     "safetyClass": "mutating",
     "executionMode": "immediate",
     "supportsHotkey": false,
@@ -1260,6 +1426,54 @@
   {
     "id": "cmd.table.capture",
     "name": "Capture table selection",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.table.capture.row",
+    "name": "Capture table row",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.table.capture.column",
+    "name": "Capture table column",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.table.capture.header",
+    "name": "Capture table header",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.table.capture.cell",
+    "name": "Capture table cell",
     "safetyClass": "safe",
     "executionMode": "immediate",
     "supportsHotkey": false,
@@ -2530,6 +2744,30 @@
     "fallbackCommandIds": []
   },
   {
+    "id": "cmd.author.html.assistantList",
+    "name": "Author Html Assistant List",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.author.html.assistant",
+    "name": "Author Html Assistant",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
     "id": "cmd.author.html.validate",
     "name": "Author Html Validate",
     "safetyClass": "safe",
@@ -2568,6 +2806,30 @@
   {
     "id": "cmd.author.markdown.insert",
     "name": "Author Markdown Insert",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.emoji.list",
+    "name": "Emoji List",
+    "safetyClass": "safe",
+    "executionMode": "immediate",
+    "supportsHotkey": false,
+    "supportsPalette": true,
+    "supportsVirtualized": false,
+    "defaultHotkey": "",
+    "requiresConfirmation": false,
+    "fallbackCommandIds": []
+  },
+  {
+    "id": "cmd.emoji.insert",
+    "name": "Emoji Insert",
     "safetyClass": "safe",
     "executionMode": "immediate",
     "supportsHotkey": false,

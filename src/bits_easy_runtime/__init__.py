@@ -72,6 +72,8 @@ from .diagnostics import get_logger, log_and_default, run_with_default
 from .file_ops import FileOpsService
 from .ai_assistant import AiAssistantService
 from .glow_client import GlowMcpService
+from .feature_flags import FeatureFlagManager
+from .emoji_assistant import EmojiAssistant
 
 __all__ = [
     "AppAdapter",
@@ -173,5 +175,7 @@ __all__ = [
     "FileOpsService",
     "AiAssistantService",
     "GlowMcpService",
+    "FeatureFlagManager",
+    "EmojiAssistant",
 ]
 

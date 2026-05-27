@@ -851,6 +851,10 @@ def register_settings_panel(
             self.multiPressCheck.SetValue(settings.enable_multi_press_gestures)
             sizer.Add(self.multiPressCheck, border=5, flag=wx.ALL)
 
+            self.betaFeaturesCheck = wx.CheckBox(self, label=_("Enable beta features"))
+            self.betaFeaturesCheck.SetValue(bool(getattr(settings, "enable_beta_features", False)))
+            sizer.Add(self.betaFeaturesCheck, border=5, flag=wx.ALL)
+
             self.rawEasySeqCheck = wx.CheckBox(self, label=_("Use EASY key sequences (required)"))
             self.rawEasySeqCheck.SetValue(True)
             self.rawEasySeqCheck.Enable(False)
@@ -888,6 +892,7 @@ def register_settings_panel(
             settings.enable_global_hotkeys = self.globalHotkeysCheck.GetValue()
             settings.emulate_capslock_prefix_for_os_hotkeys = self.capsEmulationCheck.GetValue()
             settings.enable_multi_press_gestures = self.multiPressCheck.GetValue()
+            settings.enable_beta_features = self.betaFeaturesCheck.GetValue()
             settings.enable_raw_easy_sequences = True
             settings.raw_easy_sequence_timeout_ms = int(self.rawEasyTimeout.GetValue())
             set_settings(settings)

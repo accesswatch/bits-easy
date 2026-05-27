@@ -37,6 +37,7 @@ python_sources = pythonSources
 # Data directories included in the add-on package.
 data_directories = [
     "config/hotkeys",
+    "config/features",
 ]
 
 # Files containing strings that should be extracted for translation.

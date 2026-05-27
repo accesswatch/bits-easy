@@ -66,6 +66,31 @@ class TaggingAndTableCaptureTests(unittest.TestCase):
         self.assertTrue(cleared.ok)
         self.assertEqual(cleared.payload["cleared"], 2)
 
+    def test_table_capture_granular_row_column_header_cell(self):
+        capture = TableCaptureExtractor()
+        seeded = capture.capture(
+            [["Name", "Status"], ["Alpha", "Open"], ["Beta", "Closed"]],
+            separator=" | ",
+        )
+        self.assertTrue(seeded.ok)
+
+        header = capture.capture_header(separator=" | ")
+        self.assertTrue(header.ok)
+        self.assertEqual(header.payload["content"], "Name | Status")
+
+        row = capture.capture_row(row_index=2, separator=" | ")
+        self.assertTrue(row.ok)
+        self.assertEqual(row.payload["content"], "Alpha | Open")
+
+        column = capture.capture_column(column_index=2, separator="\n")
+        self.assertTrue(column.ok)
+        self.assertIn("Status", column.payload["content"])
+        self.assertIn("Closed", column.payload["content"])
+
+        cell = capture.capture_cell(row_index=3, column_index=2)
+        self.assertTrue(cell.ok)
+        self.assertEqual(cell.payload["content"], "Closed")
+
     def test_tagging_duplicate_reports_already_tagged(self):
         session = TaggingSession()
 

@@ -22,6 +22,15 @@ Build the most delightful productivity layer for blind users on Windows by combi
 - AI-assisted writing, structuring, and navigation.
 - Graceful fallbacks when third-party apps change.
 
+### 2.1 Magical North Star
+The intended experience is not novelty. It is trusted flow.
+
+1. The next action is always obvious.
+2. Important operations are always reversible or recoverable.
+3. Power scales with user confidence, from beginner to expert.
+4. Stable users never get surprise behavior changes.
+5. Accessibility quality is part of delight, not a separate checkbox.
+
 ## 3. Product Goals
 1. Reduce time-to-task for high-frequency workflows by 40 percent in 6 months.
 2. Achieve Full or Partial parity coverage for all major Baseline modules.
@@ -901,9 +910,9 @@ This section defines the explicit capabilities that make version 1.0 feel magica
 Build selection and clip intelligence first, then command and context memory, then markdown and html magic with accessibility-first AI assistance. This sequence delivers the largest user impact with the highest implementation confidence while preserving room for richer media and feed features later without compromising accessibility quality.
 
 ## 17A. Implementation Spec References
-1. Virtualized browse surface and direct hotkey behavior contract: VIRTUALIZED-BROWSE-AND-HOTKEY-SPEC.md.
+1. Virtualized browse and direct hotkey behavior contract: BITS-EASY-COMPLETE-GUIDE.md and FULL-GUIDED-KEYSTROKE-TEST-PLAN.md.
 2. This spec is normative for D11 and D12 delivery acceptance.
-3. Engineering starter pack with command IDs, JSON schemas, and CI matrix: ENGINEERING-STARTER-PACK-VIRTUALIZED-HOTKEYS.md.
+3. Engineering command IDs, JSON schemas, and CI matrix are tracked in config and tests, with release validation in RELEASE-HARDENING-CHECKLIST.md.
 
 ## 18. Complete Chapter Inventory and Mapping Status
 This section is a comprehensive inventory based on the Baseline help index and related update material reviewed for this PRD cycle. Each chapter or feature family is mapped and assigned a parity intent and magical differentiation path.
@@ -1056,7 +1065,7 @@ This section converts mapped feature families into implementable atomic scopes. 
 Clipboard and selection feature decomposition is now complete at execution depth for parity tracking.
 
 Reference:
-1. SELECTION-CLIPBOARD-FEATURE-COMPLETE-SPEC.md
+1. This PRD sections 9.1 through 9.1C and section 21.1 serve as the canonical selection and clipboard spec.
 
 Closure intent:
 1. Every selection and clipboard feature has explicit behavior definition.
@@ -1090,8 +1099,9 @@ Closure intent:
 | P1-MD-09 | Markdown to Word export | Full | Planned | v2 | Medium High | Style-preserving export profiles |
 | P1-HTML-01 | HTML structure assistant | Full | Scoped | v1 | High | Semantic-first generator |
 | P1-HTML-02 | HTML accessibility checks | Full | Scoped | v1 | High | One-command fix preview |
-| P1-TXT-01 | Reusable text blocks with names | Full | Build-Ready | v1 | High | Template variables and quick fill |
-| P1-TXT-02 | Text abbreviation expansion | Full | Build-Ready | v1 | High | Conflict detection and fast rename |
+| P1-TXT-01 | EASYText Studio reusable text blocks with names | Full | Build-Ready | v1 | High | Template variables and quick fill |
+| P1-TXT-02 | EASYText Studio trigger plus space expansion | Full | Build-Ready | v1 | High | Conflict detection and fast rename |
+| P1-TXT-03 | EASYText Studio folder tree organization | Full | Build-Ready | v1 | High | Fast move and folder browse in command palette |
 
 ### 21.4 P1 Notes, Help, and Knowledge Features
 | ID | Atomic Feature | Parity Goal | Status | Release | Confidence | Magical Uplift |
@@ -1665,5 +1675,238 @@ Decomposition is complete for all mapped Baseline families and reviewed update f
 5. Closure ledger.
 
 This PRD is now complete at strategic and decomposition levels and ready for implementation planning and sprint execution.
+
+## 32. Feature Flag Governance and Beta Rollout Addendum
+
+### 32.1 Purpose
+This section defines the production policy for controlled feature rollout in BITS-EASY using feature flags, including offline safety, beta authority controls, keybinding gating, and manifest trust verification.
+
+Objectives:
+1. Keep stable users on stable behavior by default.
+2. Allow controlled beta testing without shipping a new add-on package for every toggle.
+3. Guarantee deterministic behavior when internet or manifest endpoints are unavailable.
+4. Ensure disabled features are not executable from either palette or keyboard gesture paths.
+
+### 32.2 Rollout Model
+
+Feature stages:
+1. stable
+2. beta
+3. experimental
+
+Authority tiers:
+1. stable
+2. beta
+3. internal
+
+Stage visibility by authority:
+1. stable authority: stable stage only.
+2. beta authority: stable + beta stages.
+3. internal authority: stable + beta + experimental stages.
+
+Resolution rule:
+1. A command is executable only when both conditions are true:
+2. The feature flag is enabled.
+3. The current authority allows the flag stage.
+
+### 32.3 Manifest Sources and Fallback Chain
+
+Manifest source precedence:
+1. Remote manifest (if configured and reachable).
+2. Cached manifest (last known valid manifest).
+3. Bundled fallback manifest shipped in the add-on.
+
+Operational behavior:
+1. Startup attempts remote refresh within bounded timeout.
+2. Remote failure never blocks startup.
+3. Cache failure falls through to bundled fallback.
+4. Bundled fallback is always required in package artifacts.
+
+Data file contract:
+1. Bundled fallback location: config/features/feature-flags.fallback.v1.json
+2. Local cache: user profile AppData BITS-EASY state store.
+3. Local authority and overrides state: user profile AppData BITS-EASY state store.
+
+### 32.4 Security and Trust Model
+
+Current baseline security:
+1. Authority and overrides are local user state.
+2. Beta access uses one-way SHA-256 grant matching.
+
+Required hardening for production remote rollout:
+1. Signed manifest verification using public key cryptography.
+2. Signature verification must occur before accepting remote or cached manifest content.
+3. On signature failure, manifest must be rejected and system must fall back to previously trusted source.
+4. Key rotation policy must support at least current and next signing keys.
+
+Manifest integrity requirements:
+1. Manifest payload must include signature metadata and key identifier.
+2. Client must verify payload canonicalization before signature check.
+3. Unsigned payloads are valid only for bundled local fallback in development mode.
+
+Threat model assumptions:
+1. Remote endpoint tampering is possible.
+2. Cache poisoning is possible.
+3. Local setting tampering by same local user is in-scope but not privilege-escalating.
+
+### 32.5 Command and Keybinding Enforcement Contract
+
+Enforcement points:
+1. Command dispatch gate: blocked commands return explicit feature-gate reason payload.
+2. Keybinding registration gate: disabled-feature bindings are filtered out before OS hotkey service starts.
+3. Key chord resolution gate: any blocked command is excluded from accepted chord candidates.
+
+Required user-visible behavior:
+1. If a feature is not enabled, associated keystrokes are not active.
+2. If a blocked command is invoked through non-key path, user receives deterministic guidance.
+3. No silent fallback to disabled feature execution.
+
+Telemetry requirements:
+1. featureGate.allowed
+2. featureGate.reason
+3. featureGate.flagId
+4. featureGate.stage
+5. featureGate.authority
+6. manifest source in use: remote, cache, fallback
+
+### 32.6 User Experience Requirements
+
+Settings and control surface:
+1. Global setting checkbox: Enable beta features.
+2. Toggling off beta features must force authority back to stable.
+3. Toggling on beta features must set authority to beta unless higher authority already exists.
+
+Feature Flags panel requirements:
+1. Show current authority.
+2. Show manifest source and last refresh result.
+3. List all flags with stage and enabled state.
+4. Allow refresh manifest action.
+5. Allow grant beta access code flow for authorized testers.
+6. Allow per-flag override for diagnostic workflows where policy permits.
+
+Accessibility requirements for panel:
+1. Fully keyboard operable.
+2. Speech and braille parity for state changes.
+3. Actionable failure messages for refresh and grant operations.
+
+### 32.7 Manifest Schema Requirements
+
+Minimum schema:
+1. version
+2. authorityStages mapping
+3. flags collection
+4. grants collection
+
+Flag object minimum fields:
+1. id
+2. name
+3. description
+4. stage
+5. enabledByDefault
+6. commandIds and or commandPrefixes
+
+Grant object minimum fields:
+1. name
+2. sha256
+3. authority
+4. enableFlags
+
+Forward-compatibility policy:
+1. Unknown fields must be ignored safely.
+2. Unknown stage values must default to blocked.
+3. Unknown authority values must default to stable.
+
+### 32.8 Example Rollout Waves
+
+Wave model:
+1. Wave A: internal only, experimental stage.
+2. Wave B: closed beta, beta stage by invite grants.
+3. Wave C: open beta, beta stage by default for opted-in users.
+4. Wave D: stable promotion with fallback flag retained for rollback window.
+
+Promotion criteria:
+1. Accessibility acceptance complete.
+2. Regression budget below threshold.
+3. Recovery path validated in release hardening.
+4. Support and docs artifacts complete.
+
+### 32.9 Fail-Safe and Recovery Rules
+
+Fail-safe rules:
+1. Manifest parse error: reject and fall back.
+2. Signature failure: reject and fall back.
+3. Network timeout: skip remote and fall back.
+4. Corrupt cache: ignore cache and use fallback.
+
+Recovery behavior:
+1. Stable user path must remain uninterrupted.
+2. Hotkeys for blocked features must be absent from active registration after recovery.
+3. Next successful refresh can restore prior beta availability.
+
+### 32.10 Acceptance Criteria
+
+Functional acceptance:
+1. Disabled beta feature command cannot execute in stable authority.
+2. Disabled beta feature keybinding is absent from active hotkeys.
+3. Enabling beta features in settings exposes beta-eligible flags.
+4. Turning beta features off hides beta-stage execution immediately.
+
+Resilience acceptance:
+1. Remote unavailable path uses cache or bundled fallback without startup failure.
+2. Corrupt remote payload does not alter current trusted state.
+3. Signature verification rejects tampered payloads once signing is enabled.
+
+Accessibility acceptance:
+1. Feature Flags panel passes keyboard-only and screen-reader workflow checks.
+2. State transitions announce authority and activation changes clearly.
+
+### 32.11 Test Plan Additions
+
+Automated tests required:
+1. Authority gate unit tests by stage and command mapping.
+2. Binding filter tests proving blocked command hotkeys are removed.
+3. Remote-refresh fallback chain tests: remote to cache to fallback.
+4. Grant code tests including invalid, valid, and downgrade scenarios.
+5. Signature verification tests for valid and invalid signatures.
+
+Manual tests required:
+1. NVDA settings checkbox toggle: verify immediate authority effect.
+2. Feature Flags panel refresh and grant workflow.
+3. Offline startup and command behavior with no network.
+4. Re-enable network and confirm refresh recovery.
+
+### 32.12 Operations and Governance
+
+Release governance:
+1. Product owner approves stage transitions.
+2. Accessibility lead approves user-facing beta promotions.
+3. Engineering lead approves manifest signing key rotation.
+
+Audit requirements:
+1. Record manifest version and source used at startup.
+2. Record authority changes and grant events.
+3. Record blocked-command events for rollout diagnostics.
+
+Rollback policy:
+1. Flag-level rollback must be possible within minutes by manifest update.
+2. Add-on release rollback remains available for structural defects.
+
+### 32.13 PRD Traceability Matrix
+
+This matrix maps Section 32 requirement groups to concrete implementation and verification artifacts.
+
+| Requirement ID | Section 32 Requirement Group | Primary Implementation Artifacts | Verification Artifacts | Status | Owner | Target Milestone |
+|---|---|---|---|---|---|---|
+| FF-R01 | 32.2 Rollout model and authority stages | src/bits_easy_runtime/feature_flags.py, config/features/feature-flags.fallback.v1.json | tests/test_feature_flags.py | Implemented | Runtime Engineering | v1.1 |
+| FF-R02 | 32.3 Remote-cache-fallback manifest chain | src/bits_easy_runtime/feature_flags.py, src/bits_easy_runtime/dispatcher.py, src/bits_easy_runtime/config.py | tests/test_feature_flags.py | Implemented | Runtime Engineering | v1.1 |
+| FF-R03 | 32.4 Manifest trust and signature hardening | src/bits_easy_runtime/feature_flags.py | tests/test_feature_flags.py plus signature tests to be added | Partial | Security Engineering | v1.2 |
+| FF-R04 | 32.5 Dispatch and keybinding enforcement | src/bits_easy_runtime/dispatcher.py, addon/globalPlugins/bits_easy.py | tests/test_feature_flags.py, tests/test_dispatcher_integration.py | Implemented | Runtime Engineering | v1.1 |
+| FF-R05 | 32.6 User UX for beta and flags control | src/bits_easy_runtime/settings.py, addon/bits_easy_settings.py, addon/globalPlugins/bits_easy.py | tests/test_settings_store.py, tests/test_mode_control_panel.py, manual NVDA settings validation | Implemented | UX and Accessibility Engineering | v1.1 |
+| FF-R06 | 32.7 Manifest schema and compatibility defaults | config/features/feature-flags.fallback.v1.json, src/bits_easy_runtime/feature_flags.py | tests/test_feature_flags.py | Implemented | Runtime Engineering | v1.1 |
+| FF-R07 | 32.8 Rollout waves and promotion policy | docs/FEATURE-FLAGS-BETA.md, docs/prd.md | release checklist and staged rollout review | Planned Ops | Product and Release | v1.2 |
+| FF-R08 | 32.9 Fail-safe and recovery behavior | src/bits_easy_runtime/feature_flags.py, src/bits_easy_runtime/dispatcher.py, addon/globalPlugins/bits_easy.py | tests/test_feature_flags.py, manual offline startup validation | Implemented | Runtime Engineering | v1.1 |
+| FF-R09 | 32.10 Functional and resilience acceptance | src/bits_easy_runtime/dispatcher.py, addon/globalPlugins/bits_easy.py, src/bits_easy_runtime/feature_flags.py | tests/test_feature_flags.py, tests/test_dispatcher_integration.py | Implemented | QA Automation | v1.1 |
+| FF-R10 | 32.11 Automated and manual test expansion | tests/test_feature_flags.py, tests/test_settings_store.py, tests/test_mode_control_panel.py | CI run plus manual panel and offline scenarios | In Progress | QA Automation | v1.2 |
+| FF-R11 | 32.12 Governance, audit, and rollback operations | src/bits_easy_runtime/feature_flags.py, docs/FEATURE-FLAGS-BETA.md, docs/RELEASE-HARDENING-CHECKLIST.md | release and audit process checks | Planned Ops | Product and Release | v1.2 |
 
 

@@ -105,6 +105,79 @@ class TableCaptureExtractor:
             },
         )
 
+    def _append_chunk(self, chunk: str) -> None:
+        self._buffer.append(str(chunk))
+
+    def _latest_table(self) -> List[List[str]]:
+        if not self._captures:
+            return []
+        return list(self._captures[-1])
+
+    def capture_header(self, *, separator: str = " | ") -> RuntimeResult:
+        table = self._latest_table()
+        if not table:
+            return RuntimeResult(ok=False, message="No captured table is available.")
+        header = table[0]
+        chunk = separator.join(header)
+        self._append_chunk(chunk)
+        return RuntimeResult(
+            ok=True,
+            message="Table header captured.",
+            payload={"content": chunk, "bufferCount": len(self._buffer)},
+        )
+
+    def capture_row(self, *, row_index: int, separator: str = " | ") -> RuntimeResult:
+        table = self._latest_table()
+        if not table:
+            return RuntimeResult(ok=False, message="No captured table is available.")
+        idx = int(row_index)
+        if idx < 1 or idx > len(table):
+            return RuntimeResult(ok=False, message="Row index is out of range.")
+        row = table[idx - 1]
+        chunk = separator.join(row)
+        self._append_chunk(chunk)
+        return RuntimeResult(
+            ok=True,
+            message="Table row captured.",
+            payload={"rowIndex": idx, "content": chunk, "bufferCount": len(self._buffer)},
+        )
+
+    def capture_column(self, *, column_index: int, separator: str = "\n") -> RuntimeResult:
+        table = self._latest_table()
+        if not table:
+            return RuntimeResult(ok=False, message="No captured table is available.")
+        idx = int(column_index)
+        width = max((len(r) for r in table), default=0)
+        if idx < 1 or idx > width:
+            return RuntimeResult(ok=False, message="Column index is out of range.")
+        values = [row[idx - 1] if idx - 1 < len(row) else "" for row in table]
+        chunk = separator.join(values)
+        self._append_chunk(chunk)
+        return RuntimeResult(
+            ok=True,
+            message="Table column captured.",
+            payload={"columnIndex": idx, "content": chunk, "bufferCount": len(self._buffer)},
+        )
+
+    def capture_cell(self, *, row_index: int, column_index: int) -> RuntimeResult:
+        table = self._latest_table()
+        if not table:
+            return RuntimeResult(ok=False, message="No captured table is available.")
+        r = int(row_index)
+        c = int(column_index)
+        if r < 1 or r > len(table):
+            return RuntimeResult(ok=False, message="Row index is out of range.")
+        row = table[r - 1]
+        if c < 1 or c > len(row):
+            return RuntimeResult(ok=False, message="Column index is out of range.")
+        value = row[c - 1]
+        self._append_chunk(value)
+        return RuntimeResult(
+            ok=True,
+            message="Table cell captured.",
+            payload={"rowIndex": r, "columnIndex": c, "content": value, "bufferCount": len(self._buffer)},
+        )
+
     def export_buffer(self, *, block_separator: str = "\n\n", format: str = "plain") -> RuntimeResult:
         fmt = str(format or "plain").strip().lower()
         if not self._captures:

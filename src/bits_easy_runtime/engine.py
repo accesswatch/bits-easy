@@ -216,6 +216,44 @@ class BitsEasyRuntime:
             return ""
         return context.buffer[lo:hi].strip()
 
+    def has_selection_start_marker(self, app_id: str) -> bool:
+        markers = self._selection_markers.get(str(app_id), {})
+        return self._marker_caret(markers, "start") is not None
+
+    def has_selection_range(self, app_id: str) -> bool:
+        return str(app_id) in self._selection_cache
+
+    def merge_settings(self) -> Dict[str, Any]:
+        return {
+            "mode": self._merge_mode,
+            "divider": self._merge_divider,
+            "clearOnPaste": self._clear_on_paste,
+        }
+
+    def compose_clipboard_text(self, existing: str, incoming: str, *, force_append: bool = False) -> Dict[str, Any]:
+        current = str(existing or "")
+        segment = str(incoming or "")
+        if not segment:
+            return {
+                "content": current,
+                "appended": False,
+                "mode": "append" if force_append else self._merge_mode,
+            }
+
+        mode = "append" if force_append else self._merge_mode
+        if mode == "replace" or not current:
+            content = segment
+            appended = False
+        else:
+            content = f"{current}{self._merge_divider}{segment}"
+            appended = True
+
+        return {
+            "content": content,
+            "appended": appended,
+            "mode": mode,
+        }
+
     def _selection_guided_flow_payload(
         self,
         context: AppContext,
@@ -609,15 +647,15 @@ class BitsEasyRuntime:
                         "end": context.caret,
                         "startMeta": markers.get("startMeta"),
                         "endMeta": markers.get("endMeta"),
-                            "fallbackSource": "clipboard",
-                            "unsupportedReason": unsupported_reason,
-                            "guidedFlow": self._selection_guided_flow_payload(
-                                context,
-                                stage="fallback-captured",
-                                fallback_used=True,
-                                selection_source=fallback_selection.source_kind,
-                                selection_reason_code=self._selection_reason_code(fallback_selection),
-                            ),
+                        "fallbackSource": "clipboard",
+                        "unsupportedReason": unsupported_reason,
+                        "guidedFlow": self._selection_guided_flow_payload(
+                            context,
+                            stage="fallback-captured",
+                            fallback_used=True,
+                            selection_source=fallback_selection.source_kind,
+                            selection_reason_code=self._selection_reason_code(fallback_selection),
+                        ),
                     }
                 )
                 self._record_marker_metric(context.app_id, "markEndCaptured")
@@ -1000,8 +1038,8 @@ class BitsEasyRuntime:
         return RuntimeResult(ok=True, message="Merge mode set to replace.")
 
     def set_merge_divider_line(self) -> RuntimeResult:
-        self._merge_divider = "\n---\n"
-        return RuntimeResult(ok=True, message="Merge divider set to line.")
+        self._merge_divider = "\n"
+        return RuntimeResult(ok=True, message="Merge divider set to line break.")
 
     def set_merge_divider_space(self) -> RuntimeResult:
         self._merge_divider = " "

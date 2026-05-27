@@ -50,6 +50,8 @@ from .surface_context import classify_surface, fallback_steps_for
 from .file_ops import FileOpsService
 from .ai_assistant import AiAssistantService
 from .glow_client import GlowMcpService
+from .feature_flags import FeatureFlagManager
+from .emoji_assistant import EmojiAssistant
 
 
 @dataclass
@@ -478,6 +480,17 @@ class RuntimeDispatcher:
         self._journal = OperationJournal(base_dir / "operation-journal.json")
         self._ai = AiAssistantService(base_dir / "ai-assistant.json")
         self._glow = GlowMcpService()
+        fallback_manifest = Path(str(getattr(self.config, "feature_flag_fallback_path", "") or "")).expanduser()
+        if not fallback_manifest.exists():
+            fallback_manifest = Path(__file__).resolve().parents[2] / "config" / "features" / "feature-flags.fallback.v1.json"
+        self._feature_flags = FeatureFlagManager(
+            state_path=base_dir / "feature-flags-state.json",
+            cache_path=base_dir / "feature-flags-cache.json",
+            fallback_manifest_path=fallback_manifest,
+            default_manifest_url=str(getattr(self.config, "feature_flag_manifest_url", "") or ""),
+        )
+        self._feature_flags.refresh_manifest(timeout_seconds=1.5)
+        self._emoji = EmojiAssistant(cache_path=base_dir / "emoji-catalog-cache.json")
         self._google_calendar = GoogleCalendarSync(
             base_dir / "google-calendar-credentials.json",
             base_dir / "google-calendar-token.json",
@@ -845,10 +858,29 @@ class RuntimeDispatcher:
             safety_gate=safety_gate,
         )
 
+    def _feature_gate_for_command(self, command_id: str) -> Dict[str, Any]:
+        return self._feature_flags.evaluate_command(command_id)
+
+    def _is_command_enabled(self, command_id: str) -> bool:
+        gate = self._feature_gate_for_command(command_id)
+        return bool(gate.get("allowed", True))
+
+    def enabled_keymap_bindings(self, bindings: Optional[list[dict]] = None) -> list[dict]:
+        source = self.config.keymap_bindings if bindings is None else bindings
+        rows = [dict(row) for row in source if isinstance(row, dict)]
+        return self._feature_flags.filter_bindings(rows)
+
+    def set_beta_features_enabled(self, enabled: bool) -> RuntimeResult:
+        authority = "beta" if bool(enabled) else "stable"
+        return self._feature_flags.set_authority(authority)
+
     def _bindings_for_context(self, context: AppContext) -> list[dict]:
         visible: list[dict] = []
         for binding in self.config.keymap_bindings:
             if not binding.get("enabled", True):
+                continue
+            command_id = str(binding.get("commandId", ""))
+            if command_id and not self._is_command_enabled(command_id):
                 continue
             scope = str(binding.get("scope", "global"))
             if scope not in ("global", "app-override"):
@@ -1446,7 +1478,11 @@ class RuntimeDispatcher:
 
         mode = self._mode_for_context(context)
         trace_rows = self.config.binding_resolution_trace(key_chord, context.app_id, mode)
-        accepted = [r for r in trace_rows if r.get("accepted")]
+        accepted = [
+            r
+            for r in trace_rows
+            if r.get("accepted") and self._is_command_enabled(str(r.get("commandId", "")))
+        ]
         accepted.sort(key=lambda r: (int(r.get("rank", 99)), int(r.get("index", 0))))
         layered = [self.config.keymap_bindings[int(r.get("index", 0))] for r in accepted]
         resolver = MultiPressResolver(layered)
@@ -1518,11 +1554,46 @@ class RuntimeDispatcher:
 
     def dispatch_command(self, context: AppContext, command_id: str, **kwargs: Any) -> DispatchOutcome:
         plan = self._plan_for_command(command_id)
+        feature_gate = self._feature_gate_for_command(command_id)
+        if not bool(feature_gate.get("allowed", True)):
+            result = RuntimeResult(
+                ok=False,
+                message="Command is disabled by feature flag policy.",
+                payload={
+                    "featureGate": feature_gate,
+                    "executionPolicy": {
+                        "confirmation": plan.confirmation,
+                        "preview": plan.preview,
+                        "safetyGate": plan.safety_gate,
+                    },
+                },
+                next_steps=[
+                    "Use feature flag commands to enable access or apply a beta access code.",
+                ],
+            )
+            return DispatchOutcome(plan=plan, result=result)
 
         if command_id == "cmd.selection.markStart":
             result = self.runtime.mark_selection_start(context)
         elif command_id == "cmd.palette.open":
             result = RuntimeResult(ok=True, message="Command palette opened.")
+        elif command_id == "cmd.feature.flags.list":
+            result = self._feature_flags.list_flags()
+        elif command_id == "cmd.feature.flags.enable":
+            result = self._feature_flags.set_override(str(kwargs.get("flagId", "")), True)
+        elif command_id == "cmd.feature.flags.disable":
+            result = self._feature_flags.set_override(str(kwargs.get("flagId", "")), False)
+        elif command_id == "cmd.feature.flags.clearOverride":
+            result = self._feature_flags.clear_override(str(kwargs.get("flagId", "")))
+        elif command_id == "cmd.feature.flags.refreshManifest":
+            result = self._feature_flags.refresh_manifest(
+                manifest_url=str(kwargs.get("manifestUrl", "")),
+                timeout_seconds=float(kwargs.get("timeoutSeconds", 2.5)),
+            )
+        elif command_id == "cmd.feature.flags.grantBeta":
+            result = self._feature_flags.grant_beta_access(str(kwargs.get("accessCode", "")))
+        elif command_id == "cmd.feature.flags.setAuthority":
+            result = self._feature_flags.set_authority(str(kwargs.get("authority", "stable")))
         elif command_id == "cmd.integration.glow.health":
             result = self._glow.health()
         elif command_id == "cmd.integration.glow.audit":
@@ -2255,6 +2326,13 @@ class RuntimeDispatcher:
                 str(kwargs.get("title", "")),
                 [str(x) for x in list(kwargs.get("items", []))],
             )
+        elif command_id == "cmd.author.html.assistantList":
+            result = self._author.html_assistant_list()
+        elif command_id == "cmd.author.html.assistant":
+            result = self._author.html_assistant(
+                str(kwargs.get("action", "")),
+                dict(kwargs.get("values", {})) if isinstance(kwargs.get("values", {}), dict) else {},
+            )
         elif command_id == "cmd.author.html.validate":
             result = self._author.html_validate(str(kwargs.get("html", "")))
         elif command_id == "cmd.author.export.html":
@@ -2422,6 +2500,29 @@ class RuntimeDispatcher:
             )
         elif command_id == "cmd.selection.markEnd":
             result = self.runtime.mark_selection_end(context)
+        elif command_id == "cmd.selection.markEndAppendClipboard":
+            result = self.runtime.mark_selection_end(context)
+            if result.ok:
+                selection_text = self.runtime.selection_text_for_actions(context)
+                composed = self.runtime.compose_clipboard_text(
+                    context.clipboard_text,
+                    selection_text,
+                    force_append=True,
+                )
+                if result.payload is None:
+                    result.payload = {}
+                result.payload.update(
+                    {
+                        "clipboardWriteText": composed.get("content", ""),
+                        "clipboardWriteMode": "append",
+                        "clipboardWriteSource": "selection",
+                        "selectionText": selection_text,
+                    }
+                )
+                if selection_text:
+                    result.message = "Selection appended to clipboard."
+                else:
+                    result.message = "Selection captured, but no text was available to append."
         elif command_id == "cmd.selection.readContext":
             result = self.runtime.read_selection_context(context)
         elif command_id == "cmd.selection.markerStatus":
@@ -2498,21 +2599,76 @@ class RuntimeDispatcher:
             result = RuntimeResult(ok=True, message="Merge profile applied.", payload={"profile": profile})
         elif command_id == "cmd.merge.commit":
             result = self.runtime.merge_commit()
+        elif command_id == "cmd.clipboard.speak":
+            clip_text = str(context.clipboard_text or "").strip()
+            if clip_text:
+                result = RuntimeResult(
+                    ok=True,
+                    message="Clipboard text available.",
+                    payload={
+                        "clipboardPreview": clip_text,
+                        "virtualView": {
+                            "title": "Clipboard",
+                            "lines": [clip_text],
+                        },
+                    },
+                )
+            else:
+                result = RuntimeResult(ok=True, message="Clipboard is empty.")
+        elif command_id == "cmd.clipboard.clear":
+            result = RuntimeResult(
+                ok=True,
+                message="Clipboard cleared.",
+                payload={
+                    "clipboardWriteText": "",
+                    "clipboardWriteMode": "replace",
+                    "clipboardWriteSource": "clear",
+                },
+            )
         elif command_id == "cmd.text.expansion.upsert":
             result = self._expansions.upsert(
                 abbreviation=str(kwargs.get("abbreviation", "")),
                 content=str(kwargs.get("content", "")),
                 title=kwargs.get("title"),
                 overwrite=bool(kwargs.get("overwrite", False)),
+                folder_id=str(kwargs.get("folderId", "root")),
+                trigger=str(kwargs.get("trigger", "")),
+                hotkey_hint=str(kwargs.get("hotkeyHint", "")),
             )
         elif command_id == "cmd.text.expansion.expand":
             result = self._expansions.expand(str(kwargs.get("abbreviation", "")))
+        elif command_id == "cmd.text.expansion.resolveTrigger":
+            result = self._expansions.resolve_trigger(str(kwargs.get("trigger", "")))
         elif command_id == "cmd.text.expansion.list":
             result = self._expansions.list_entries()
+        elif command_id == "cmd.text.expansion.tree":
+            result = self._expansions.folder_tree()
+        elif command_id == "cmd.text.expansion.createFolder":
+            result = self._expansions.create_folder(
+                name=str(kwargs.get("folderName", "")),
+                parent_id=str(kwargs.get("parentId", "root")),
+            )
+        elif command_id == "cmd.text.expansion.renameFolder":
+            result = self._expansions.rename_folder(
+                folder_id=str(kwargs.get("folderId", "")),
+                new_name=str(kwargs.get("folderName", "")),
+            )
+        elif command_id == "cmd.text.expansion.deleteFolder":
+            result = self._expansions.delete_folder(str(kwargs.get("folderId", "")))
+        elif command_id == "cmd.text.expansion.moveToFolder":
+            result = self._expansions.move_to_folder(
+                abbreviation=str(kwargs.get("abbreviation", "")),
+                folder_id=str(kwargs.get("folderId", "")),
+            )
         elif command_id == "cmd.text.expansion.rename":
             result = self._expansions.rename(
                 abbreviation=str(kwargs.get("abbreviation", "")),
                 new_title=str(kwargs.get("title", "")),
+            )
+        elif command_id == "cmd.text.expansion.setHotkeyHint":
+            result = self._expansions.set_hotkey_hint(
+                abbreviation=str(kwargs.get("abbreviation", "")),
+                hotkey_hint=str(kwargs.get("hotkeyHint", "")),
             )
         elif command_id == "cmd.text.expansion.delete":
             result = self._expansions.delete(str(kwargs.get("abbreviation", "")))
@@ -2728,6 +2884,23 @@ class RuntimeDispatcher:
         elif command_id == "cmd.table.capture":
             rows = kwargs.get("rows", [])
             result = self._table_capture.capture(rows, separator=str(kwargs.get("separator", " | ")))
+        elif command_id == "cmd.table.capture.row":
+            result = self._table_capture.capture_row(
+                row_index=int(kwargs.get("rowIndex", 1)),
+                separator=str(kwargs.get("separator", " | ")),
+            )
+        elif command_id == "cmd.table.capture.column":
+            result = self._table_capture.capture_column(
+                column_index=int(kwargs.get("columnIndex", 1)),
+                separator=str(kwargs.get("separator", "\n")),
+            )
+        elif command_id == "cmd.table.capture.header":
+            result = self._table_capture.capture_header(separator=str(kwargs.get("separator", " | ")))
+        elif command_id == "cmd.table.capture.cell":
+            result = self._table_capture.capture_cell(
+                row_index=int(kwargs.get("rowIndex", 1)),
+                column_index=int(kwargs.get("columnIndex", 1)),
+            )
         elif command_id == "cmd.table.capture.exportClipboard":
             result = self._table_capture.export_buffer(
                 block_separator=str(kwargs.get("blockSeparator", "\n\n")),
@@ -2735,6 +2908,17 @@ class RuntimeDispatcher:
             )
         elif command_id == "cmd.table.capture.clearBuffer":
             result = self._table_capture.clear_buffer()
+        elif command_id == "cmd.emoji.list":
+            result = self._emoji.list_items(
+                category=str(kwargs.get("category", "")),
+                query=str(kwargs.get("query", "")),
+                limit=int(kwargs.get("limit", 25)),
+            )
+        elif command_id == "cmd.emoji.insert":
+            result = self._emoji.insert(
+                alias=str(kwargs.get("alias", "")),
+                fallback_text=bool(kwargs.get("fallbackText", False)),
+            )
         elif command_id == "cmd.profile.hotkeyChainCreate":
             result = self._chains.create_chain(
                 str(kwargs.get("name", "")),

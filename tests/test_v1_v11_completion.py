@@ -28,11 +28,21 @@ class V1V11CompletionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             self.dispatcher._expansions = TextExpansionStore(Path(td) / "expansions.json")
 
+            folder = self.dispatcher.dispatch_command(
+                self.ctx,
+                "cmd.text.expansion.createFolder",
+                folderName="Signatures",
+            )
+            self.assertTrue(folder.result.ok)
+            folder_id = folder.result.payload["folderId"]
+
             created = self.dispatcher.dispatch_command(
                 self.ctx,
                 "cmd.text.expansion.upsert",
                 abbreviation="sig",
                 content="Regards, Team",
+                trigger="sig",
+                folderId=folder_id,
             )
             self.assertTrue(created.result.ok)
 
@@ -51,6 +61,14 @@ class V1V11CompletionTests(unittest.TestCase):
             )
             self.assertTrue(set_primary.result.ok)
 
+            trigger_hit = self.dispatcher.dispatch_command(
+                self.ctx,
+                "cmd.text.expansion.resolveTrigger",
+                trigger="sig",
+            )
+            self.assertTrue(trigger_hit.result.ok)
+            self.assertEqual(trigger_hit.result.payload["content"], "Regards, Team")
+
             quick = self.dispatcher.dispatch_command(self.ctx, "cmd.text.quickInsert")
             self.assertTrue(quick.result.ok)
             self.assertEqual(quick.result.payload["content"], "Regards, Team")
@@ -58,6 +76,11 @@ class V1V11CompletionTests(unittest.TestCase):
             listed = self.dispatcher.dispatch_command(self.ctx, "cmd.text.expansion.list")
             self.assertTrue(listed.result.ok)
             self.assertEqual(len(listed.result.payload["items"]), 1)
+            self.assertEqual(listed.result.payload["items"][0]["folderId"], folder_id)
+
+            tree = self.dispatcher.dispatch_command(self.ctx, "cmd.text.expansion.tree")
+            self.assertTrue(tree.result.ok)
+            self.assertIn(folder_id, tree.result.payload["folders"])
 
             renamed = self.dispatcher.dispatch_command(
                 self.ctx,

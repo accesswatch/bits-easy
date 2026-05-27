@@ -4,6 +4,8 @@
 
 BITS-EASY (Efficient Accessibility Shortcuts for You) adds selection-first hotkeys, clip slot workflows, and merge utilities to NVDA.
 
+For the full user documentation set, start at docs/README.md in the source repository and then read docs/BITS-EASY-COMPLETE-GUIDE.md.
+
 ## Compatibility Baseline
 
 1. Windows 10 or 11, 64-bit.
@@ -17,6 +19,8 @@ This add-on handoff profile is validated only on NVDA 2026.1 x64.
 2. Selection context readback.
 3. Clip slot copy and paste workflow with persistent storage.
 4. Runtime command dispatcher driven by repository hotkey JSON.
+5. Feature flags with bundled fallback manifest and optional remote retrieval.
+6. Beta authority grants for controlled feature rollout.
 
 ## Default Add-on Gestures
 

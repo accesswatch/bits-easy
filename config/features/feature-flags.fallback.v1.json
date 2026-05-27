@@ -1,0 +1,67 @@
+{
+  "version": "1",
+  "source": "fallback",
+  "authorityStages": {
+    "stable": [
+      "stable"
+    ],
+    "beta": [
+      "stable",
+      "beta"
+    ],
+    "internal": [
+      "stable",
+      "beta",
+      "experimental"
+    ]
+  },
+  "flags": [
+    {
+      "id": "htmlAssistantWizard",
+      "name": "HTML Assistant Wizard",
+      "description": "Guided HTML assistant flow commands.",
+      "stage": "beta",
+      "enabledByDefault": false,
+      "commandIds": [
+        "cmd.author.html.assistant",
+        "cmd.author.html.assistantList"
+      ]
+    },
+    {
+      "id": "tableCaptureGranular",
+      "name": "Table Capture Granular",
+      "description": "Row/column/header/cell table capture commands.",
+      "stage": "beta",
+      "enabledByDefault": false,
+      "commandIds": [
+        "cmd.table.capture.row",
+        "cmd.table.capture.column",
+        "cmd.table.capture.header",
+        "cmd.table.capture.cell"
+      ]
+    },
+    {
+      "id": "emojiAssistant",
+      "name": "Emoji Assistant",
+      "description": "Search and insert emoji by alias.",
+      "stage": "beta",
+      "enabledByDefault": false,
+      "commandIds": [
+        "cmd.emoji.list",
+        "cmd.emoji.insert"
+      ]
+    }
+  ],
+  "grants": [
+    {
+      "name": "preview-2026",
+      "sha256": "cbb7eb91226649fae0f5668d70f566736ca9ca89aeed14cea8e77def66290936",
+      "authority": "beta",
+      "enableFlags": [
+        "htmlAssistantWizard",
+        "tableCaptureGranular",
+        "emojiAssistant"
+      ]
+    }
+  ]
+}

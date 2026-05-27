@@ -21,6 +21,7 @@ class BitsEasySettings:
     enable_global_hotkeys: bool = True
     emulate_capslock_prefix_for_os_hotkeys: bool = True
     enable_multi_press_gestures: bool = True
+    enable_beta_features: bool = False
     enable_raw_easy_sequences: bool = True
     raw_easy_sequence_timeout_ms: int = 900
     active_mode: str = ""
@@ -53,6 +54,7 @@ class SettingsStore:
                 enable_global_hotkeys=bool(payload.get("enable_global_hotkeys", True)),
                 emulate_capslock_prefix_for_os_hotkeys=bool(payload.get("emulate_capslock_prefix_for_os_hotkeys", True)),
                 enable_multi_press_gestures=bool(payload.get("enable_multi_press_gestures", True)),
+                enable_beta_features=bool(payload.get("enable_beta_features", False)),
                 # EASY key sequences are mandatory; keep persisted field for compatibility.
                 enable_raw_easy_sequences=True,
                 raw_easy_sequence_timeout_ms=int(payload.get("raw_easy_sequence_timeout_ms", 900)),

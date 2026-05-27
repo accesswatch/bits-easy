@@ -106,30 +106,6 @@
       "safetyGate": "none"
     },
     {
-      "commandId": "cmd.result.block.copy",
-      "keyChord": "Grave+C",
-      "scope": "virtualized",
-      "appId": null,
-      "enabled": true,
-      "safetyGate": "none"
-    },
-    {
-      "commandId": "cmd.result.block.next",
-      "keyChord": "Grave+RightArrow",
-      "scope": "virtualized",
-      "appId": null,
-      "enabled": true,
-      "safetyGate": "none"
-    },
-    {
-      "commandId": "cmd.result.block.previous",
-      "keyChord": "Grave+LeftArrow",
-      "scope": "virtualized",
-      "appId": null,
-      "enabled": true,
-      "safetyGate": "none"
-    },
-    {
       "commandId": "cmd.context.returnSource",
       "keyChord": "Grave+Backspace",
       "scope": "global",
@@ -289,6 +265,14 @@
       "safetyGate": "none"
     },
     {
+      "commandId": "cmd.selection.markEndAppendClipboard",
+      "keyChord": "Grave+Shift+CloseBracket",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
       "commandId": "cmd.selection.readContext",
       "keyChord": "Grave+Quote",
       "scope": "global",
@@ -315,6 +299,22 @@
     {
       "commandId": "cmd.selection.cancel",
       "keyChord": "Grave+X",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clipboard.speak",
+      "keyChord": "Grave+Shift+Quote",
+      "scope": "global",
+      "appId": null,
+      "enabled": true,
+      "safetyGate": "none"
+    },
+    {
+      "commandId": "cmd.clipboard.clear",
+      "keyChord": "Grave+Shift+Backspace",
       "scope": "global",
       "appId": null,
       "enabled": true,

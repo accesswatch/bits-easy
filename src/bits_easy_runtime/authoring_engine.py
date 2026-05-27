@@ -158,6 +158,79 @@ class AuthoringEngine:
             issues.append("Link text 'click here' is ambiguous.")
         return RuntimeResult(ok=True, message="HTML validation complete.", payload={"issues": issues, "count": len(issues)})
 
+    def html_assistant_list(self) -> RuntimeResult:
+        actions = [
+            {"id": "heading", "label": "Insert heading"},
+            {"id": "paragraph", "label": "Insert paragraph"},
+            {"id": "link", "label": "Insert link"},
+            {"id": "emailLink", "label": "Insert email link"},
+            {"id": "list", "label": "Insert list"},
+            {"id": "table", "label": "Insert table"},
+            {"id": "image", "label": "Insert image"},
+            {"id": "title", "label": "Insert document title"},
+            {"id": "toc", "label": "Insert table of contents placeholder"},
+        ]
+        return RuntimeResult(
+            ok=True,
+            message="HTML assistant actions ready.",
+            payload={"actions": actions, "count": len(actions)},
+        )
+
+    def html_assistant(self, action: str, values: Dict[str, Any]) -> RuntimeResult:
+        a = str(action or "").strip().lower()
+        values = dict(values or {})
+
+        if a == "heading":
+            level = max(1, min(6, int(values.get("level", 2))))
+            text = str(values.get("text", "Heading")).strip() or "Heading"
+            snippet = f"<h{level}>{text}</h{level}>"
+        elif a == "paragraph":
+            text = str(values.get("text", "Paragraph text.")).strip() or "Paragraph text."
+            snippet = f"<p>{text}</p>"
+        elif a == "link":
+            href = str(values.get("href", "https://example.com")).strip() or "https://example.com"
+            text = str(values.get("text", "Open resource")).strip() or "Open resource"
+            snippet = f"<a href=\"{href}\">{text}</a>"
+        elif a == "emaillink":
+            email = str(values.get("email", "support@example.com")).strip() or "support@example.com"
+            text = str(values.get("text", "Contact support")).strip() or "Contact support"
+            snippet = f"<a href=\"mailto:{email}\">{text}</a>"
+        elif a == "list":
+            kind = str(values.get("kind", "ul")).strip().lower()
+            if kind not in ("ul", "ol"):
+                kind = "ul"
+            items = values.get("items", [])
+            if not isinstance(items, list):
+                items = ["First item", "Second item"]
+            rendered_items = "".join(f"<li>{str(item).strip()}</li>" for item in items if str(item).strip())
+            if not rendered_items:
+                rendered_items = "<li>First item</li><li>Second item</li>"
+            snippet = f"<{kind}>{rendered_items}</{kind}>"
+        elif a == "table":
+            snippet = (
+                "<table>\n"
+                "  <thead><tr><th>Column A</th><th>Column B</th></tr></thead>\n"
+                "  <tbody><tr><td>Value</td><td>Value</td></tr></tbody>\n"
+                "</table>"
+            )
+        elif a == "image":
+            src = str(values.get("src", "image.png")).strip() or "image.png"
+            alt = str(values.get("alt", "")).strip() or "Descriptive image text"
+            snippet = f"<img src=\"{src}\" alt=\"{alt}\" />"
+        elif a == "title":
+            text = str(values.get("text", "Document Title")).strip() or "Document Title"
+            snippet = f"<title>{text}</title>"
+        elif a == "toc":
+            snippet = "<nav aria-label=\"Table of contents\"><ul><!-- toc items --></ul></nav>"
+        else:
+            return RuntimeResult(ok=False, message="Unsupported HTML assistant action.")
+
+        return RuntimeResult(
+            ok=True,
+            message="HTML assistant snippet ready.",
+            payload={"action": a, "html": snippet, "insertText": snippet},
+        )
+
     def export_html(self, markdown: str, out_path: Path | str) -> RuntimeResult:
         # Lightweight markdown conversion preserving headings and lists.
         lines = markdown.splitlines()

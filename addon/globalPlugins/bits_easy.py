@@ -66,8 +66,56 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         self._hotkey_overrides_path = None
         self._base_keymap_bindings = []
         self._tools_menu_id = None
+        self._quick_select_armed = False
+        self._typed_word_buffer = ""
+        self._trigger_expand_enabled = True
         self._initialize_runtime()
         log.info("BITS-EASY: GlobalPlugin __init__ complete")
+
+    def _read_clipboard_text(self) -> str:
+        try:
+            import wx
+        except Exception:
+            return ""
+
+        text = ""
+        if wx.TheClipboard.Open():
+            try:
+                data = wx.TextDataObject()
+                if wx.TheClipboard.GetData(data):
+                    text = data.GetText() or ""
+            finally:
+                wx.TheClipboard.Close()
+        return str(text)
+
+    def _write_clipboard_text(self, text: str) -> bool:
+        try:
+            import wx
+        except Exception:
+            return False
+
+        ok = False
+        if wx.TheClipboard.Open():
+            try:
+                ok = wx.TheClipboard.SetData(wx.TextDataObject(str(text or "")))
+            finally:
+                wx.TheClipboard.Close()
+        return bool(ok)
+
+    def _apply_payload_clipboard_side_effects(self, payload) -> str:
+        if not isinstance(payload, dict):
+            return ""
+
+        if "clipboardWriteText" not in payload:
+            return ""
+
+        target = str(payload.get("clipboardWriteText", ""))
+        if not self._write_clipboard_text(target):
+            return _("Clipboard unavailable")
+
+        if self._context is not None:
+            self._context.clipboard_text = target
+        return ""
 
     def _get_focus_snapshot(self):
         try:
@@ -94,6 +142,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         self._context.control_id = snapshot.control_id or self._context.control_id
         self._context.buffer = snapshot.text or ""
         self._context.caret = snapshot.caret
+        self._context.clipboard_text = self._read_clipboard_text()
 
     def _initialize_runtime(self):
         # The addon root sits at different depths depending on layout:
@@ -205,6 +254,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 profile_id=self._settings.profile_id,
             )
             self._dispatcher.multi_press_enabled_override = self._settings.enable_multi_press_gestures
+            self._dispatcher.set_beta_features_enabled(bool(getattr(self._settings, "enable_beta_features", False)))
             log.info("BITS-EASY: dispatcher constructed for profile=%s", self._settings.profile_id)
             self._palette = PaletteEngine(config=self._config, history_path=palette_history_path)
             self._hotkeys = GlobalHotkeyService(
@@ -236,7 +286,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 control_id=control_id,
                 buffer=buffer,
                 caret=caret,
-                clipboard_text="",
+                clipboard_text=self._read_clipboard_text(),
             )
 
             self._settings_panel_class = register_settings_panel(
@@ -480,6 +530,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             self._refresh_context_from_focus()
             out = self._dispatcher.dispatch_key_chord(self._context, key_chord, **args)
             if out.result.ok:
+                if out.plan.command_id == "cmd.selection.markStart":
+                    self._quick_select_armed = True
+                elif out.plan.command_id in ("cmd.selection.markEnd", "cmd.selection.cancel", "cmd.selection.markEndAppendClipboard"):
+                    self._quick_select_armed = False
+
+                clip_error = self._apply_payload_clipboard_side_effects(out.result.payload)
+                if clip_error:
+                    self._announce_text(clip_error)
+                    return
+
                 integration_error = self._run_integration_action(out.result.payload)
                 if integration_error:
                     self._announce_text(integration_error)
@@ -512,7 +572,13 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
                 enable_raw_sequences=True,
                 raw_sequence_timeout_ms=self._settings.raw_easy_sequence_timeout_ms,
             )
-            self._hotkeys.start(self._config.keymap_bindings)
+            bindings = self._config.keymap_bindings
+            if self._dispatcher is not None:
+                try:
+                    bindings = self._dispatcher.enabled_keymap_bindings(bindings)
+                except Exception:
+                    log.exception("BITS-EASY: feature flag hotkey filtering failed")
+            self._hotkeys.start(bindings)
 
     def terminate(self):
         log.info("BITS-EASY: terminate start")
@@ -549,6 +615,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         if self._dispatcher is not None:
             self._dispatcher.profile_id = self._settings.profile_id
             self._dispatcher.multi_press_enabled_override = self._settings.enable_multi_press_gestures
+            self._dispatcher.set_beta_features_enabled(bool(getattr(self._settings, "enable_beta_features", False)))
 
     def _set_settings(self, settings):
         self._settings = settings
@@ -639,6 +706,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
         out = self._dispatcher.dispatch_command(self._context, command_id, **kwargs)
         if out.result.ok:
+            if command_id == "cmd.selection.markStart":
+                self._quick_select_armed = True
+            elif command_id in ("cmd.selection.markEnd", "cmd.selection.cancel", "cmd.selection.markEndAppendClipboard"):
+                self._quick_select_armed = False
+
+            clip_error = self._apply_payload_clipboard_side_effects(out.result.payload)
+            if clip_error:
+                self._announce_text(clip_error)
+                return
+
             integration_error = self._run_integration_action(out.result.payload)
             if integration_error:
                 self._announce_text(integration_error)
@@ -1119,6 +1196,244 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     def script_readSelectionContext(self, gesture):
         self._dispatch("cmd.selection.readContext")
 
+    def _try_apply_native_selection(self, start: int, end: int) -> bool:
+        try:
+            import api
+        except Exception:
+            return False
+
+        focus = api.getFocusObject()
+        if focus is None:
+            return False
+
+        lo = int(min(start, end))
+        hi = int(max(start, end))
+        if hi <= lo:
+            return False
+
+        providers = []
+        tree = getattr(focus, "treeInterceptor", None)
+        if tree is not None and not bool(getattr(tree, "passThrough", False)):
+            providers.append(tree)
+        providers.append(focus)
+
+        for provider in providers:
+            make_info = getattr(provider, "makeTextInfo", None)
+            if not callable(make_info):
+                continue
+            try:
+                info = make_info((lo, hi))
+                updater = getattr(info, "updateSelection", None)
+                if callable(updater):
+                    updater()
+                    return True
+            except Exception:
+                continue
+        return False
+
+    def _run_quick_select_action(self, action: str, gesture) -> None:
+        if self._dispatcher is None or self._runtime is None or self._context is None:
+            if gesture is not None:
+                gesture.send()
+            return
+
+        self._refresh_context_from_focus()
+        if not self._quick_select_armed or not self._runtime.has_selection_start_marker(self._context.app_id):
+            if gesture is not None:
+                gesture.send()
+            return
+
+        end_out = self._dispatcher.dispatch_command(self._context, "cmd.selection.markEnd")
+        if not end_out.result.ok:
+            self._announce_result_message(end_out.result.message, end_out.result.payload)
+            return
+
+        payload = end_out.result.payload if isinstance(end_out.result.payload, dict) else {}
+        start = int(payload.get("start", self._context.caret))
+        end = int(payload.get("end", self._context.caret))
+        selection_text = self._runtime.selection_text_for_actions(self._context)
+        self._quick_select_armed = False
+
+        if not selection_text:
+            self._announce_text(_("No text was captured for quick select."))
+            return
+
+        if action in ("copy", "cut"):
+            existing = self._read_clipboard_text()
+            settings = self._runtime.merge_settings()
+            force_append = str(settings.get("mode", "replace")).lower() == "append"
+            composed = self._runtime.compose_clipboard_text(existing, selection_text, force_append=force_append)
+            if not self._write_clipboard_text(str(composed.get("content", ""))):
+                self._announce_text(_("Clipboard unavailable"))
+                return
+            if self._context is not None:
+                self._context.clipboard_text = str(composed.get("content", ""))
+
+            if action == "cut":
+                if self._try_apply_native_selection(start, end):
+                    try:
+                        import keyboardHandler
+
+                        keyboardHandler.KeyboardInputGesture.fromName("delete").send()
+                    except Exception:
+                        log.exception("BITS-EASY: quick-select cut delete fallback failed")
+                else:
+                    self._announce_text(_("Selection copied, but text could not be removed in this surface."))
+            else:
+                self._announce_text(_("Selection appended to clipboard.") if force_append else _("Selection copied to clipboard."))
+            return
+
+        applied = self._try_apply_native_selection(start, end)
+        if not applied:
+            self._announce_text(_("Quick select could not apply a native selection in this surface."))
+            return
+
+        if gesture is not None:
+            gesture.send()
+
+    def _paste_text_preserving_clipboard(self, text: str) -> bool:
+        payload = str(text or "")
+        if not payload:
+            return False
+
+        old_clip = self._read_clipboard_text()
+        if not self._write_clipboard_text(payload):
+            return False
+
+        try:
+            import keyboardHandler
+
+            keyboardHandler.KeyboardInputGesture.fromName("control+v").send()
+        except Exception:
+            log.exception("BITS-EASY: unable to paste expanded EASYText")
+            self._write_clipboard_text(old_clip)
+            return False
+
+        try:
+            import wx
+
+            wx.CallLater(120, self._write_clipboard_text, old_clip)
+        except Exception:
+            self._write_clipboard_text(old_clip)
+        return True
+
+    def _try_expand_trigger_token(self, token: str) -> bool:
+        if not self._trigger_expand_enabled:
+            return False
+        if self._dispatcher is None or self._context is None:
+            return False
+
+        value = str(token or "").strip()
+        if not value:
+            return False
+
+        out = self._dispatcher.dispatch_command(
+            self._context,
+            "cmd.text.expansion.resolveTrigger",
+            trigger=value,
+        )
+        if not out.result.ok:
+            return False
+
+        payload = out.result.payload if isinstance(out.result.payload, dict) else {}
+        insert_text = str(payload.get("insertText") or payload.get("content") or "")
+        if not insert_text:
+            return False
+
+        try:
+            import keyboardHandler
+
+            keyboardHandler.KeyboardInputGesture.fromName("control+backspace").send()
+        except Exception:
+            log.exception("BITS-EASY: unable to remove trigger token before expansion paste")
+            return False
+
+        suffix = str(payload.get("insertTextSuffix", " "))
+        if not self._paste_text_preserving_clipboard(insert_text + suffix):
+            return False
+
+        self._announce_text(_format_message(_("Expanded {token}"), token=value))
+        return True
+
+    def event_typedCharacter(self, ch, nextHandler):
+        # Preserve NVDA and app default behavior first.
+        nextHandler()
+
+        try:
+            if self._dispatcher is None or self._context is None:
+                return
+
+            c = str(ch or "")
+            if not c:
+                return
+
+            if c.isalnum() or c in ("_", "-", "."):
+                if len(self._typed_word_buffer) < 80:
+                    self._typed_word_buffer += c
+                else:
+                    self._typed_word_buffer = self._typed_word_buffer[-40:] + c
+                return
+
+            if c.isspace():
+                token = self._typed_word_buffer.strip()
+                self._typed_word_buffer = ""
+                if not token:
+                    return
+
+                self._refresh_context_from_focus()
+                self._try_expand_trigger_token(token)
+                return
+
+            # Any punctuation boundary resets token accumulation.
+            self._typed_word_buffer = ""
+        except Exception:
+            log.exception("BITS-EASY: typed character trigger expansion failed")
+
+    @scriptHandler.script(description=_("BITS-EASY quick select copy"))
+    def script_quickSelectCopy(self, gesture):
+        self._run_quick_select_action("copy", gesture)
+
+    @scriptHandler.script(description=_("BITS-EASY quick select cut"))
+    def script_quickSelectCut(self, gesture):
+        self._run_quick_select_action("cut", gesture)
+
+    @scriptHandler.script(description=_("BITS-EASY quick select paste"))
+    def script_quickSelectPaste(self, gesture):
+        self._run_quick_select_action("paste", gesture)
+
+    @scriptHandler.script(description=_("BITS-EASY quick select delete"))
+    def script_quickSelectDelete(self, gesture):
+        self._run_quick_select_action("delete", gesture)
+
+    @scriptHandler.script(description=_("BITS-EASY quick select format"))
+    def script_quickSelectFormat(self, gesture):
+        self._run_quick_select_action("format", gesture)
+
+    @scriptHandler.script(description=_("BITS-EASY quick select cancel"))
+    def script_quickSelectCancel(self, gesture):
+        if self._runtime is None or self._context is None:
+            if gesture is not None:
+                gesture.send()
+            return
+        if self._quick_select_armed and self._runtime.has_selection_start_marker(self._context.app_id):
+            self._quick_select_armed = False
+            self._announce_text(_("Quick selection canceled."))
+            return
+        if gesture is not None:
+            gesture.send()
+
+    @scriptHandler.script(description=_("BITS-EASY append selection to clipboard"))
+    def script_markEndAppendClipboard(self, gesture):
+        self._dispatch("cmd.selection.markEndAppendClipboard")
+
+    @scriptHandler.script(description=_("BITS-EASY speak clipboard"))
+    def script_speakClipboard(self, gesture):
+        self._dispatch("cmd.clipboard.speak")
+
+    @scriptHandler.script(description=_("BITS-EASY clear clipboard"))
+    def script_clearClipboard(self, gesture):
+        self._dispatch("cmd.clipboard.clear")
+
     @scriptHandler.script(description=_("BITS-EASY copy to clip slot 1"))
     def script_copyToSlotOne(self, gesture):
         self._dispatch("cmd.clip.copyToSlot", slot=1)
@@ -1130,7 +1445,22 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     __gestures = {
         "kb:control+alt+[": "markSelectionStart",
         "kb:control+alt+]": "markSelectionEnd",
+        "kb:control+alt+shift+]": "markEndAppendClipboard",
         "kb:control+alt+'": "readSelectionContext",
+        "kb:control+alt+shift+'": "speakClipboard",
+        "kb:control+alt+backspace": "clearClipboard",
+        "kb:control+c": "quickSelectCopy",
+        "kb:control+x": "quickSelectCut",
+        "kb:control+v": "quickSelectPaste",
+        "kb:delete": "quickSelectDelete",
+        "kb:escape": "quickSelectCancel",
+        "kb:control+b": "quickSelectFormat",
+        "kb:control+i": "quickSelectFormat",
+        "kb:control+u": "quickSelectFormat",
+        "kb:control+l": "quickSelectFormat",
+        "kb:control+r": "quickSelectFormat",
+        "kb:control+j": "quickSelectFormat",
+        "kb:control+e": "quickSelectFormat",
         "kb:control+alt+1": "copyToSlotOne",
         "kb:control+alt+2": "pasteFromSlotOne",
         "kb:control+alt+space": "openCommandPalette",

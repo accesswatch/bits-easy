@@ -4,12 +4,21 @@
 
 This plan is the complete manual test flow for BITS-EASY.
 
+It is designed to feel guided, not heavy: testers should always know the next keystroke, the expected outcome, and the recovery path.
+
 Goals:
 
 1. Start with selection workflows first.
 2. Keep execution simple and guided.
 3. Provide every keystroke for each test step.
 4. Cover all features, including all commands in `config/hotkeys/commands/tier1-commands.v1.json`.
+
+Magic-quality pass criteria:
+
+1. User always understands what just happened.
+2. User can recover quickly from errors or uncertainty.
+3. Command behavior feels consistent across app surfaces.
+4. Stable and beta behavior boundaries remain clear.
 
 ## 2. Test Environment
 
@@ -23,11 +32,13 @@ Goals:
 1. `EASY key` is the BITS-EASY prefix key (physical grave key by default).
 2. `EASY then X` means press and release EASY, then press `X`.
 3. Existing notation like `Grave+X` in tables still maps to `EASY then X`.
-4. `Palette path` always means:
+4. `cmd.something` is a command ID label, not a keyboard key.
+5. Keyboard modifier naming uses `Ctrl` (Windows), never Command.
+6. `Palette path` always means:
    1. Press `Grave`.
    2. Type full command ID, for example `cmd.selection.summarize`.
    3. Press `Enter`.
-5. For confirm dialogs:
+7. For confirm dialogs:
    1. Press `Tab` to move to the primary action.
    2. Press `Enter` to confirm.
    3. Press `Escape` to cancel.
@@ -45,6 +56,8 @@ The following table records test execution, expected behavior, and evidence link
 ## 5. Selection First Guided Flow
 
 Run this section first, in this exact order.
+
+This section validates the core magical loop: select, transform, inspect, return.
 
 ### 5.1 Selection Baseline Setup
 
@@ -105,19 +118,17 @@ Expected:
 1. Output is simplified.
 2. Meaning is preserved.
 
-### 5.5 Virtualized Result Navigation for Selection Outputs
+### 5.5 Virtualized Result Navigation (Standard NVDA Browse Commands)
 
-1. With virtualized result open, press `Grave+RightArrow`.
-2. Press `Grave+LeftArrow`.
-3. Press `Grave+C` to copy current block.
-4. Press `Grave+Shift+C` to copy all blocks.
-5. Press `Grave+K` to read confidence.
-6. Press `Grave+F` to open fallbacks.
-7. Press `Grave+Backspace` to return to source.
+1. With virtualized result open, use standard NVDA browse-mode keys to move and review content (arrow keys and quick navigation keys such as headings and links).
+2. Press `Grave+Shift+C` to copy all result content.
+3. Press `Grave+K` to read confidence.
+4. Press `Grave+F` to open fallbacks.
+5. Press `Grave+Backspace` to return to source.
 
 Expected:
 
-1. Block navigation works in both directions.
+1. Standard NVDA browse navigation works as expected in the virtualized surface.
 2. Copy actions place expected text in clipboard.
 3. Confidence and fallback surfaces are available.
 4. Return to source moves focus back correctly.
@@ -163,6 +174,48 @@ Expected:
 4. Selection actions execute against marker range.
 5. Cancel clears marker state.
 
+### 5.8 Mark-End-and-Append Flow
+
+Run this to validate the one-step end plus clipboard append command.
+
+1. In Notepad, type three lines:
+   1. `line one`
+   2. `line two`
+   3. `line three`
+2. Copy `seed` to clipboard with `Ctrl+C` from any source.
+3. Move caret to before `line one`.
+4. Press `Grave+OpenBracket` to mark start.
+5. Move caret to end of `line two`.
+6. Press `Grave+Shift+CloseBracket` to run `cmd.selection.markEndAppendClipboard`.
+7. Paste with `Ctrl+V` into an empty area and inspect text.
+
+Expected:
+
+1. Command sets end marker and appends selected range to existing clipboard text.
+2. Pasted result contains `seed` followed by selected marker range.
+3. Command announces successful append behavior.
+
+### 5.9 Quick Select Armed Actions
+
+Run this to validate the marker-start quick action mode.
+
+1. In Notepad, type: `alpha bravo charlie delta`.
+2. Move caret to before `bravo`.
+3. Press `Grave+OpenBracket`.
+4. Move caret to after `charlie`.
+5. Press `Ctrl+C` and paste into a blank line with `Ctrl+V`.
+6. Repeat setup and test `Ctrl+X`; verify range is removed.
+7. Undo with `Ctrl+Z`, repeat setup and test `Delete`; verify range is removed.
+8. Undo with `Ctrl+Z`, repeat setup and test `Ctrl+V` with clipboard containing `REPLACED`; verify replacement.
+9. Repeat setup, press `Escape`, then press `Ctrl+C`; verify normal app copy behavior resumes.
+
+Expected:
+
+1. After start marker, quick keys apply to marker range while armed.
+2. Copy, cut, replace, and delete operate on the intended range.
+3. `Escape` disarms quick-select interception.
+4. After disarm, native app shortcuts behave normally.
+
 ## 6. Clipboard Capabilities Guided Flow
 
 Run this section immediately after Section 5.
@@ -195,7 +248,7 @@ For each slot key from `F1` through `F12`:
 3. Press `Grave+Shift+F{n}` to run `cmd.clip.copyToSlot` for slot `n`.
 4. Press `Grave+Windows+F{n}` to run `cmd.clip.describeSlot` for slot `n`.
 5. Move to destination field.
-6. Press `Grave+Control+F{n}` to run `cmd.clip.pasteFromSlot` for slot `n`.
+6. Press `Grave+Ctrl+F{n}` to run `cmd.clip.pasteFromSlot` for slot `n`.
 
 Expected:
 
@@ -203,7 +256,20 @@ Expected:
 2. Copy and paste operations route to the selected slot.
 3. Slot description maps to the correct slot each time.
 
-### 6.3 Protection, Edit, Delete, and Recovery
+### 6.3 Clipboard Speak and Clear
+
+1. In Notepad, type `clipboard speech probe` and copy it with `Ctrl+C`.
+2. Press `Grave+Shift+Quote` to run `cmd.clipboard.speak`.
+3. Press `Grave+Shift+Backspace` to run `cmd.clipboard.clear`.
+4. Press `Grave+Shift+Quote` again.
+
+Expected:
+
+1. First speak command reads clipboard content.
+2. Clear command empties clipboard and announces completion.
+3. Second speak command reports empty clipboard state.
+
+### 6.4 Protection, Edit, Delete, and Recovery
 
 1. Select slot with `Grave+F1`.
 2. Press `Grave+Shift+P` to run `cmd.clip.protectSlot`.
@@ -221,7 +287,7 @@ Expected:
 3. Edit updates slot payload.
 4. Delete clears slot content.
 
-### 6.4 Clipboard Browser Features
+### 6.5 Clipboard Browser Features
 
 1. Press `Grave+Shift+6` to open clip browser with `cmd.clip.browser.open`.
 2. In palette, run the following commands one by one:
@@ -243,7 +309,7 @@ Expected:
 3. Compare, reorder, split, and merge execute without crashes.
 4. Export and import pack flows complete with clear status.
 
-### 6.5 Clipboard Library Features
+### 6.6 Clipboard Library Features
 
 1. Press `Grave+6` to run `cmd.clip.library.open`.
 2. Run each command through palette path:
@@ -268,7 +334,7 @@ Expected:
 3. Restore and retention features behave predictably.
 4. Timeline and linked-location views are readable and accurate.
 
-### 6.6 Clipboard-Adjacent Cross-Feature Commands
+### 6.7 Clipboard-Adjacent Cross-Feature Commands
 
 Run these commands because they depend on clipboard or selected text payloads.
 
@@ -287,7 +353,7 @@ Expected:
 1. Tag-from-selection extracts current selection path or text correctly.
 2. Table capture export writes clipboard payload in expected shape.
 
-### 6.7 Clipboard Command Coverage Checklist
+### 6.8 Clipboard Command Coverage Checklist
 
 Mark each command PASS or FAIL during execution.
 
@@ -295,12 +361,14 @@ Mark each command PASS or FAIL during execution.
 | --- | --- | --- | --- |
 | cmd.clip.copyToSlot | Grave+1, Grave+Shift+F1..F12 | No |  |
 | cmd.clip.selectSlot | Grave+F1..F12 | No |  |
-| cmd.clip.pasteFromSlot | Grave+2, Grave+Control+F1..F12 | No |  |
+| cmd.clip.pasteFromSlot | Grave+2, Grave+Ctrl+F1..F12 | No |  |
 | cmd.clip.protectSlot | Grave+Shift+P | No |  |
 | cmd.clip.unprotectSlot | Grave+Shift+U | No |  |
 | cmd.clip.deleteSlot | Grave+3 | No |  |
 | cmd.clip.editSlot | Grave+Shift+E | No |  |
 | cmd.clip.describeSlot | Grave+4, Grave+Windows+F1..F12 | No |  |
+| cmd.clipboard.speak | Grave+Shift+Quote | No |  |
+| cmd.clipboard.clear | Grave+Shift+Backspace | No |  |
 | cmd.clip.browser.open | Grave+Shift+6 | No |  |
 | cmd.clip.browser.search |  | Yes |  |
 | cmd.clip.browser.filter |  | Yes |  |
@@ -329,9 +397,86 @@ Mark each command PASS or FAIL during execution.
 | cmd.tags.session.tagFromSelection | Grave+Alt+Shift+G | Yes (also run palette) |  |
 | cmd.table.capture.exportClipboard |  | Yes |  |
 
-## 7. Core Global and Safety Controls
+### 6.9 Selection Parity Coverage Checklist
 
-### 6.1 Hotkey Help and Diagnostics
+| Command ID | Direct Hotkey | Palette Required | Result |
+| --- | --- | --- | --- |
+| cmd.selection.markStart | Grave+OpenBracket | No |  |
+| cmd.selection.markEnd | Grave+CloseBracket | No |  |
+| cmd.selection.markEndAppendClipboard | Grave+Shift+CloseBracket | No |  |
+| cmd.selection.readContext | Grave+Quote | No |  |
+| cmd.selection.markerStatus | Grave+Semicolon | No |  |
+| cmd.selection.jumpStart | Grave+J | No |  |
+| cmd.selection.cancel | Grave+X | No |  |
+
+## 7. EASYText Studio Guided Flow
+
+Run this section after clipboard flow and before global controls.
+
+### 7.1 Create and Organize EASYText Entries
+
+1. Prepare clipboard text: `Yours sincerely` plus signature lines.
+2. Open palette and run `cmd.text.expansion.upsert` with:
+   1. `abbreviation=sig`
+   2. `trigger=sig`
+   3. `title=Signature`
+3. Open palette and run `cmd.text.expansion.createFolder` with `folderName=Email`.
+4. Run `cmd.text.expansion.list` and note the new folder id for `Email`.
+5. Run `cmd.text.expansion.moveToFolder` with:
+   1. `abbreviation=sig`
+   2. `folderId=<Email folder id>`
+6. Run `cmd.text.expansion.tree`.
+
+Expected:
+
+1. Entry is created and listed.
+2. Folder is created and visible in tree output.
+3. Entry moves into selected folder.
+
+### 7.2 Trigger Plus Space Expansion
+
+1. Focus a text field in Notepad or Word.
+2. Type `sig` then press `Space`.
+3. Verify trigger token is replaced by full EASYText content and a trailing space.
+4. Type an unknown token such as `zzz` then `Space`.
+
+Expected:
+
+1. Known trigger expands in place.
+2. Unknown trigger remains unchanged.
+
+### 7.3 Primary Quick Insert
+
+1. Run `cmd.text.expansion.setPrimary` with `abbreviation=sig`.
+2. Focus editable surface and press `Grave+0`.
+
+Expected:
+
+1. Primary entry content is returned for insertion workflow.
+2. If insertion path uses clipboard paste, content appears at caret.
+
+### 7.4 EASYText Studio Coverage Checklist
+
+| Command ID | Direct Hotkey | Palette Required | Result |
+| --- | --- | --- | --- |
+| cmd.text.expansion.upsert |  | Yes |  |
+| cmd.text.expansion.expand |  | Yes |  |
+| cmd.text.expansion.resolveTrigger |  | Yes |  |
+| cmd.text.expansion.list |  | Yes |  |
+| cmd.text.expansion.tree |  | Yes |  |
+| cmd.text.expansion.createFolder |  | Yes |  |
+| cmd.text.expansion.renameFolder |  | Yes |  |
+| cmd.text.expansion.deleteFolder |  | Yes |  |
+| cmd.text.expansion.moveToFolder |  | Yes |  |
+| cmd.text.expansion.rename |  | Yes |  |
+| cmd.text.expansion.setHotkeyHint |  | Yes |  |
+| cmd.text.expansion.delete |  | Yes |  |
+| cmd.text.expansion.setPrimary |  | Yes |  |
+| cmd.text.quickInsert | Grave+0 | Yes |  |
+
+## 8. Core Global and Safety Controls
+
+### 8.1 Hotkey Help and Diagnostics
 
 1. Press `Grave+Slash`.
 2. Press `Grave` twice quickly (double press) if configured.
@@ -343,7 +488,7 @@ Expected:
 1. Available hotkeys surface opens.
 2. Multi-press and hold triggers behave as configured.
 
-### 6.2 Journal and Emergency Controls
+### 8.2 Journal and Emergency Controls
 
 1. Press `Grave+Shift+J`.
 2. Press `Grave+Escape`.
@@ -353,7 +498,7 @@ Expected:
 1. Undo last reversible action executes safely.
 2. Emergency stop command responds immediately.
 
-## 8. Direct-Bound Hotkey Matrix
+## 9. Direct-Bound Hotkey Matrix
 
 Run each direct chord once, then run the same command through the palette path.
 
@@ -378,10 +523,7 @@ The following table maps default bound chords to command IDs for dual-path valid
 | Grave+Slash | global | cmd.help.availableHotkeys |
 | Grave+Shift+J | global | cmd.journal.undoLast |
 | Grave+Escape | global | cmd.system.emergencyStop |
-| Grave+C | virtualized | cmd.result.block.copy |
 | Grave+Shift+C | virtualized | cmd.result.copyAll |
-| Grave+RightArrow | virtualized | cmd.result.block.next |
-| Grave+LeftArrow | virtualized | cmd.result.block.previous |
 | Grave+P | virtualized | cmd.result.pinInbox |
 | Grave+K | virtualized | cmd.result.readConfidence |
 | Grave+F | virtualized | cmd.result.openFallbacks |

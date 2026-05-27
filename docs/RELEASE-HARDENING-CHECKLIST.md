@@ -4,6 +4,8 @@
 
 This checklist standardizes release readiness for major feature waves so rollout quality remains consistent.
 
+Release quality in BITS-EASY means more than tests passing. It means users get speed with trust: commands behave predictably, recovery paths are intact, and beta controls do not leak into stable experience.
+
 ## 1. Build and Validation Gate
 
 1. Run hotkey schema and config validation.
@@ -27,9 +29,30 @@ This checklist standardizes release readiness for major feature waves so rollout
 
 ## 3. QA Evidence Pack
 
-1. Include manual parity matrix output from `TESTER-HANDOFF-NVDA-2026.1-x64.md`.
+1. Include manual parity matrix output from `FULL-GUIDED-KEYSTROKE-TEST-PLAN.md`.
 2. Include pass/fail summary by app surface.
 3. Include unresolved risk notes and explicit defer list.
+
+Evidence should demonstrate both correctness and experience quality, not only raw pass counts.
+
+## 3A. Tester Handoff Baseline (Consolidated)
+
+This checklist now contains the former tester handoff essentials.
+
+1. Hard requirements:
+1. Windows 10 or 11, 64-bit.
+2. NVDA 2026.1, 64-bit.
+3. Latest BITS-EASY `.nvda-addon` package.
+2. Optional dependency scope:
+1. Install Google APIs only if testing Google Calendar or Google Contacts flows.
+3. Manual device pass surfaces:
+1. Edge
+2. Chrome
+3. Firefox
+4. Outlook
+5. Word
+6. Notepad
+7. VS Code
 
 ## 4. Release Notes Content
 
